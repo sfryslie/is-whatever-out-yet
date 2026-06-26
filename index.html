@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Is it out yet?</title>
+  <meta name="description" content="Tracking things that may or may not exist yet.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0a0a0a;
+      --surface:     #141414;
+      --border:      #222;
+      --text:        #e8e8e8;
+      --muted:       #484848;
+      --yes:         #22c55e;
+      --yes-bg:      rgba(34, 197, 94, 0.07);
+      --yes-border:  rgba(34, 197, 94, 0.3);
+      --soon:        #f59e0b;
+      --soon-bg:     rgba(245, 158, 11, 0.07);
+      --soon-border: rgba(245, 158, 11, 0.3);
+      --other:       #60a5fa;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 5rem 1.25rem 5rem;
+      gap: 4rem;
+    }
+
+    header { text-align: center; }
+
+    h1 {
+      font-size: clamp(2.5rem, 7vw, 4.25rem);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.05;
+      margin-bottom: 0.6rem;
+    }
+
+    .subtitle { color: var(--muted); font-size: 0.9rem; }
+
+    /* ── content sections ── */
+    #content {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+
+    .section { display: flex; flex-direction: column; gap: 0.875rem; }
+
+    .cat-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 0.75rem;
+    }
+
+    /* ── cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.5rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .card.yes  { background: var(--yes-bg);  border-color: var(--yes-border); }
+    .card.soon { background: var(--soon-bg); border-color: var(--soon-border); }
+
+    .card-name {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-answer {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+    }
+
+    .card.yes  .card-answer { color: var(--yes); }
+    .card.soon .card-answer { color: var(--soon); }
+    .card.no   .card-answer { color: #2c2c2c; }
+    .card.other .card-answer { color: var(--other); }
+
+    .card-detail {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-top: 0.1rem;
+    }
+
+    /* ── skeleton loader ── */
+    .skeleton {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.5rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    .skeleton-line {
+      border-radius: 4px;
+      background: var(--border);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.45; }
+    }
+
+    /* ── footer ── */
+    footer {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    footer a { color: var(--muted); text-underline-offset: 3px; }
+
+    #error { color: #ef4444; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Is it out yet?</h1>
+    <p class="subtitle">Checked every 6 hours via GitHub Actions</p>
+  </header>
+
+  <div id="content"></div>
+
+  <footer>
+    <span id="updated"></span>
+    <span><a href="https://github.com" target="_blank" rel="noopener">Source</a></span>
+  </footer>
+
+  <script>
+    const content = document.getElementById('content');
+
+    function cardClass(answer) {
+      const a = answer.toLowerCase();
+      if (a.startsWith('yes'))                           return 'yes';
+      if (a.startsWith('no') || a === 'never.')          return 'no';
+      if (a.includes('soon') || a.includes('next year')) return 'soon';
+      return 'other';
+    }
+
+    function renderSkeletons() {
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      for (let i = 0; i < 8; i++) {
+        grid.innerHTML += `
+          <div class="skeleton">
+            <div class="skeleton-line" style="height:11px;width:50%"></div>
+            <div class="skeleton-line" style="height:40px;width:35%"></div>
+          </div>`;
+      }
+      content.appendChild(grid);
+    }
+
+    function renderData({ updated, items }) {
+      content.innerHTML = '';
+
+      // group by category, preserving first-seen order
+      const order = [];
+      const groups = {};
+      items.forEach(item => {
+        if (!groups[item.category]) {
+          order.push(item.category);
+          groups[item.category] = [];
+        }
+        groups[item.category].push(item);
+      });
+
+      order.forEach(cat => {
+        const section = document.createElement('section');
+        section.className = 'section';
+        section.innerHTML = `<h2 class="cat-label">${cat}</h2>`;
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        groups[cat].forEach(item => {
+          const cls = cardClass(item.answer);
+          grid.innerHTML += `
+            <div class="card ${cls}">
+              <div class="card-name">${item.label}</div>
+              <div class="card-answer">${item.answer}</div>
+              ${item.detail ? `<div class="card-detail">${item.detail}</div>` : ''}
+            </div>`;
+        });
+
+        section.appendChild(grid);
+        content.appendChild(section);
+      });
+
+      const d = new Date(updated);
+      const epoch = d.getFullYear() === 1970;
+      document.getElementById('updated').textContent = epoch
+        ? 'Not yet checked — run the GitHub Action to populate live data.'
+        : 'Last checked: ' + d.toLocaleString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+          });
+    }
+
+    renderSkeletons();
+
+    fetch('data.json?v=' + Date.now())
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(renderData)
+      .catch(() => {
+        content.innerHTML = '<p id="error">Could not load data.json — the GitHub Action may not have run yet.</p>';
+      });
+  </script>
+</body>
+</html>
