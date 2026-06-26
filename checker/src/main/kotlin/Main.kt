@@ -81,14 +81,17 @@ val ITEMS = listOf(
     Item("gemini-3-1-pro", "Gemini 3.1 Pro",   "AI", Check.Gemini("gemini-3.1-pro")),
 
     // Games
-    Item("half-life-3",     "Half-Life 3",     "Game", Check.Hardcoded, "No.",  "Please understand."),
-    Item("ricochet-2",      "Ricochet 2",      "Game", Check.Hardcoded, "No.",  "Valve counted to 2 once."),
-    Item("team-fortress-3", "Team Fortress 3", "Game", Check.Hardcoded, "No.",  "TF2 still has more players than most modern games."),
+    Item("half-life-3",     "Half-Life 3",     "Game", Check.Hardcoded, "No."),
+    Item("ricochet-2",      "Ricochet 2",      "Game", Check.Hardcoded, "No."),
+    Item("team-fortress-3", "Team Fortress 3", "Game", Check.Hardcoded, "No.",  "<a href=\"https://store.steampowered.com/app/3545060/Team_Fortress_2_Classified/\" target=\"_blank\" rel=\"noopener\">TF2 Classified is kinda fun, though.</a>"),
     Item("palworld-1",      "Palworld 1.0",    "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 10))),
     Item("valheim-1",       "Valheim 1.0",     "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 9))),
     Item("deltarune-ch5",   "Deltarune Ch. 5", "Game", Check.Hardcoded, "Yes.",   "Released June 24, 2026."),
     Item("deltarune-ch6",   "Deltarune Ch. 6", "Game", Check.Hardcoded, "Chill.", "Chapter 5 just came out. Relax."),
-    Item("gta-6",           "GTA 6 (PC)",      "Game", Check.Hardcoded, "No.",   "Console: Nov 19, 2026. PC release: ask your grandchildren."),
+    Item("persona-6",       "Persona 6",       "Game", Check.Hardcoded, "No."),
+    Item("persona-4-revival", "Persona 4 Revival", "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 18))),
+    Item("gta-vi",          "Grand Theft Auto VI",      "Game", Check.ScheduledDate(LocalDate.of(2026, 11, 19))),
+    Item("gta-vi-pc",       "Grand Theft Auto VI (PC)", "Game", Check.Hardcoded, "No.", "Rip"),
 
     // People
     Item("diddy",           "Diddy",           "People", Check.Hardcoded, "No.", "Serving ~50 months. Not out."),

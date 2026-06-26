@@ -18,14 +18,19 @@ checker/
 
 ## Adding or editing items
 
-Everything lives in `ITEMS` in `Main.kt`. Each item is:
+**`Main.kt` is the source of truth. `data.json` is a generated artifact** — the GitHub Action overwrites it completely on every run. Editing only `data.json` will be reverted within 30 minutes.
+
+When adding or changing an item, always update **both**:
+1. `ITEMS` in `checker/src/main/kotlin/Main.kt` — permanent definition
+2. `data.json` — so the site reflects the change immediately, before the next action run
+
+Each item in `ITEMS` is:
 
 ```kotlin
 Item(id, label, category, check, defaultAnswer, defaultDetail)
 ```
 
 - `defaultAnswer` defaults to `"No."`, `defaultDetail` defaults to `null`
-- Always add a matching entry in `data.json` so the site shows something before the next run
 
 ### Check types
 
