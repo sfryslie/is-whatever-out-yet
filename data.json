@@ -23,6 +23,6 @@
     { "id": "diddy",           "label": "Diddy",           "category": "People",   "answer": "No.",          "detail": "Serving ~50 months. Not out." },
     { "id": "henry-kissinger", "label": "Henry Kissinger", "category": "People",   "answer": "No.",          "detail": "Died November 29, 2023. Or trapped in a Myst book." },
     { "id": "helium",          "label": "Helium",          "category": "Resource", "answer": "No.",          "detail": "~200 years of supply remaining. Don't panic." },
-    { "id": "sbemail-211",     "label": "Sbemail 211",     "category": "Internet", "answer": "No.",          "detail": "Still on 210." }
+    { "id": "sbemail-211",     "label": "Sbemail 211",     "category": "Internet", "answer": "No.",          "detail": "<a href=\"https://homestarrunner.com/sbemails/210-robots\" target=\"_blank\" rel=\"noopener\">Still on 210.</a>" }
   ]
 }

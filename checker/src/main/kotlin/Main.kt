@@ -152,16 +152,19 @@ suspend fun fetchGeminiModelIds(client: HttpClient, apiKey: String): List<String
 }
 
 suspend fun checkHomestarRunnerSitemap(client: HttpClient): Pair<String, String> {
+    val link210 = "<a href=\"https://homestarrunner.com/sbemails/210-robots\" target=\"_blank\" rel=\"noopener\">Still on 210.</a>"
     return try {
         val xml = client.get("https://homestarrunner.com/sitemap.xml").bodyAsText()
-        val patterns = listOf("sbemail211", "sbemail/211", "email211", "email/211")
-        if (patterns.any { xml.contains(it, ignoreCase = true) }) {
-            "Yes." to "Found in sitemap."
+        val locRegex = Regex("<loc>(https://homestarrunner\\.com/sbemails/211[^<]*)</loc>", RegexOption.IGNORE_CASE)
+        val match = locRegex.find(xml)
+        if (match != null) {
+            val url = match.groupValues[1]
+            "Yes." to "<a href=\"$url\" target=\"_blank\" rel=\"noopener\">It's here!</a>"
         } else {
-            "No." to "Still on 210."
+            "No." to link210
         }
     } catch (e: Exception) {
-        "No." to "Sitemap unreachable — assuming still on 210."
+        "No." to link210
     }
 }
 
