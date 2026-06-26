@@ -86,7 +86,7 @@ val ITEMS = listOf(
     Item("team-fortress-3", "Team Fortress 3", "Game", Check.Hardcoded, "No.",  "TF2 still has more players than most modern games."),
     Item("palworld-1",      "Palworld 1.0",    "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 10))),
     Item("valheim-1",       "Valheim 1.0",     "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 9))),
-    Item("deltarune-ch5",   "Deltarune Ch. 5", "Game", Check.Hardcoded, "Yes.",   "Released September 2025."),
+    Item("deltarune-ch5",   "Deltarune Ch. 5", "Game", Check.Hardcoded, "Yes.",   "Released June 24, 2026."),
     Item("deltarune-ch6",   "Deltarune Ch. 6", "Game", Check.Hardcoded, "Chill.", "Chapter 5 just came out. Relax."),
     Item("gta-6",           "GTA 6 (PC)",      "Game", Check.Hardcoded, "No.",   "Console: Nov 19, 2026. PC release: ask your grandchildren."),
 

@@ -14,7 +14,7 @@
     { "id": "team-fortress-3", "label": "Team Fortress 3", "category": "Game",     "answer": "No.",          "detail": "TF2 still has more players than most modern games." },
     { "id": "palworld-1",      "label": "Palworld 1.0",    "category": "Game",     "answer": "Jul 10, 2026", "detail": "15 days to go" },
     { "id": "valheim-1",       "label": "Valheim 1.0",     "category": "Game",     "answer": "Sep 9, 2026",  "detail": "76 days to go" },
-    { "id": "deltarune-ch5",   "label": "Deltarune Ch. 5", "category": "Game",     "answer": "Yes.",         "detail": "Released September 2025." },
+    { "id": "deltarune-ch5",   "label": "Deltarune Ch. 5", "category": "Game",     "answer": "Yes.",         "detail": "Released June 24, 2026." },
     { "id": "deltarune-ch6",   "label": "Deltarune Ch. 6", "category": "Game",     "answer": "Chill.",       "detail": "Chapter 5 just came out. Relax." },
     { "id": "gta-6",           "label": "GTA 6 (PC)",      "category": "Game",     "answer": "No.",          "detail": "Console: Nov 19, 2026. PC release: ask your grandchildren." },
     { "id": "diddy",           "label": "Diddy",           "category": "People",   "answer": "No.",          "detail": "Serving ~50 months. Not out." },
