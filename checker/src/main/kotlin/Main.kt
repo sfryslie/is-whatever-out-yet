@@ -77,7 +77,7 @@ val ITEMS = listOf(
     Item("mythos",          "Claude Mythos",     "AI", Check.Anthropic("mythos"), "No.", "Probably not for you."),
 
     // AI — other vendors
-    Item("gpt-5-6",        "GPT-5.6",         "AI", Check.OpenAI("gpt-5.6")),
+    Item("gpt-5-6",        "GPT-5.6",         "AI", Check.OpenAI("gpt-5.6"), "No.", "Sol/Terra/Luna Soon™ — I would've thought these were new Pokémon games."),
     Item("gemini-3-1-pro", "Gemini 3.1 Pro",   "AI", Check.Gemini("gemini-3.1-pro")),
 
     // Games
@@ -85,7 +85,7 @@ val ITEMS = listOf(
     Item("ricochet-2",      "Ricochet 2",      "Game", Check.Hardcoded, "No."),
     Item("team-fortress-3", "Team Fortress 3", "Game", Check.Hardcoded, "No.",  "<a href=\"https://store.steampowered.com/app/3545060/Team_Fortress_2_Classified/\" target=\"_blank\" rel=\"noopener\">TF2 Classified is kinda fun, though.</a>"),
     Item("palworld-1",      "Palworld 1.0",    "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 10))),
-    Item("valheim-1",       "Valheim 1.0",     "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 9))),
+    Item("valheim-1",       "Valheim Deep North",     "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 9))),
     Item("deltarune-ch5",   "Deltarune Ch. 5", "Game", Check.Hardcoded, "Yes.",   "Released June 24, 2026."),
     Item("deltarune-ch6",   "Deltarune Ch. 6", "Game", Check.Hardcoded, "No.", "Chapter 5 just came out. Relax."),
     Item("persona-6",       "Persona 6",       "Game", Check.Hardcoded, "No."),
@@ -172,7 +172,7 @@ suspend fun checkHomestarRunnerSitemap(client: HttpClient): Pair<String, String>
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-fun main() = runBlocking {
+fun main(): Unit = runBlocking {
     val anthropicKey = System.getenv("ANTHROPIC_API_KEY") ?: error("ANTHROPIC_API_KEY not set")
     val openAiKey    = System.getenv("OPENAI_API_KEY")    // optional
     val googleKey    = System.getenv("GOOGLE_API_KEY")    // optional
