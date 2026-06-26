@@ -18,7 +18,7 @@
     { "id": "gta-6",           "label": "GTA 6 (PC)",      "category": "Game",     "answer": "No.",          "detail": "Console: Nov 19, 2026. PC release: ask your grandchildren." },
     { "id": "diddy",           "label": "Diddy",           "category": "People",   "answer": "No.",          "detail": "Serving ~50 months. Not out." },
     { "id": "henry-kissinger", "label": "Henry Kissinger", "category": "People",   "answer": "No.",          "detail": "Died November 29, 2023. Or trapped in a Myst book." },
-    { "id": "helium",          "label": "Helium",          "category": "Resource", "answer": "Yes.",         "detail": "~200 years of supply remaining. Don't panic." },
+    { "id": "helium",          "label": "Helium",          "category": "Resource", "answer": "No.",          "detail": "~200 years of supply remaining. Don't panic." },
     { "id": "sbemail-211",     "label": "Sbemail 211",     "category": "Internet", "answer": "No.",          "detail": "Still on 210." }
   ]
 }

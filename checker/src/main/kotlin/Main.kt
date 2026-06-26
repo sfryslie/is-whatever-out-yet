@@ -94,7 +94,7 @@ val ITEMS = listOf(
     Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "No.", "Died November 29, 2023. Or trapped in a Myst book."),
 
     // Resources
-    Item("helium",          "Helium",          "Resource", Check.Hardcoded, "Yes.", "~200 years of supply remaining. Don't panic."),
+    Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
 
     // Internet
     Item("sbemail-211",     "Sbemail 211",     "Internet", Check.HomestarRunner),
