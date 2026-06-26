@@ -147,6 +147,13 @@
             "detail": "~200 years of supply remaining. Don't panic."
         },
         {
+            "id": "ram",
+            "label": "RAM",
+            "category": "Resource",
+            "answer": "Probably.",
+            "detail": "Blame AI."
+        },
+        {
             "id": "toilet-paper",
             "label": "Toilet Paper",
             "category": "Resource",

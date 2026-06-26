@@ -100,6 +100,7 @@ val ITEMS = listOf(
 
     // Resources
     Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
+    Item("ram",             "RAM",             "Resource", Check.Hardcoded, "Probably.",  "Blame AI."),
     Item("toilet-paper",    "Toilet Paper",    "Resource", Check.Hardcoded, "No.",  "Honestly, just get a \"<a href=\"https://www.costco.com/p/-/toto-drake-2-piece-elongated-toilet-with-c5-washlet-bidet-seat/4000380465\" target=\"_blank\" rel=\"noopener\">Toto bidet from Costco.</a>\" Y'know, with like a heated seat and warm water."),
 
     // Internet
