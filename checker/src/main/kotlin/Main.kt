@@ -3,6 +3,7 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
@@ -106,6 +107,14 @@ val ITEMS = listOf(
     Item("sbemail-211",     "Sbemail 211",     "Internet", Check.HomestarRunner),
 )
 
+// ── Match helpers ─────────────────────────────────────────────────────────────
+
+private val PREVIEW_SUFFIXES = listOf("-preview", "-experimental", "-exp", "-beta", "-alpha")
+private fun String.isPreviewVariant() = PREVIEW_SUFFIXES.any { contains(it, ignoreCase = true) }
+
+private fun matchModelId(ids: List<String>, pattern: String): String? =
+    ids.firstOrNull { !it.isPreviewVariant() && (it == pattern || it.startsWith("$pattern-") || it.contains(pattern)) }
+
 // ── Network helpers ───────────────────────────────────────────────────────────
 
 suspend fun fetchAnthropicModelIds(client: HttpClient, apiKey: String): List<String> {
@@ -127,6 +136,18 @@ suspend fun fetchAnthropicModelIds(client: HttpClient, apiKey: String): List<Str
         } else null
     }
     return ids
+}
+
+suspend fun probeAnthropicModel(client: HttpClient, apiKey: String, modelId: String): Boolean = try {
+    val response = client.post("https://api.anthropic.com/v1/messages") {
+        header("x-api-key", apiKey)
+        header("anthropic-version", "2023-06-01")
+        contentType(ContentType.Application.Json)
+        setBody("""{"model":"$modelId","max_tokens":1,"messages":[{"role":"user","content":"x"}]}""")
+    }
+    response.status.value == 200
+} catch (e: Exception) {
+    false
 }
 
 suspend fun fetchOpenAIModelIds(client: HttpClient, apiKey: String): List<String> {
@@ -221,12 +242,18 @@ fun main(): Unit = runBlocking {
             }
 
             is Check.Anthropic -> {
-                val pat = check.pattern
-                val matched = anthropicIds.firstOrNull { it == pat || it.startsWith("$pat-") || it.contains(pat) }
+                // Listing match excludes preview/experimental variants. If a candidate is found,
+                // probe with a 1-token messages call — Anthropic lists models in the catalog
+                // before they're actually callable, so we have to verify accessibility.
+                val candidate = matchModelId(anthropicIds, check.pattern)
+                val callable = candidate != null && probeAnthropicModel(client, anthropicKey, candidate)
+                if (candidate != null && !callable) {
+                    println("  ${item.label}: listed as '$candidate' but probe failed")
+                }
                 ItemResult(
                     item.id, item.label, item.category,
-                    answer = if (matched != null) "Yes." else item.defaultAnswer,
-                    detail = matched ?: item.defaultDetail,
+                    answer = if (callable) "Yes." else item.defaultAnswer,
+                    detail = if (callable) candidate else item.defaultDetail,
                 )
             }
 
@@ -234,8 +261,7 @@ fun main(): Unit = runBlocking {
                 if (openAiKey == null) {
                     ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
                 } else {
-                    val pat = check.pattern
-                    val matched = openAiIds.firstOrNull { it == pat || it.startsWith("$pat-") || it.contains(pat) }
+                    val matched = matchModelId(openAiIds, check.pattern)
                     ItemResult(
                         item.id, item.label, item.category,
                         answer = if (matched != null) "Yes." else item.defaultAnswer,
@@ -248,8 +274,7 @@ fun main(): Unit = runBlocking {
                 if (googleKey == null) {
                     ItemResult(item.id, item.label, item.category, item.defaultAnswer, "Add GOOGLE_API_KEY secret to enable live check.")
                 } else {
-                    val pat = check.pattern
-                    val matched = geminiIds.firstOrNull { it == pat || it.contains(pat) }
+                    val matched = matchModelId(geminiIds, check.pattern)
                     ItemResult(
                         item.id, item.label, item.category,
                         answer = if (matched != null) "Yes." else item.defaultAnswer,
