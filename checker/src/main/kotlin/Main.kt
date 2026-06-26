@@ -87,18 +87,20 @@ val ITEMS = listOf(
     Item("palworld-1",      "Palworld 1.0",    "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 10))),
     Item("valheim-1",       "Valheim 1.0",     "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 9))),
     Item("deltarune-ch5",   "Deltarune Ch. 5", "Game", Check.Hardcoded, "Yes.",   "Released June 24, 2026."),
-    Item("deltarune-ch6",   "Deltarune Ch. 6", "Game", Check.Hardcoded, "Chill.", "Chapter 5 just came out. Relax."),
+    Item("deltarune-ch6",   "Deltarune Ch. 6", "Game", Check.Hardcoded, "No.", "Chapter 5 just came out. Relax."),
     Item("persona-6",       "Persona 6",       "Game", Check.Hardcoded, "No."),
     Item("persona-4-revival", "Persona 4 Revival", "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 18))),
     Item("gta-vi",          "Grand Theft Auto VI",      "Game", Check.ScheduledDate(LocalDate.of(2026, 11, 19))),
     Item("gta-vi-pc",       "Grand Theft Auto VI (PC)", "Game", Check.Hardcoded, "No.", "Rip"),
 
     // People
-    Item("diddy",           "Diddy",           "People", Check.Hardcoded, "No.", "Serving ~50 months. Not out."),
-    Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "No.", "Died November 29, 2023. Or trapped in a Myst book."),
+    Item("diddy",           "Diddy",           "People", Check.Hardcoded, "No.", "Serving ~50 months in prison."),
+    Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "Probably not.", "I think he's still in one of those Myst books?"),
 
     // Resources
     Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
+    Item("ram",             "RAM",             "Resource", Check.Hardcoded, "Probably.",  "Blame AI."),
+    Item("toilet-paper",    "Toilet Paper",    "Resource", Check.Hardcoded, "No.",  "Honestly, just get a \"<a href=https://www.costco.com/p/-/toto-drake-2-piece-elongated-toilet-with-c5-washlet-bidet-seat/4000380465\" target=\"_blank\" rel=\"noopener\">Toto bidet from Costco.</a> Y'know, with like a heated seat and warm water."),
 
     // Internet
     Item("sbemail-211",     "Sbemail 211",     "Internet", Check.HomestarRunner),
