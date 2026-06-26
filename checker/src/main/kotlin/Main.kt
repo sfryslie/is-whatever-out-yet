@@ -74,7 +74,7 @@ val ITEMS = listOf(
     Item("claude-opus-5",   "Claude Opus 5",   "AI", Check.Anthropic("claude-opus-5")),
     Item("claude-haiku-5",  "Claude Haiku 5",  "AI", Check.Anthropic("claude-haiku-5")),
     Item("claude-fable-6",  "Claude Fable 6",  "AI", Check.Anthropic("claude-fable-6")),
-    Item("mythos",          "Mythos",           "AI", Check.Anthropic("mythos"), "No.", "Probably not for you."),
+    Item("mythos",          "Claude Mythos",     "AI", Check.Anthropic("mythos"), "No.", "Probably not for you."),
 
     // AI — other vendors
     Item("gpt-5-6",        "GPT-5.6",         "AI", Check.OpenAI("gpt-5.6")),
@@ -86,6 +86,7 @@ val ITEMS = listOf(
     Item("team-fortress-3", "Team Fortress 3", "Game", Check.Hardcoded, "No.",  "TF2 still has more players than most modern games."),
     Item("palworld-1",      "Palworld 1.0",    "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 10))),
     Item("valheim-1",       "Valheim 1.0",     "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 9))),
+    Item("deltarune-ch5",   "Deltarune Ch. 5", "Game", Check.Hardcoded, "Yes.",   "Released September 2025."),
     Item("deltarune-ch6",   "Deltarune Ch. 6", "Game", Check.Hardcoded, "Chill.", "Chapter 5 just came out. Relax."),
     Item("gta-6",           "GTA 6 (PC)",      "Game", Check.Hardcoded, "No.",   "Console: Nov 19, 2026. PC release: ask your grandchildren."),
 
@@ -223,7 +224,7 @@ fun main() = runBlocking {
 
             is Check.OpenAI -> {
                 if (openAiKey == null) {
-                    ItemResult(item.id, item.label, item.category, item.defaultAnswer, "Add OPENAI_API_KEY secret to enable live check.")
+                    ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
                 } else {
                     val pat = check.pattern
                     val matched = openAiIds.firstOrNull { it == pat || it.startsWith("$pat-") || it.contains(pat) }
