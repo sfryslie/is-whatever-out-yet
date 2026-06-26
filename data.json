@@ -95,7 +95,7 @@
             "id": "deltarune-ch6",
             "label": "Deltarune Ch. 6",
             "category": "Game",
-            "answer": "Chill.",
+            "answer": "No.",
             "detail": "Chapter 5 just came out. Relax."
         },
         {
@@ -130,14 +130,14 @@
             "label": "Diddy",
             "category": "People",
             "answer": "No.",
-            "detail": "Serving ~50 months. Not out."
+            "detail": "Serving ~50 months in prison."
         },
         {
             "id": "henry-kissinger",
             "label": "Henry Kissinger",
             "category": "People",
-            "answer": "No.",
-            "detail": "Died November 29, 2023. Or trapped in a Myst book."
+            "answer": "Probably not.",
+            "detail": "I think he's still in one of those Myst books?"
         },
         {
             "id": "helium",
