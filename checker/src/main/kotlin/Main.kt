@@ -50,6 +50,12 @@ sealed class Check {
     /** Answer is always taken from the item config — no network call. */
     object Hardcoded : Check()
 
+    /**
+     * Hardcoded answer/detail plus a `countdownTo` of *next* Jan 1, recomputed every run so it
+     * perpetually rolls forward — the card never reaches the date (for "Year of the Linux Desktop").
+     */
+    object RollingNewYear : Check()
+
     /** Flips to "Yes." once the wall clock passes the scheduled date. */
     data class ScheduledDate(val date: LocalDate) : Check()
 
@@ -220,16 +226,27 @@ val ITEMS = listOf(
     // Resources
     Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
     Item("ram",             "RAM",             "Resource", Check.Hardcoded, "Probably.",  "Blame AI."),
+    Item("sand",            "Sand",            "Resource", Check.Hardcoded, "Maybe?", "It's actually a major problem, look it up."),
+    Item("bananas",         "Bananas",         "Resource", Check.Hardcoded, "Maybe?", "Panama disease for Cavendish bananas in stores."),
     Item("toilet-paper",    "Toilet Paper",    "Resource", Check.Hardcoded, "No.",  "Honestly, just get a <a href=\"https://www.costco.com/p/-/toto-drake-2-piece-elongated-toilet-with-c5-washlet-bidet-seat/4000380465\" target=\"_blank\" rel=\"noopener\">Toto bidet from Costco.</a> Y'know, with like a heated seat and warm water."),
 
     // Tech
     Item("tesla-roadster-2", "Tesla Roadster 2", "Tech",
         Check.WikipediaLead("Tesla_Roadster_(second_generation)", "is an upcoming"),
         defaultDetail = "Announced November 2017. Still upcoming."),
+    Item("python-4",        "Python 4",        "Tech", Check.Hardcoded, "No.", "Stop building AI backend services in Python, it sucks. Go use Java/Kotlin and <a href=\"https://spring.io/projects/spring-ai\" target=\"_blank\" rel=\"noopener\">Spring AI</a>."),
+    Item("steam-machine",   "Steam Machine",   "Tech", Check.Hardcoded, "Yes.", "<a href=\"https://store.steampowered.com/hardware/steammachine\" target=\"_blank\" rel=\"noopener\">Too expensive though.</a>"),
+    Item("steam-frame",     "Steam Frame",     "Tech",
+        Check.WikipediaLead("Steam_Frame", "is an upcoming", LocalDate.of(2026, 9, 22)),
+        defaultDetail = "Expected Summer 2026."),
+    Item("java-valhalla",   "Java Value Types (Valhalla)", "Tech", Check.VagueDate(LocalDate.of(2027, 3, 31), "March 2027?"),
+        defaultDetail = "JDK 28 preview."),
+    Item("fsd-level-5",     "Level 5 Full Self-Driving", "Tech", Check.Hardcoded, "No."),
     Item("cold-fusion",     "Cold Fusion",     "Tech", Check.Hardcoded, "No."),
 
     // Internet
     Item("sbemail-211",     "Sbemail 211",     "Internet", Check.HomestarRunner),
+    Item("year-of-linux",   "Year of the Linux Desktop", "Internet", Check.RollingNewYear, "No."),
 )
 
 // ── Match helpers ─────────────────────────────────────────────────────────────
@@ -397,6 +414,13 @@ fun main(): Unit = runBlocking {
     val results = ITEMS.map { item ->
         when (val check = item.check) {
             is Check.Hardcoded -> ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+
+            is Check.RollingNewYear -> ItemResult(
+                item.id, item.label, item.category,
+                answer = item.defaultAnswer,
+                detail = item.defaultDetail,
+                countdownTo = LocalDate.of(LocalDate.now().year + 1, 1, 1).toString(),
+            )
 
             is Check.ScheduledDate -> ItemResult(
                 item.id, item.label, item.category,
