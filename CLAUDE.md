@@ -50,6 +50,7 @@ Item(id, label, category, check, defaultAnswer, defaultDetail)
 | Check | Behavior |
 |-------|----------|
 | `Check.Hardcoded` | Uses `defaultAnswer`/`defaultDetail`, never changes |
+| `Check.RollingNewYear` | Hardcoded answer/detail + a `countdownTo` of *next* Jan 1, recomputed each run so it perpetually rolls forward and never arrives (e.g. "Year of the Linux Desktop") |
 | `Check.ScheduledDate(date)` | Emits `releaseDate` (ISO) only — the frontend computes Yes/No, the formatted date, and "N days to go" from the user's local clock |
 | `Check.VagueDate(date, vagueLabel)` | Same as ScheduledDate plus a `vagueLabel` (e.g. `"January 2027?"`). Frontend shows the label and "~N months out" instead of the exact date. `date` is still the flip trigger |
 | `Check.CountdownTo(date)` | Hardcoded `defaultAnswer`/`defaultDetail` plus a display-only `countdownTo` — counts down to `date` but never flips the card (e.g. a CES reveal date on a "No." item) |
