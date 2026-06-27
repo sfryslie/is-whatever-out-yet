@@ -52,6 +52,7 @@ Item(id, label, category, check, defaultAnswer, defaultDetail)
 | `Check.Hardcoded` | Uses `defaultAnswer`/`defaultDetail`, never changes |
 | `Check.ScheduledDate(date)` | Emits `releaseDate` (ISO) only — the frontend computes Yes/No, the formatted date, and "N days to go" from the user's local clock |
 | `Check.VagueDate(date, vagueLabel)` | Same as ScheduledDate plus a `vagueLabel` (e.g. `"January 2027?"`). Frontend shows the label and "~N months out" instead of the exact date. `date` is still the flip trigger |
+| `Check.CountdownTo(date)` | Hardcoded `defaultAnswer`/`defaultDetail` plus a display-only `countdownTo` — counts down to `date` but never flips the card (e.g. a CES reveal date on a "No." item) |
 | `Check.Anthropic(pattern)` | Searches Anthropic `/v1/models` for an ID containing `pattern` |
 | `Check.OpenAI(pattern)` | Same for OpenAI `/v1/models`; skipped if `OPENAI_API_KEY` unset |
 | `Check.Gemini(pattern)` | Same for Google `/v1beta/models`; skipped if `GOOGLE_API_KEY` unset |
