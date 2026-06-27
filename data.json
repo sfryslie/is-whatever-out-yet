@@ -1,28 +1,171 @@
 {
-  "updated": "1970-01-01T00:00:00Z",
-  "items": [
-    { "id": "claude-fable-5",  "label": "Claude Fable 5",  "category": "AI",       "answer": "No.",          "detail": null },
-    { "id": "claude-sonnet-5", "label": "Claude Sonnet 5", "category": "AI",       "answer": "No.",          "detail": null },
-    { "id": "claude-opus-5",   "label": "Claude Opus 5",   "category": "AI",       "answer": "No.",          "detail": null },
-    { "id": "claude-haiku-5",  "label": "Claude Haiku 5",  "category": "AI",       "answer": "No.",          "detail": null },
-    { "id": "claude-fable-6",  "label": "Claude Fable 6",  "category": "AI",       "answer": "No.",          "detail": null },
-    { "id": "mythos",          "label": "Claude Mythos",    "category": "AI",       "answer": "No.",          "detail": "Probably not for you." },
-    { "id": "gpt-5-6",         "label": "GPT-5.6",         "category": "AI",       "answer": "No.",          "detail": null },
-    { "id": "gemini-3-1-pro",  "label": "Gemini 3.1 Pro",  "category": "AI",       "answer": "No.",          "detail": null },
-    { "id": "half-life-3",     "label": "Half-Life 3",     "category": "Game",     "answer": "No.",          "detail": null },
-    { "id": "ricochet-2",      "label": "Ricochet 2",      "category": "Game",     "answer": "No.",          "detail": null },
-    { "id": "team-fortress-3", "label": "Team Fortress 3", "category": "Game",     "answer": "No.",          "detail": "<a href=\"https://store.steampowered.com/app/3545060/Team_Fortress_2_Classified/\" target=\"_blank\" rel=\"noopener\">TF2 Classified is kinda fun, though.</a>" },
-    { "id": "palworld-1",      "label": "Palworld 1.0",    "category": "Game",     "answer": "Jul 10, 2026", "detail": "15 days to go" },
-    { "id": "valheim-1",       "label": "Valheim 1.0",     "category": "Game",     "answer": "Sep 9, 2026",  "detail": "76 days to go" },
-    { "id": "deltarune-ch5",   "label": "Deltarune Ch. 5", "category": "Game",     "answer": "Yes.",         "detail": "Released June 24, 2026." },
-    { "id": "deltarune-ch6",   "label": "Deltarune Ch. 6", "category": "Game",     "answer": "Chill.",       "detail": "Chapter 5 just came out. Relax." },
-    { "id": "persona-6",       "label": "Persona 6",       "category": "Game",     "answer": "No.",          "detail": null },
-    { "id": "persona-4-revival", "label": "Persona 4 Revival", "category": "Game", "answer": "Feb 18, 2027", "detail": "238 days to go" },
-    { "id": "gta-vi",          "label": "Grand Theft Auto VI", "category": "Game", "answer": "Nov 19, 2026", "detail": "147 days to go" },
-    { "id": "gta-vi-pc",       "label": "Grand Theft Auto VI (PC)", "category": "Game", "answer": "No.",     "detail": "Rip" },
-    { "id": "diddy",           "label": "Diddy",           "category": "People",   "answer": "No.",          "detail": "Serving ~50 months. Not out." },
-    { "id": "henry-kissinger", "label": "Henry Kissinger", "category": "People",   "answer": "No.",          "detail": "Died November 29, 2023. Or trapped in a Myst book." },
-    { "id": "helium",          "label": "Helium",          "category": "Resource", "answer": "No.",          "detail": "~200 years of supply remaining. Don't panic." },
-    { "id": "sbemail-211",     "label": "Sbemail 211",     "category": "Internet", "answer": "No.",          "detail": "<a href=\"https://homestarrunner.com/sbemails/210-robots\" target=\"_blank\" rel=\"noopener\">Still on 210.</a>" }
-  ]
+    "updated": "2026-06-26T23:37:40.699819767Z",
+    "items": [
+        {
+            "id": "claude-fable-5",
+            "label": "Claude Fable 5",
+            "category": "AI",
+            "answer": "No."
+        },
+        {
+            "id": "claude-sonnet-5",
+            "label": "Claude Sonnet 5",
+            "category": "AI",
+            "answer": "No."
+        },
+        {
+            "id": "claude-opus-5",
+            "label": "Claude Opus 5",
+            "category": "AI",
+            "answer": "No."
+        },
+        {
+            "id": "claude-haiku-5",
+            "label": "Claude Haiku 5",
+            "category": "AI",
+            "answer": "No."
+        },
+        {
+            "id": "claude-fable-6",
+            "label": "Claude Fable 6",
+            "category": "AI",
+            "answer": "No."
+        },
+        {
+            "id": "mythos",
+            "label": "Claude Mythos",
+            "category": "AI",
+            "answer": "No.",
+            "detail": "Probably not for you."
+        },
+        {
+            "id": "gpt-5-6",
+            "label": "GPT-5.6",
+            "category": "AI",
+            "answer": "No.",
+            "detail": "Sol/Terra/Luna Soon™ — I would've thought these were new Pokémon games."
+        },
+        {
+            "id": "gemini-3-1-pro",
+            "label": "Gemini 3.1 Pro",
+            "category": "AI",
+            "answer": "No."
+        },
+        {
+            "id": "half-life-3",
+            "label": "Half-Life 3",
+            "category": "Game",
+            "answer": "No."
+        },
+        {
+            "id": "ricochet-2",
+            "label": "Ricochet 2",
+            "category": "Game",
+            "answer": "No."
+        },
+        {
+            "id": "team-fortress-3",
+            "label": "Team Fortress 3",
+            "category": "Game",
+            "answer": "No.",
+            "detail": "<a href=\"https://store.steampowered.com/app/3545060/Team_Fortress_2_Classified/\" target=\"_blank\" rel=\"noopener\">TF2 Classified is kinda fun, though.</a>"
+        },
+        {
+            "id": "palworld-1",
+            "label": "Palworld 1.0",
+            "category": "Game",
+            "answer": "Jul 10, 2026",
+            "detail": "14 days to go"
+        },
+        {
+            "id": "valheim-1",
+            "label": "Valheim Deep North",
+            "category": "Game",
+            "answer": "Sep 9, 2026",
+            "detail": "75 days to go"
+        },
+        {
+            "id": "deltarune-ch5",
+            "label": "Deltarune Ch. 5",
+            "category": "Game",
+            "answer": "Yes.",
+            "detail": "Released June 24, 2026."
+        },
+        {
+            "id": "deltarune-ch6",
+            "label": "Deltarune Ch. 6",
+            "category": "Game",
+            "answer": "No.",
+            "detail": "Chapter 5 just came out. Relax."
+        },
+        {
+            "id": "persona-6",
+            "label": "Persona 6",
+            "category": "Game",
+            "answer": "No."
+        },
+        {
+            "id": "persona-4-revival",
+            "label": "Persona 4 Revival",
+            "category": "Game",
+            "answer": "Feb 18, 2027",
+            "detail": "237 days to go"
+        },
+        {
+            "id": "gta-vi",
+            "label": "Grand Theft Auto VI",
+            "category": "Game",
+            "answer": "Nov 19, 2026",
+            "detail": "146 days to go"
+        },
+        {
+            "id": "gta-vi-pc",
+            "label": "Grand Theft Auto VI (PC)",
+            "category": "Game",
+            "answer": "No.",
+            "detail": "Rip"
+        },
+        {
+            "id": "diddy",
+            "label": "Diddy",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Serving ~50 months in prison."
+        },
+        {
+            "id": "henry-kissinger",
+            "label": "Henry Kissinger",
+            "category": "People",
+            "answer": "Probably not.",
+            "detail": "I think he's still in one of those Myst books?"
+        },
+        {
+            "id": "helium",
+            "label": "Helium",
+            "category": "Resource",
+            "answer": "No.",
+            "detail": "~200 years of supply remaining. Don't panic."
+        },
+        {
+            "id": "ram",
+            "label": "RAM",
+            "category": "Resource",
+            "answer": "Probably.",
+            "detail": "Blame AI."
+        },
+        {
+            "id": "toilet-paper",
+            "label": "Toilet Paper",
+            "category": "Resource",
+            "answer": "No.",
+            "detail": "Honestly, just get a \"<a href=\"https://www.costco.com/p/-/toto-drake-2-piece-elongated-toilet-with-c5-washlet-bidet-seat/4000380465\" target=\"_blank\" rel=\"noopener\">Toto bidet from Costco.</a>\" Y'know, with like a heated seat and warm water."
+        },
+        {
+            "id": "sbemail-211",
+            "label": "Sbemail 211",
+            "category": "Internet",
+            "answer": "No.",
+            "detail": "<a href=\"https://homestarrunner.com/sbemails/210-robots\" target=\"_blank\" rel=\"noopener\">Still on 210.</a>"
+        }
+    ]
 }
