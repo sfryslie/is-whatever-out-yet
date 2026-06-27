@@ -52,6 +52,13 @@
             "answer": "No."
         },
         {
+            "id": "grok-5",
+            "label": "Grok 5",
+            "category": "AI",
+            "answer": "No.",
+            "detail": "... but do you care?"
+        },
+        {
             "id": "half-life-3",
             "label": "Half-Life 3",
             "category": "Game",
