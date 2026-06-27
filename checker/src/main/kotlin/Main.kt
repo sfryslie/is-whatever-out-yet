@@ -152,9 +152,11 @@ val ITEMS = listOf(
     Item("halo-campaign-evolved", "Halo: Campaign Evolved", "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 28)),
         defaultDetail = "Early access July 23."),
     Item("cod-mw4",         "Call of Duty: MW4",        "Game", Check.ScheduledDate(LocalDate.of(2026, 10, 23))),
+    Item("ff7-revelation",  "Final Fantasy VII Revelation", "Game", Check.VagueDate(LocalDate.of(2027, 6, 20), "Spring 2027?")),
 
     // Books
     Item("winds-of-winter", "The Winds of Winter",      "Book", Check.Hardcoded, "No.", "GRRM started writing it in 2010. Watch the show again."),
+    Item("dsm-6",           "DSM-6",                    "Book", Check.Hardcoded, "No.", "AI <a href=\"https://en.wikipedia.org/wiki/Chatbot_psychosis\" target=\"_blank\" rel=\"noopener\">chatbot psychosis</a> will likely be in there."),
 
     // Shows
     Item("rezero-s4-cour2",     "Re:Zero S4 Cour 2",      "Show", Check.ScheduledDate(LocalDate.of(2026, 8, 12))),
@@ -167,6 +169,7 @@ val ITEMS = listOf(
 
     // Movies
     Item("avengers-doomsday",   "Avengers: Doomsday",     "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),
+    Item("demon-slayer-ic-2",   "Demon Slayer: Infinity Castle Part 2", "Movie", Check.VagueDate(LocalDate.of(2027, 9, 22), "Summer 2027?")),
 
     // People
     Item("diddy",           "Diddy",           "People",
