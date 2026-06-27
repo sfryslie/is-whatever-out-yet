@@ -1,5 +1,5 @@
 {
-    "updated": "2026-06-26T23:37:40.699819767Z",
+    "updated": "2026-06-27T01:30:39.933354366Z",
     "items": [
         {
             "id": "claude-fable-5",
@@ -75,14 +75,14 @@
             "label": "Palworld 1.0",
             "category": "Game",
             "answer": "Jul 10, 2026",
-            "detail": "14 days to go"
+            "detail": "13 days to go"
         },
         {
             "id": "valheim-1",
             "label": "Valheim Deep North",
             "category": "Game",
             "answer": "Sep 9, 2026",
-            "detail": "75 days to go"
+            "detail": "74 days to go"
         },
         {
             "id": "deltarune-ch5",
@@ -109,14 +109,14 @@
             "label": "Persona 4 Revival",
             "category": "Game",
             "answer": "Feb 18, 2027",
-            "detail": "237 days to go"
+            "detail": "236 days to go"
         },
         {
             "id": "gta-vi",
             "label": "Grand Theft Auto VI",
             "category": "Game",
             "answer": "Nov 19, 2026",
-            "detail": "146 days to go"
+            "detail": "145 days to go"
         },
         {
             "id": "gta-vi-pc",
