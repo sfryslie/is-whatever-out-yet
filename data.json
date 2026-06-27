@@ -189,11 +189,25 @@
             "releaseDate": "2026-10-23"
         },
         {
+            "id": "ff7-revelation",
+            "label": "Final Fantasy VII Revelation",
+            "category": "Game",
+            "releaseDate": "2027-06-20",
+            "vagueLabel": "Spring 2027?"
+        },
+        {
             "id": "winds-of-winter",
             "label": "The Winds of Winter",
             "category": "Book",
             "answer": "No.",
             "detail": "GRRM started writing it in 2010. Watch the show again."
+        },
+        {
+            "id": "dsm-6",
+            "label": "DSM-6",
+            "category": "Book",
+            "answer": "No.",
+            "detail": "AI <a href=\"https://en.wikipedia.org/wiki/Chatbot_psychosis\" target=\"_blank\" rel=\"noopener\">chatbot psychosis</a> will likely be in there."
         },
         {
             "id": "rezero-s4-cour2",
@@ -242,6 +256,13 @@
             "label": "Avengers: Doomsday",
             "category": "Movie",
             "releaseDate": "2026-12-18"
+        },
+        {
+            "id": "demon-slayer-ic-2",
+            "label": "Demon Slayer: Infinity Castle Part 2",
+            "category": "Movie",
+            "releaseDate": "2027-09-22",
+            "vagueLabel": "Summer 2027?"
         },
         {
             "id": "diddy",
