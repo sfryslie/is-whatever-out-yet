@@ -59,6 +59,12 @@
             "detail": "... but do you care?"
         },
         {
+            "id": "agi",
+            "label": "AGI",
+            "category": "AI",
+            "answer": "No."
+        },
+        {
             "id": "half-life-3",
             "label": "Half-Life 3",
             "category": "Game",
@@ -252,6 +258,13 @@
             "vagueLabel": "Late 2027?"
         },
         {
+            "id": "chainsaw-man-s2",
+            "label": "Chainsaw Man Season 2",
+            "category": "Show",
+            "releaseDate": "2027-12-31",
+            "vagueLabel": "Late 2027?"
+        },
+        {
             "id": "dune-3",
             "label": "Dune: Part Three",
             "category": "Movie",
@@ -426,6 +439,12 @@
             "category": "Tech",
             "answer": "No.",
             "detail": "Announced November 2017. Still upcoming."
+        },
+        {
+            "id": "cold-fusion",
+            "label": "Cold Fusion",
+            "category": "Tech",
+            "answer": "No."
         },
         {
             "id": "sbemail-211",
