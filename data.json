@@ -52,6 +52,13 @@
             "answer": "No."
         },
         {
+            "id": "grok-5",
+            "label": "Grok 5",
+            "category": "AI",
+            "answer": "No.",
+            "detail": "... but do you care?"
+        },
+        {
             "id": "half-life-3",
             "label": "Half-Life 3",
             "category": "Game",
@@ -149,6 +156,39 @@
             "detail": "I hope it's a roguelite deckbuilder."
         },
         {
+            "id": "bge-2",
+            "label": "Beyond Good and Evil 2",
+            "category": "Game",
+            "answer": "No.",
+            "detail": "Announced 2008. Still waiting."
+        },
+        {
+            "id": "kotor-remake",
+            "label": "Star Wars: KOTOR Remake",
+            "category": "Game",
+            "answer": "No.",
+            "detail": "In development limbo since 2021."
+        },
+        {
+            "id": "onimusha-sword",
+            "label": "Onimusha: Way of the Sword",
+            "category": "Game",
+            "releaseDate": "2026-09-25"
+        },
+        {
+            "id": "halo-campaign-evolved",
+            "label": "Halo: Campaign Evolved",
+            "category": "Game",
+            "detail": "Early access July 23.",
+            "releaseDate": "2026-07-28"
+        },
+        {
+            "id": "cod-mw4",
+            "label": "Call of Duty: MW4",
+            "category": "Game",
+            "releaseDate": "2026-10-23"
+        },
+        {
             "id": "winds-of-winter",
             "label": "The Winds of Winter",
             "category": "Book",
@@ -189,6 +229,13 @@
             "category": "Show",
             "releaseDate": "2027-10-31",
             "vagueLabel": "October 2027?"
+        },
+        {
+            "id": "dbs-galactic-patrol",
+            "label": "Dragon Ball Super: The Galactic Patrol",
+            "category": "Show",
+            "releaseDate": "2027-12-31",
+            "vagueLabel": "Late 2027?"
         },
         {
             "id": "avengers-doomsday",

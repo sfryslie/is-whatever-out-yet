@@ -68,6 +68,9 @@ sealed class Check {
     /** Check the Google Generative Language /v1beta/models list. Skipped gracefully if GOOGLE_API_KEY is unset. */
     data class Gemini(val pattern: String) : Check()
 
+    /** Check the xAI /v1/models list (OpenAI-compatible). Skipped gracefully if XAI_API_KEY is unset. */
+    data class Grok(val pattern: String) : Check()
+
     /** Fetch homestarrunner.com/sitemap.xml and look for sbemail211. */
     object HomestarRunner : Check()
 
@@ -124,6 +127,7 @@ val ITEMS = listOf(
     // AI — other vendors
     Item("gpt-5-6",        "GPT-5.6",         "AI", Check.OpenAI("gpt-5.6"), "No.", "Sol/Terra/Luna Soon™ — I would've thought these were new Pokémon games."),
     Item("gemini-3-1-pro", "Gemini 3.1 Pro",   "AI", Check.Gemini("gemini-3.1-pro")),
+    Item("grok-5",         "Grok 5",           "AI", Check.Grok("grok-5"), "No.", "... but do you care?"),
 
     // Games
     Item("half-life-3",     "Half-Life 3",     "Game", Check.Hardcoded, "No."),
@@ -142,6 +146,12 @@ val ITEMS = listOf(
     Item("fable-game",      "Fable",                    "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 23))),
     Item("elder-scrolls-6", "The Elder Scrolls VI",     "Game", Check.Hardcoded, "No.", "Bethesda's been in development since 2018. Buy Skyrim again."),
     Item("huniepop-3",      "HuniePop 3",               "Game", Check.Hardcoded, "No.", "I hope it's a roguelite deckbuilder."),
+    Item("bge-2",           "Beyond Good and Evil 2",   "Game", Check.Hardcoded, "No.", "Announced 2008. Still waiting."),
+    Item("kotor-remake",    "Star Wars: KOTOR Remake",  "Game", Check.Hardcoded, "No.", "In development limbo since 2021."),
+    Item("onimusha-sword",  "Onimusha: Way of the Sword", "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 25))),
+    Item("halo-campaign-evolved", "Halo: Campaign Evolved", "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 28)),
+        defaultDetail = "Early access July 23."),
+    Item("cod-mw4",         "Call of Duty: MW4",        "Game", Check.ScheduledDate(LocalDate.of(2026, 10, 23))),
 
     // Books
     Item("winds-of-winter", "The Winds of Winter",      "Book", Check.Hardcoded, "No.", "GRRM started writing it in 2010. Watch the show again."),
@@ -153,6 +163,7 @@ val ITEMS = listOf(
         defaultDetail = "Fuck Netflix."),
     Item("shangri-la-s3",       "Shangri-La Frontier S3", "Show", Check.VagueDate(LocalDate.of(2027, 1, 31), "January 2027")),
     Item("frieren-s3",          "Frieren S3",             "Show", Check.VagueDate(LocalDate.of(2027, 10, 31), "October 2027?")),
+    Item("dbs-galactic-patrol", "Dragon Ball Super: The Galactic Patrol", "Show", Check.VagueDate(LocalDate.of(2027, 12, 31), "Late 2027?")),
 
     // Movies
     Item("avengers-doomsday",   "Avengers: Doomsday",     "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),
@@ -239,6 +250,13 @@ suspend fun fetchOpenAIModelIds(client: HttpClient, apiKey: String): List<String
     return body["data"]?.jsonArray?.map { it.jsonObject["id"]!!.jsonPrimitive.content } ?: emptyList()
 }
 
+suspend fun fetchXaiModelIds(client: HttpClient, apiKey: String): List<String> {
+    val body = client.get("https://api.x.ai/v1/models") {
+        header("Authorization", "Bearer $apiKey")
+    }.bodyAsText().let { Json.parseToJsonElement(it).jsonObject }
+    return body["data"]?.jsonArray?.map { it.jsonObject["id"]!!.jsonPrimitive.content } ?: emptyList()
+}
+
 suspend fun fetchGeminiModelIds(client: HttpClient, apiKey: String): List<String> {
     val ids = mutableListOf<String>()
     var pageToken: String? = null
@@ -303,6 +321,7 @@ fun main(): Unit = runBlocking {
     val anthropicKey = System.getenv("ANTHROPIC_API_KEY") ?: error("ANTHROPIC_API_KEY not set")
     val openAiKey    = System.getenv("OPENAI_API_KEY")    // optional
     val googleKey    = System.getenv("GOOGLE_API_KEY")    // optional
+    val xaiKey       = System.getenv("XAI_API_KEY")       // optional
     val outputPath   = System.getenv("DATA_JSON_PATH")    ?: "../data.json"
 
     val client = HttpClient(CIO) {
@@ -330,6 +349,16 @@ fun main(): Unit = runBlocking {
         }
     } else {
         println("GOOGLE_API_KEY not set — skipping Gemini checks.")
+        emptyList()
+    }
+
+    val xaiIds: List<String> = if (xaiKey != null) {
+        println("Fetching xAI models…")
+        fetchXaiModelIds(client, xaiKey).also {
+            println("  Found ${it.size} model(s)")
+        }
+    } else {
+        println("XAI_API_KEY not set — skipping Grok checks.")
         emptyList()
     }
 
@@ -384,6 +413,19 @@ fun main(): Unit = runBlocking {
                     ItemResult(item.id, item.label, item.category, item.defaultAnswer, "Add GOOGLE_API_KEY secret to enable live check.")
                 } else {
                     val matched = matchModelId(geminiIds, check.pattern)
+                    ItemResult(
+                        item.id, item.label, item.category,
+                        answer = if (matched != null) "Yes." else item.defaultAnswer,
+                        detail = matched ?: item.defaultDetail,
+                    )
+                }
+            }
+
+            is Check.Grok -> {
+                if (xaiKey == null) {
+                    ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+                } else {
+                    val matched = matchModelId(xaiIds, check.pattern)
                     ItemResult(
                         item.id, item.label, item.category,
                         answer = if (matched != null) "Yes." else item.defaultAnswer,
