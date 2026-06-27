@@ -94,8 +94,9 @@ sealed class Check {
 
     /**
      * Scrape the AAA gas-prices page at [url] for the national average and surface it as a blue
-     * subheader (countdownLabel/Sub). Answer/detail stay at the item defaults. Fail-closed: on a
-     * network error or parse miss, the subheader is simply omitted.
+     * subheader (countdownLabel/Sub). The price also drives the answer: over $6/gal flips to
+     * "Yes.", over $5/gal to "Maybe?", otherwise the item defaults hold. Fail-closed: on a network
+     * error or parse miss, answer/detail fall back to defaults and the subheader is omitted.
      */
     data class GasPrices(val url: String) : Check()
 
@@ -116,15 +117,19 @@ sealed class Check {
 
     /**
      * Like [WikipediaLead] but fetches the full rendered HTML (not just the summary extract),
-     * so it can see infobox fields the summary endpoint strips. Case-sensitive substring match
-     * — infobox values have predictable capitalization (e.g. "Incarcerated at") that body
-     * prose typically doesn't. Phrase missing → "Maybe?" with [flippedDetail] + Wikipedia link
-     * (intentionally not a confident "Yes." — infobox changes can be template churn or transfer
-     * notation, not just release).
+     * so it can see infobox fields the summary endpoint strips. [phrases] are OR-matched
+     * (case-sensitive substring) against the page: while ANY is present the card holds at the
+     * item default; only when ALL are gone does it flip. Pass several spellings of the same
+     * infobox signal (e.g. "Incarcerated at" / ">Imprisoned<") so a single editor reword doesn't
+     * false-flip the card. Keep them capitalized + tag-bounded — infobox values have predictable
+     * capitalization that lowercase body prose (which mentions past incarceration forever) does
+     * not, so a bare "incarcerated" would freeze the card on "No." Flip → "Maybe?" with
+     * [flippedDetail] + Wikipedia link (intentionally not a confident "Yes." — infobox changes
+     * can be template churn or transfer notation, not just release).
      */
     data class WikipediaHtml(
         val article: String,
-        val phrase: String,
+        val phrases: List<String>,
         val flippedDetail: String,
     ) : Check()
 }
@@ -139,6 +144,14 @@ data class Item(
     val defaultAnswer: String = "No.",
     val defaultDetail: String? = null,
 )
+
+// Infobox-anchored "still locked up" markers, OR-matched against the full rendered Wikipedia HTML
+// by Check.WikipediaHtml: the card stays "No." while ANY is present and flips only when all are
+// gone. Capitalized + tag-bounded on purpose so they match infobox value/label cells, not the
+// lowercase body prose that mentions past incarceration forever (which would freeze the card).
+// Covers the incarcerated↔imprisoned wording editors swap between. Defined before ITEMS so it's
+// initialized first.
+private val INCARCERATION_MARKERS = listOf("Incarcerated at", ">Incarcerated<", ">Imprisoned<")
 
 val ITEMS = listOf(
     // AI — Anthropic (live API check)
@@ -226,7 +239,7 @@ val ITEMS = listOf(
 
     // People
     Item("diddy",           "Diddy",           "People",
-        Check.WikipediaHtml("Sean_Combs", "Incarcerated at", flippedDetail ="He's out."),
+        Check.WikipediaHtml("Sean_Combs", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "Serving ~50 months in prison."),
     Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "Maybe?", "I think he's still in one of those Myst books?"),
     Item("donald-trump",    "Donald Trump",    "People",
@@ -236,16 +249,40 @@ val ITEMS = listOf(
         Check.WikipediaLead("Vladimir_Putin", "President of Russia since"),
         defaultDetail = "Still President of Russia. Has been since 2012."),
     Item("elizabeth-holmes", "Elizabeth Holmes", "People",
-        Check.WikipediaHtml("Elizabeth_Holmes", "Incarcerated at", flippedDetail ="She's out."),
+        Check.WikipediaHtml("Elizabeth_Holmes", INCARCERATION_MARKERS, flippedDetail = "She's out."),
         defaultDetail = "Serving 11+ years at FPC Bryan."),
     Item("sbf",              "Sam Bankman-Fried", "People",
-        Check.WikipediaHtml("Sam_Bankman-Fried", ">Imprisoned<", flippedDetail ="He's out."),
+        Check.WikipediaHtml("Sam_Bankman-Fried", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "25 years at FCI Lompoc I. Don't hold your breath."),
+    // Cosby's already out of prison (conviction overturned 2021); the WikipediaLead instead tracks
+    // the lead's "is/was an American" copula — when he dies the verb flips and the detail refreshes
+    // to the obituary. (The summary endpoint strips the "(born July 12, 1937)" parenthetical, so the
+    // birth date itself isn't a usable signal here.)
+    Item("bill-cosby",      "Bill Cosby",      "People",
+        Check.WikipediaLead("Bill_Cosby", "is an American former comedian"),
+        defaultAnswer = "Yes.", defaultDetail = "Released in 2021. <a href=\"https://en.wikipedia.org/wiki/Trial_of_Bill_Cosby#Overturned_conviction\" target=\"_blank\" rel=\"noopener\">It was kinda bullshit.</a>"),
+    Item("harvey-weinstein", "Harvey Weinstein", "People",
+        Check.WikipediaHtml("Harvey_Weinstein", INCARCERATION_MARKERS, flippedDetail = "He's out."),
+        defaultDetail = "Held at Rikers Island."),
+    Item("r-kelly",         "R. Kelly",        "People",
+        Check.WikipediaHtml("R._Kelly", INCARCERATION_MARKERS, flippedDetail = "He's out."),
+        defaultDetail = "Serving 30 years at FCI Butner."),
+    Item("jared-fogle",     "Jared Fogle",     "People",
+        Check.WikipediaHtml("Jared_Fogle", INCARCERATION_MARKERS, flippedDetail = "He's out."),
+        defaultDetail = "~16 years at FCI Englewood. Out around 2029."),
+    Item("joe-exotic",      "Joe Exotic",      "People",
+        Check.WikipediaHtml("Joe_Exotic", INCARCERATION_MARKERS, flippedDetail = "He's out."),
+        defaultDetail = "21 years at FMC Fort Worth. Still no pardon."),
+    Item("ted-kaczynski",   "Ted Kaczynski",   "People", Check.Hardcoded, "Yes.",
+        "Yeah, he died in 2023, dude. That was like... a while ago."),
+    Item("oj-simpson",      "O.J. Simpson",    "People", Check.Hardcoded, "No.",
+        "The Juice is not loose, he died in 2024."),
 
     // Resources
     Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
     Item("ram",             "RAM",             "Resource", Check.Hardcoded, "Probably.",  "Blame AI."),
     Item("sand",            "Sand",            "Resource", Check.Hardcoded, "Maybe?", "It's actually a major problem, look it up."),
+    Item("sulfur",          "Sulfur",          "Resource", Check.Hardcoded, "Maybe?", "A lot of it comes from the Persian Gulf."),
     Item("bananas",         "Bananas",         "Resource", Check.Hardcoded, "Maybe?", "Panama disease for Cavendish bananas in stores."),
     Item("toilet-paper",    "Toilet Paper",    "Resource", Check.Hardcoded, "No.",  "Honestly, just get a <a href=\"https://www.costco.com/p/-/toto-drake-2-piece-elongated-toilet-with-c5-washlet-bidet-seat/4000380465\" target=\"_blank\" rel=\"noopener\">Toto bidet from Costco.</a> Y'know, with like a heated seat and warm water."),
     Item("water",           "Water",           "Resource", Check.Hardcoded, "Maybe?", "Take shorter showers, that water could go to a data center."),
@@ -270,6 +307,9 @@ val ITEMS = listOf(
 
     // Internet
     Item("sbemail-211",     "Sbemail 211",     "Internet", Check.HomestarRunner),
+    Item("scp-682",         "SCP-682",         "Internet", Check.Hardcoded, "Probably not.", "No need to panic."),
+    Item("scp-096",         "SCP-096",         "Internet", Check.Hardcoded, "No.",
+        "<a href=\"https://scp-wiki.wikidot.com/incident-096-1-a\" target=\"_blank\" rel=\"noopener\">Four pixels. Four fucking pixels.</a>"),
     Item("year-of-linux",   "Year of the Linux Desktop", "Internet", Check.RollingNewYear, "No."),
 )
 
@@ -389,15 +429,15 @@ suspend fun checkHomestarRunnerSitemap(client: HttpClient): Pair<String, String>
 }
 
 // Pull the national average out of the AAA gas-prices HTML. The value sits in server-rendered
-// markup as "National Average …<p class="numb"> $3.901". Returns a formatted "$X.XX/gal" or null.
+// markup as "National Average …<p class="numb"> $3.901". Returns the raw price (e.g. 3.901) or
+// null — the caller formats it for display and compares it against the threshold answers.
 private val GAS_AVG_REGEX = Regex("National Average[\\s\\S]{0,200}?\\\$\\s*([0-9]+\\.[0-9]{2,4})")
 
-suspend fun fetchNationalGasAverage(client: HttpClient, url: String): String? = try {
+suspend fun fetchNationalGasAverage(client: HttpClient, url: String): Double? = try {
     val html = client.get(url) {
         header("User-Agent", "Mozilla/5.0 (compatible; is-whatever-out-yet/1.0; +https://iswhateveroutyet.com)")
     }.bodyAsText()
     GAS_AVG_REGEX.find(html)?.groupValues?.get(1)?.toDoubleOrNull()
-        ?.let { "$" + "%.2f".format(it) + "/gal" }
 } catch (e: Exception) {
     null
 }
@@ -543,13 +583,22 @@ fun main(): Unit = runBlocking {
 
             is Check.GasPrices -> {
                 println("Checking AAA national gas average…")
-                val avg = fetchNationalGasAverage(client, check.url)
+                val price = fetchNationalGasAverage(client, check.url)
+                val label = price?.let { "$" + "%.2f".format(it) + "/gal" }
+                // The price drives the answer: over $6/gal it's "out," over $5/gal it's getting
+                // there. Below that (or on a parse/network miss) the item defaults hold.
+                val (answer, detail) = when {
+                    price == null -> item.defaultAnswer to item.defaultDetail
+                    price > 6.0   -> "Yes." to "Over six bucks a gallon. Yeah, it's a problem."
+                    price > 5.0   -> "Maybe?" to "Five-plus a gallon and climbing."
+                    else          -> item.defaultAnswer to item.defaultDetail
+                }
                 ItemResult(
                     item.id, item.label, item.category,
-                    answer = item.defaultAnswer,
-                    detail = item.defaultDetail,
-                    countdownLabel = avg,
-                    countdownSub = if (avg != null) "U.S. average · AAA" else null,
+                    answer = answer,
+                    detail = detail,
+                    countdownLabel = label,
+                    countdownSub = if (label != null) "U.S. average · AAA" else null,
                 )
             }
 
@@ -577,7 +626,7 @@ fun main(): Unit = runBlocking {
             is Check.WikipediaHtml -> {
                 println("Checking Wikipedia HTML for ${check.article}…")
                 val html = fetchWikipediaHtml(client, check.article)
-                if (html == null || html.contains(check.phrase)) {
+                if (html == null || check.phrases.any { html.contains(it) }) {
                     ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
                 } else {
                     val articleUrl = "https://en.wikipedia.org/wiki/${check.article}"
