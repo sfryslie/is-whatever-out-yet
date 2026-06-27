@@ -42,6 +42,7 @@ Item(id, label, category, check, defaultAnswer, defaultDetail)
 | `Check.Anthropic(pattern)` | Searches Anthropic `/v1/models` for an ID containing `pattern` |
 | `Check.OpenAI(pattern)` | Same for OpenAI `/v1/models`; skipped if `OPENAI_API_KEY` unset |
 | `Check.Gemini(pattern)` | Same for Google `/v1beta/models`; skipped if `GOOGLE_API_KEY` unset |
+| `Check.Grok(pattern)` | Same for xAI `/v1/models` (OpenAI-compatible); skipped if `XAI_API_KEY` unset |
 | `Check.HomestarRunner` | Checks homestarrunner.com sitemap for sbemail211 |
 | `Check.WikipediaLead(article, phrase, latestDate?)` | Fetches the Wikipedia REST summary for `article`; phrase present in the lead extract → defaults (condition still holds), phrase missing → `"Yes."` with the full new extract + a Wikipedia link as the detail. Optional `latestDate` adds a display-only `countdownTo` while the condition still holds (the Wikipedia signal can flip earlier). Fails closed on network errors |
 | `Check.WikipediaHtml(article, phrase, flippedDetail)` | Same idea but fetches the full rendered HTML so the check can see infobox fields the summary endpoint strips (e.g. `"Incarcerated at"` for prisoners). Case-sensitive match — infobox values have predictable capitalization. Phrase missing → `"Maybe?"` (intentionally hedged — infobox edits can be template churn / transfer notation, not just release) with `flippedDetail` + Wikipedia link |
@@ -70,6 +71,7 @@ The countdown label is always rendered in the blue accent (`--other`) regardless
 - `ANTHROPIC_API_KEY` — required
 - `OPENAI_API_KEY` — optional, live OpenAI check skipped if absent
 - `GOOGLE_API_KEY` — optional, live Gemini check skipped if absent
+- `XAI_API_KEY` — optional, live Grok check skipped if absent
 
 ## Workflow notes
 
