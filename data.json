@@ -264,6 +264,18 @@
             "releaseDate": "2026-12-18"
         },
         {
+            "id": "air-bud-returns",
+            "label": "Air Bud Returns",
+            "category": "Movie",
+            "releaseDate": "2027-01-22"
+        },
+        {
+            "id": "sonic-4",
+            "label": "Sonic the Hedgehog 4",
+            "category": "Movie",
+            "releaseDate": "2027-03-19"
+        },
+        {
             "id": "zelda-movie",
             "label": "The Legend of Zelda",
             "category": "Movie",
