@@ -47,6 +47,40 @@
 
     .subtitle { color: var(--muted); font-size: 0.9rem; }
 
+    /* ── search ── */
+    .search-wrap {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      justify-content: center;
+    }
+
+    #search {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 0.7rem 0.95rem;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    #search:focus { border-color: #444; }
+    #search::placeholder { color: var(--muted); }
+
+    .no-results {
+      font-size: clamp(2.5rem, 7vw, 4.25rem);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.05;
+      text-align: center;
+      padding: 3rem 0;
+    }
+
     /* ── content sections ── */
     #content {
       width: 100%;
@@ -160,6 +194,10 @@
     <h1>Is whatever out yet?</h1>
   </header>
 
+  <div class="search-wrap">
+    <input id="search" type="search" placeholder="Filter by name…" autocomplete="off" />
+  </div>
+
   <div id="content"></div>
 
   <footer>
@@ -169,6 +207,9 @@
 
   <script>
     const content = document.getElementById('content');
+    const searchInput = document.getElementById('search');
+
+    let allItems = [];
 
     function cardClass(answer) {
       const a = answer.toLowerCase();
@@ -191,13 +232,23 @@
       content.appendChild(grid);
     }
 
-    function renderData({ updated, items }) {
+    function renderGrid() {
+      const filter = searchInput.value.trim().toLowerCase();
+      const visibleItems = filter
+        ? allItems.filter(item => item.label.toLowerCase().includes(filter))
+        : allItems;
+
       content.innerHTML = '';
+
+      if (visibleItems.length === 0) {
+        content.innerHTML = `<p class="no-results">I don't know.</p>`;
+        return;
+      }
 
       // group by category, preserving first-seen order
       const order = [];
       const groups = {};
-      items.forEach(item => {
+      visibleItems.forEach(item => {
         if (!groups[item.category]) {
           order.push(item.category);
           groups[item.category] = [];
@@ -225,6 +276,11 @@
         section.appendChild(grid);
         content.appendChild(section);
       });
+    }
+
+    function renderData({ updated, items }) {
+      allItems = items;
+      renderGrid();
 
       const d = new Date(updated);
       const epoch = d.getFullYear() === 1970;
@@ -235,6 +291,10 @@
             hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
           });
     }
+
+    searchInput.addEventListener('input', () => {
+      if (allItems.length > 0) renderGrid();
+    });
 
     renderSkeletons();
 
