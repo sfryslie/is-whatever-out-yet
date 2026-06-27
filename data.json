@@ -276,6 +276,12 @@
             "releaseDate": "2027-03-19"
         },
         {
+            "id": "spaceballs-new-one",
+            "label": "Spaceballs: The New One",
+            "category": "Movie",
+            "releaseDate": "2027-04-23"
+        },
+        {
             "id": "zelda-movie",
             "label": "The Legend of Zelda",
             "category": "Movie",
@@ -302,6 +308,12 @@
             "releaseDate": "2027-06-30"
         },
         {
+            "id": "quiet-place-3",
+            "label": "A Quiet Place Part III",
+            "category": "Movie",
+            "releaseDate": "2027-07-30"
+        },
+        {
             "id": "demon-slayer-ic-2",
             "label": "Demon Slayer: Infinity Castle Part 2",
             "category": "Movie",
@@ -313,6 +325,12 @@
             "label": "The Batman Part II",
             "category": "Movie",
             "releaseDate": "2027-10-01"
+        },
+        {
+            "id": "helldivers",
+            "label": "Helldivers",
+            "category": "Movie",
+            "releaseDate": "2027-11-10"
         },
         {
             "id": "frozen-3",
