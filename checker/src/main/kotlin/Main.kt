@@ -128,6 +128,7 @@ val ITEMS = listOf(
     Item("gpt-5-6",        "GPT-5.6",         "AI", Check.OpenAI("gpt-5.6"), "No.", "Sol/Terra/Luna Soon™ — I would've thought these were new Pokémon games."),
     Item("gemini-3-1-pro", "Gemini 3.1 Pro",   "AI", Check.Gemini("gemini-3.1-pro")),
     Item("grok-5",         "Grok 5",           "AI", Check.Grok("grok-5"), "No.", "... but do you care?"),
+    Item("agi",            "AGI",              "AI", Check.Hardcoded, "No."),
 
     // Games
     Item("half-life-3",     "Half-Life 3",     "Game", Check.Hardcoded, "No."),
@@ -166,6 +167,7 @@ val ITEMS = listOf(
     Item("shangri-la-s3",       "Shangri-La Frontier S3", "Show", Check.VagueDate(LocalDate.of(2027, 1, 31), "January 2027")),
     Item("frieren-s3",          "Frieren S3",             "Show", Check.VagueDate(LocalDate.of(2027, 10, 31), "October 2027?")),
     Item("dbs-galactic-patrol", "Dragon Ball Super: The Galactic Patrol", "Show", Check.VagueDate(LocalDate.of(2027, 12, 31), "Late 2027?")),
+    Item("chainsaw-man-s2",     "Chainsaw Man Season 2",  "Show", Check.VagueDate(LocalDate.of(2027, 12, 31), "Late 2027?")),
 
     // Movies (date-ordered)
     Item("dune-3",              "Dune: Part Three",       "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),
@@ -215,6 +217,7 @@ val ITEMS = listOf(
     Item("tesla-roadster-2", "Tesla Roadster 2", "Tech",
         Check.WikipediaLead("Tesla_Roadster_(second_generation)", "is an upcoming"),
         defaultDetail = "Announced November 2017. Still upcoming."),
+    Item("cold-fusion",     "Cold Fusion",     "Tech", Check.Hardcoded, "No."),
 
     // Internet
     Item("sbemail-211",     "Sbemail 211",     "Internet", Check.HomestarRunner),
