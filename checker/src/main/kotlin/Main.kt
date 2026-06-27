@@ -36,6 +36,11 @@ data class ItemResult(
     val releaseDate: String? = null,
     val vagueLabel: String? = null,
     val countdownTo: String? = null,
+    // Server-provided blue subheader (reuses the frontend's countdown block). For date items the
+    // frontend computes these client-side instead; here a check can set them directly to surface a
+    // live value like the AAA national gas average.
+    val countdownLabel: String? = null,
+    val countdownSub: String? = null,
 )
 
 @Serializable
@@ -73,6 +78,13 @@ sealed class Check {
 
     /** Fetch homestarrunner.com/sitemap.xml and look for sbemail211. */
     object HomestarRunner : Check()
+
+    /**
+     * Scrape the AAA gas-prices page at [url] for the national average and surface it as a blue
+     * subheader (countdownLabel/Sub). Answer/detail stay at the item defaults. Fail-closed: on a
+     * network error or parse miss, the subheader is simply omitted.
+     */
+    data class GasPrices(val url: String) : Check()
 
     /**
      * Fetch the Wikipedia REST summary for [article] and check whether [phrase] still appears in
@@ -221,6 +233,8 @@ val ITEMS = listOf(
     Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
     Item("ram",             "RAM",             "Resource", Check.Hardcoded, "Probably.",  "Blame AI."),
     Item("toilet-paper",    "Toilet Paper",    "Resource", Check.Hardcoded, "No.",  "Honestly, just get a <a href=\"https://www.costco.com/p/-/toto-drake-2-piece-elongated-toilet-with-c5-washlet-bidet-seat/4000380465\" target=\"_blank\" rel=\"noopener\">Toto bidet from Costco.</a> Y'know, with like a heated seat and warm water."),
+    Item("water",           "Water",           "Resource", Check.Hardcoded, "Maybe?", "Take shorter showers, that water could go to a data center."),
+    Item("gas",             "Gas",             "Resource", Check.GasPrices("https://gasprices.aaa.com/"), "No?", "I think we still have reserves."),
 
     // Tech
     Item("tesla-roadster-2", "Tesla Roadster 2", "Tech",
@@ -347,6 +361,20 @@ suspend fun checkHomestarRunnerSitemap(client: HttpClient): Pair<String, String>
     }
 }
 
+// Pull the national average out of the AAA gas-prices HTML. The value sits in server-rendered
+// markup as "National Average …<p class="numb"> $3.901". Returns a formatted "$X.XX/gal" or null.
+private val GAS_AVG_REGEX = Regex("National Average[\\s\\S]{0,200}?\\\$\\s*([0-9]+\\.[0-9]{2,4})")
+
+suspend fun fetchNationalGasAverage(client: HttpClient, url: String): String? = try {
+    val html = client.get(url) {
+        header("User-Agent", "Mozilla/5.0 (compatible; is-whatever-out-yet/1.0; +https://iswhateveroutyet.com)")
+    }.bodyAsText()
+    GAS_AVG_REGEX.find(html)?.groupValues?.get(1)?.toDoubleOrNull()
+        ?.let { "$" + "%.2f".format(it) + "/gal" }
+} catch (e: Exception) {
+    null
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 fun main(): Unit = runBlocking {
@@ -470,6 +498,18 @@ fun main(): Unit = runBlocking {
                 println("Checking Homestar Runner sitemap…")
                 val (answer, detail) = checkHomestarRunnerSitemap(client)
                 ItemResult(item.id, item.label, item.category, answer, detail)
+            }
+
+            is Check.GasPrices -> {
+                println("Checking AAA national gas average…")
+                val avg = fetchNationalGasAverage(client, check.url)
+                ItemResult(
+                    item.id, item.label, item.category,
+                    answer = item.defaultAnswer,
+                    detail = item.defaultDetail,
+                    countdownLabel = avg,
+                    countdownSub = if (avg != null) "U.S. average · AAA" else null,
+                )
             }
 
             is Check.WikipediaLead -> {

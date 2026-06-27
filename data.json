@@ -489,6 +489,22 @@
             "detail": "Honestly, just get a <a href=\"https://www.costco.com/p/-/toto-drake-2-piece-elongated-toilet-with-c5-washlet-bidet-seat/4000380465\" target=\"_blank\" rel=\"noopener\">Toto bidet from Costco.</a> Y'know, with like a heated seat and warm water."
         },
         {
+            "id": "water",
+            "label": "Water",
+            "category": "Resource",
+            "answer": "Maybe?",
+            "detail": "Take shorter showers, that water could go to a data center."
+        },
+        {
+            "id": "gas",
+            "label": "Gas",
+            "category": "Resource",
+            "answer": "No?",
+            "detail": "I think we still have reserves.",
+            "countdownLabel": "$3.90/gal",
+            "countdownSub": "U.S. average · AAA"
+        },
+        {
             "id": "tesla-roadster-2",
             "label": "Tesla Roadster 2",
             "category": "Tech",
