@@ -209,6 +209,11 @@
     const content = document.getElementById('content');
     const searchInput = document.getElementById('search');
 
+    // Allow deep-linking a prepopulated filter via ?search=... — used by the
+    // isclaudesonnet5outyet.com redirect to land on the Sonnet 5 card.
+    const initialSearch = new URLSearchParams(window.location.search).get('search');
+    if (initialSearch) searchInput.value = initialSearch;
+
     let allItems = [];
 
     function cardClass(answer) {
