@@ -12,19 +12,30 @@ import kotlinx.serialization.json.*
 import java.io.File
 import java.time.Instant
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import kotlin.system.exitProcess
 
 // ── Data model ───────────────────────────────────────────────────────────────
 
+/**
+ * Either [answer] is set (hardcoded / API check) OR [releaseDate] is set (date-driven, frontend
+ * computes Yes/No and countdown from the user's local clock). [vagueLabel] when present means
+ * the date is approximate — the frontend shows the fuzzy label and "~N months out" instead of
+ * the exact date and days-to-go.
+ *
+ * [countdownTo] is the *display-only* sibling of [releaseDate]: the frontend shows a countdown
+ * to this date but does NOT flip the card on it — used when some other signal (e.g. a Wikipedia
+ * check) is the authoritative truth and the date is just "the latest this could happen".
+ */
 @Serializable
 data class ItemResult(
     val id: String,
     val label: String,
     val category: String,
-    val answer: String,
+    val answer: String? = null,
     val detail: String? = null,
+    val releaseDate: String? = null,
+    val vagueLabel: String? = null,
+    val countdownTo: String? = null,
 )
 
 @Serializable
@@ -42,6 +53,12 @@ sealed class Check {
     /** Flips to "Yes." once the wall clock passes the scheduled date. */
     data class ScheduledDate(val date: LocalDate) : Check()
 
+    /**
+     * Like ScheduledDate but the public-facing label is fuzzy ("January 2027", "Late 2026?").
+     * Underlying date is still used as the flip trigger and to drive the rough countdown.
+     */
+    data class VagueDate(val date: LocalDate, val vagueLabel: String) : Check()
+
     /** Check the Anthropic /v1/models list for a model whose ID contains [pattern]. */
     data class Anthropic(val pattern: String) : Check()
 
@@ -53,6 +70,33 @@ sealed class Check {
 
     /** Fetch homestarrunner.com/sitemap.xml and look for sbemail211. */
     object HomestarRunner : Check()
+
+    /**
+     * Fetch the Wikipedia REST summary for [article] and check whether [phrase] still appears in
+     * the lead extract. Phrase present → defaultAnswer (condition still holds); phrase missing →
+     * "Yes." with the full new extract + a link to the article as the detail. Fail-closed on
+     * network errors so transient outages don't flip the card.
+     *
+     * [latestDate], if set, adds a display-only countdown to that date while the condition still
+     * holds — useful for "this could end sooner, but here's the official deadline" cases.
+     */
+    data class WikipediaLead(
+        val article: String,
+        val phrase: String,
+        val latestDate: LocalDate? = null,
+    ) : Check()
+
+    /**
+     * Like [WikipediaLead] but fetches the full rendered HTML (not just the summary extract),
+     * so it can see infobox fields the summary endpoint strips. Case-sensitive substring match
+     * — infobox values have predictable capitalization (e.g. "Incarcerated at") that body
+     * prose typically doesn't. Phrase missing → "Yes." with [yesDetail] + Wikipedia link.
+     */
+    data class WikipediaHtml(
+        val article: String,
+        val phrase: String,
+        val yesDetail: String,
+    ) : Check()
 }
 
 // ── Item catalogue ────────────────────────────────────────────────────────────
@@ -65,8 +109,6 @@ data class Item(
     val defaultAnswer: String = "No.",
     val defaultDetail: String? = null,
 )
-
-private val DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
 val ITEMS = listOf(
     // AI — Anthropic (live API check)
@@ -93,15 +135,52 @@ val ITEMS = listOf(
     Item("persona-4-revival", "Persona 4 Revival", "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 18))),
     Item("gta-vi",          "Grand Theft Auto VI",      "Game", Check.ScheduledDate(LocalDate.of(2026, 11, 19))),
     Item("gta-vi-pc",       "Grand Theft Auto VI (PC)", "Game", Check.Hardcoded, "No.", "Rip"),
+    Item("how-many-dudes",  "How Many Dudes?",          "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 30)),
+        defaultDetail = "<a href=\"https://store.steampowered.com/app/3934270/How_Many_Dudes/\" target=\"_blank\" rel=\"noopener\">Demo's out on Steam.</a>"),
+    Item("fable-game",      "Fable",                    "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 23))),
+    Item("elder-scrolls-6", "The Elder Scrolls VI",     "Game", Check.Hardcoded, "No.", "Bethesda's been in development since 2018. Buy Skyrim again."),
+
+    // Books
+    Item("winds-of-winter", "The Winds of Winter",      "Book", Check.Hardcoded, "No.", "GRRM started writing it in 2010. Watch the show again."),
+
+    // Shows
+    Item("rezero-s4-cour2",     "Re:Zero S4 Cour 2",      "Show", Check.ScheduledDate(LocalDate.of(2026, 8, 12))),
+    Item("jjk-s4",              "Jujutsu Kaisen S4",      "Show", Check.VagueDate(LocalDate.of(2027, 1, 31), "January 2027?")),
+    Item("steel-ball-run-ep2",  "Steel Ball Run Ep. 2",   "Show", Check.VagueDate(LocalDate.of(2026, 12, 31), "Late 2026?"),
+        defaultDetail = "Fuck Netflix."),
+    Item("shangri-la-s3",       "Shangri-La Frontier S3", "Show", Check.VagueDate(LocalDate.of(2027, 1, 31), "January 2027")),
+    Item("frieren-s3",          "Frieren S3",             "Show", Check.VagueDate(LocalDate.of(2027, 10, 31), "October 2027?")),
+
+    // Movies
+    Item("avengers-doomsday",   "Avengers: Doomsday",     "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),
 
     // People
-    Item("diddy",           "Diddy",           "People", Check.Hardcoded, "No.", "Serving ~50 months in prison."),
-    Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "Probably not.", "I think he's still in one of those Myst books?"),
+    Item("diddy",           "Diddy",           "People",
+        Check.WikipediaHtml("Sean_Combs", "Incarcerated at", yesDetail = "He's out."),
+        defaultDetail = "Serving ~50 months in prison."),
+    Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "Maybe?", "I think he's still in one of those Myst books?"),
+    Item("donald-trump",    "Donald Trump",    "People",
+        Check.WikipediaLead("Donald_Trump", "is the 47th president", LocalDate.of(2029, 1, 20)),
+        defaultDetail = "Still the 47th president."),
+    Item("vladimir-putin",  "Vladimir Putin",  "People",
+        Check.WikipediaLead("Vladimir_Putin", "President of Russia since"),
+        defaultDetail = "Still President of Russia. Has been since 2012."),
+    Item("elizabeth-holmes", "Elizabeth Holmes", "People",
+        Check.WikipediaHtml("Elizabeth_Holmes", "Incarcerated at", yesDetail = "She's out."),
+        defaultDetail = "Serving 11+ years at FPC Bryan."),
+    Item("sbf",              "Sam Bankman-Fried", "People",
+        Check.WikipediaHtml("Sam_Bankman-Fried", ">Imprisoned<", yesDetail = "He's out."),
+        defaultDetail = "25 years at FCI Lompoc I. Don't hold your breath."),
 
     // Resources
     Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
     Item("ram",             "RAM",             "Resource", Check.Hardcoded, "Probably.",  "Blame AI."),
     Item("toilet-paper",    "Toilet Paper",    "Resource", Check.Hardcoded, "No.",  "Honestly, just get a <a href=\"https://www.costco.com/p/-/toto-drake-2-piece-elongated-toilet-with-c5-washlet-bidet-seat/4000380465\" target=\"_blank\" rel=\"noopener\">Toto bidet from Costco.</a> Y'know, with like a heated seat and warm water."),
+
+    // Tech
+    Item("tesla-roadster-2", "Tesla Roadster 2", "Tech",
+        Check.WikipediaLead("Tesla_Roadster_(second_generation)", "is an upcoming"),
+        defaultDetail = "Announced November 2017. Still upcoming."),
 
     // Internet
     Item("sbemail-211",     "Sbemail 211",     "Internet", Check.HomestarRunner),
@@ -174,6 +253,30 @@ suspend fun fetchGeminiModelIds(client: HttpClient, apiKey: String): List<String
     return ids
 }
 
+suspend fun fetchWikipediaExtract(client: HttpClient, article: String): String? = try {
+    val body = client.get("https://en.wikipedia.org/api/rest_v1/page/summary/$article") {
+        header("User-Agent", "is-whatever-out-yet (https://iswhateveroutyet.com)")
+    }.bodyAsText()
+    Json.parseToJsonElement(body).jsonObject["extract"]?.jsonPrimitive?.contentOrNull
+} catch (e: Exception) {
+    null
+}
+
+suspend fun fetchWikipediaHtml(client: HttpClient, article: String): String? = try {
+    client.get("https://en.wikipedia.org/api/rest_v1/page/html/$article") {
+        header("User-Agent", "is-whatever-out-yet (https://iswhateveroutyet.com)")
+    }.bodyAsText()
+} catch (e: Exception) {
+    null
+}
+
+private fun escapeHtmlText(s: String): String = s
+    .replace("&", "&amp;")
+    .replace("<", "&lt;")
+    .replace(">", "&gt;")
+    .replace("\"", "&quot;")
+    .replace("'", "&#39;")
+
 suspend fun checkHomestarRunnerSitemap(client: HttpClient): Pair<String, String> {
     val link210 = "<a href=\"https://homestarrunner.com/sbemails/210-robots\" target=\"_blank\" rel=\"noopener\">Still on 210.</a>"
     return try {
@@ -198,7 +301,6 @@ fun main(): Unit = runBlocking {
     val openAiKey    = System.getenv("OPENAI_API_KEY")    // optional
     val googleKey    = System.getenv("GOOGLE_API_KEY")    // optional
     val outputPath   = System.getenv("DATA_JSON_PATH")    ?: "../data.json"
-    val today        = LocalDate.now()
 
     val client = HttpClient(CIO) {
         install(ContentNegotiation) { json() }
@@ -232,14 +334,18 @@ fun main(): Unit = runBlocking {
         when (val check = item.check) {
             is Check.Hardcoded -> ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
 
-            is Check.ScheduledDate -> {
-                if (today >= check.date) {
-                    ItemResult(item.id, item.label, item.category, "Yes.", "Released ${check.date.format(DATE_FMT)}")
-                } else {
-                    val days = ChronoUnit.DAYS.between(today, check.date)
-                    ItemResult(item.id, item.label, item.category, check.date.format(DATE_FMT), "$days day${if (days == 1L) "" else "s"} to go")
-                }
-            }
+            is Check.ScheduledDate -> ItemResult(
+                item.id, item.label, item.category,
+                detail = item.defaultDetail,
+                releaseDate = check.date.toString(),
+            )
+
+            is Check.VagueDate -> ItemResult(
+                item.id, item.label, item.category,
+                detail = item.defaultDetail,
+                releaseDate = check.date.toString(),
+                vagueLabel = check.vagueLabel,
+            )
 
             is Check.Anthropic -> {
                 // Listing match excludes preview/experimental variants. If a candidate is found,
@@ -287,6 +393,42 @@ fun main(): Unit = runBlocking {
                 println("Checking Homestar Runner sitemap…")
                 val (answer, detail) = checkHomestarRunnerSitemap(client)
                 ItemResult(item.id, item.label, item.category, answer, detail)
+            }
+
+            is Check.WikipediaLead -> {
+                println("Checking Wikipedia lead for ${check.article}…")
+                val extract = fetchWikipediaExtract(client, check.article)
+                if (extract == null || extract.contains(check.phrase, ignoreCase = true)) {
+                    ItemResult(
+                        item.id, item.label, item.category,
+                        answer = item.defaultAnswer,
+                        detail = item.defaultDetail,
+                        countdownTo = check.latestDate?.toString(),
+                    )
+                } else {
+                    // Early flip — Wikipedia signal beat the deadline. Drop the countdown.
+                    val articleUrl = "https://en.wikipedia.org/wiki/${check.article}"
+                    ItemResult(
+                        item.id, item.label, item.category,
+                        answer = "Yes.",
+                        detail = "${escapeHtmlText(extract)} <a href=\"$articleUrl\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
+                    )
+                }
+            }
+
+            is Check.WikipediaHtml -> {
+                println("Checking Wikipedia HTML for ${check.article}…")
+                val html = fetchWikipediaHtml(client, check.article)
+                if (html == null || html.contains(check.phrase)) {
+                    ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+                } else {
+                    val articleUrl = "https://en.wikipedia.org/wiki/${check.article}"
+                    ItemResult(
+                        item.id, item.label, item.category,
+                        answer = "Yes.",
+                        detail = "${check.yesDetail} <a href=\"$articleUrl\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
+                    )
+                }
             }
         }
     }

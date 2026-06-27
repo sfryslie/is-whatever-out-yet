@@ -143,6 +143,26 @@
     .card.no   .card-answer { color: #2c2c2c; }
     .card.other .card-answer { color: var(--other); }
 
+    .card-countdown {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      margin-top: -0.15rem;
+    }
+
+    .card-countdown-label {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--other);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card-countdown-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
     .card-detail {
       font-size: 0.72rem;
       color: var(--muted);
@@ -216,6 +236,71 @@
 
     let allItems = [];
 
+    const DATE_FMT = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    // Parse "yyyy-MM-dd" as a *local* date so a release on 2026-07-10 reads as
+    // midnight wherever the user is — avoids the UTC→local off-by-one at midnight.
+    function parseLocalDate(iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function midnightToday() {
+      const t = new Date();
+      t.setHours(0, 0, 0, 0);
+      return t;
+    }
+
+    function monthsBetween(from, to) {
+      let m = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+      if (to.getDate() < from.getDate()) m--;
+      return Math.max(0, m);
+    }
+
+    // Resolve a date-driven item against the user's local clock: derive answer,
+    // detail, and countdown text. `releaseDate` drives the Yes/No flip; `countdownTo`
+    // is display-only (server's `answer` stays authoritative). Items with neither
+    // pass through untouched.
+    function resolveItem(item) {
+      if (item.releaseDate) {
+        const today = midnightToday();
+        const release = parseLocalDate(item.releaseDate);
+
+        if (today >= release) {
+          return { ...item, answer: 'Yes.', detail: `Released ${DATE_FMT.format(release)}` };
+        }
+
+        const days = Math.round((release - today) / 86_400_000);
+        let label, sub;
+        if (item.vagueLabel) {
+          const months = monthsBetween(today, release);
+          label = item.vagueLabel;
+          sub = months >= 1
+            ? `~${months} month${months === 1 ? '' : 's'} out`
+            : `~${days} day${days === 1 ? '' : 's'} out`;
+        } else {
+          label = DATE_FMT.format(release);
+          sub = `${days} day${days === 1 ? '' : 's'} to go`;
+        }
+        return { ...item, answer: 'No.', countdownLabel: label, countdownSub: sub };
+      }
+
+      if (item.countdownTo) {
+        const today = midnightToday();
+        const target = parseLocalDate(item.countdownTo);
+        if (today < target) {
+          const days = Math.round((target - today) / 86_400_000);
+          return {
+            ...item,
+            countdownLabel: DATE_FMT.format(target),
+            countdownSub: `${days} day${days === 1 ? '' : 's'} to go`,
+          };
+        }
+      }
+
+      return item;
+    }
+
     function cardClass(answer) {
       const a = answer.toLowerCase();
       if (a.startsWith('yes'))                           return 'yes';
@@ -268,12 +353,19 @@
 
         const grid = document.createElement('div');
         grid.className = 'grid';
-        groups[cat].forEach(item => {
+        groups[cat].forEach(raw => {
+          const item = resolveItem(raw);
           const cls = cardClass(item.answer);
           grid.innerHTML += `
             <div class="card ${cls}">
               <div class="card-name">${item.label}</div>
               <div class="card-answer">${item.answer}</div>
+              ${item.countdownLabel ? `
+                <div class="card-countdown">
+                  <div class="card-countdown-label">${item.countdownLabel}</div>
+                  <div class="card-countdown-sub">${item.countdownSub}</div>
+                </div>
+              ` : ''}
               ${item.detail ? `<div class="card-detail">${item.detail}</div>` : ''}
             </div>`;
         });
