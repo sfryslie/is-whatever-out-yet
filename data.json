@@ -59,6 +59,12 @@
             "detail": "... but do you care?"
         },
         {
+            "id": "agi",
+            "label": "AGI",
+            "category": "AI",
+            "answer": "No."
+        },
+        {
             "id": "half-life-3",
             "label": "Half-Life 3",
             "category": "Game",
@@ -76,6 +82,18 @@
             "category": "Game",
             "answer": "No.",
             "detail": "<a href=\"https://store.steampowered.com/app/3545060/Team_Fortress_2_Classified/\" target=\"_blank\" rel=\"noopener\">TF2 Classified is kinda fun, though.</a>"
+        },
+        {
+            "id": "left-4-dead-3",
+            "label": "Left 4 Dead 3",
+            "category": "Game",
+            "answer": "No."
+        },
+        {
+            "id": "portal-3",
+            "label": "Portal 3",
+            "category": "Game",
+            "answer": "No."
         },
         {
             "id": "palworld-1",
@@ -196,6 +214,43 @@
             "vagueLabel": "Spring 2027?"
         },
         {
+            "id": "bloodborne-2",
+            "label": "Bloodborne 2",
+            "category": "Game",
+            "answer": "No."
+        },
+        {
+            "id": "bloodborne-pc",
+            "label": "Bloodborne: Remastered (PC)",
+            "category": "Game",
+            "answer": "No."
+        },
+        {
+            "id": "elden-ring-2",
+            "label": "Elden Ring 2",
+            "category": "Game",
+            "answer": "No."
+        },
+        {
+            "id": "star-citizen",
+            "label": "Star Citizen 1.0",
+            "category": "Game",
+            "answer": "No."
+        },
+        {
+            "id": "marvels-wolverine",
+            "label": "Marvel's Wolverine",
+            "category": "Game",
+            "releaseDate": "2026-09-15"
+        },
+        {
+            "id": "witcher-4",
+            "label": "The Witcher IV",
+            "category": "Game",
+            "releaseDate": "2028-12-31",
+            "vagueLabel": "2028?"
+        },
+        {
             "id": "winds-of-winter",
             "label": "The Winds of Winter",
             "category": "Book",
@@ -208,6 +263,12 @@
             "category": "Book",
             "answer": "No.",
             "detail": "AI <a href=\"https://en.wikipedia.org/wiki/Chatbot_psychosis\" target=\"_blank\" rel=\"noopener\">chatbot psychosis</a> will likely be in there."
+        },
+        {
+            "id": "doors-of-stone",
+            "label": "The Doors of Stone",
+            "category": "Book",
+            "answer": "No."
         },
         {
             "id": "rezero-s4-cour2",
@@ -252,10 +313,73 @@
             "vagueLabel": "Late 2027?"
         },
         {
+            "id": "chainsaw-man-s2",
+            "label": "Chainsaw Man Season 2",
+            "category": "Show",
+            "releaseDate": "2027-12-31",
+            "vagueLabel": "Late 2027?"
+        },
+        {
+            "id": "dune-3",
+            "label": "Dune: Part Three",
+            "category": "Movie",
+            "releaseDate": "2026-12-18"
+        },
+        {
             "id": "avengers-doomsday",
             "label": "Avengers: Doomsday",
             "category": "Movie",
             "releaseDate": "2026-12-18"
+        },
+        {
+            "id": "air-bud-returns",
+            "label": "Air Bud Returns",
+            "category": "Movie",
+            "releaseDate": "2027-01-22"
+        },
+        {
+            "id": "sonic-4",
+            "label": "Sonic the Hedgehog 4",
+            "category": "Movie",
+            "releaseDate": "2027-03-19"
+        },
+        {
+            "id": "spaceballs-new-one",
+            "label": "Spaceballs: The New One",
+            "category": "Movie",
+            "releaseDate": "2027-04-23"
+        },
+        {
+            "id": "zelda-movie",
+            "label": "The Legend of Zelda",
+            "category": "Movie",
+            "detail": "I'm morbidly curious.",
+            "releaseDate": "2027-04-30"
+        },
+        {
+            "id": "starwars-starfighter",
+            "label": "Star Wars: Starfighter",
+            "category": "Movie",
+            "detail": "It has Ryan Gosling, I guess? Did anyone actually go to the Mandalorian movie?",
+            "releaseDate": "2027-05-28"
+        },
+        {
+            "id": "spiderverse-3",
+            "label": "Spider-Man: Beyond the Spider-Verse",
+            "category": "Movie",
+            "releaseDate": "2027-06-18"
+        },
+        {
+            "id": "shrek-5",
+            "label": "Shrek 5",
+            "category": "Movie",
+            "releaseDate": "2027-06-30"
+        },
+        {
+            "id": "quiet-place-3",
+            "label": "A Quiet Place Part III",
+            "category": "Movie",
+            "releaseDate": "2027-07-30"
         },
         {
             "id": "demon-slayer-ic-2",
@@ -263,6 +387,42 @@
             "category": "Movie",
             "releaseDate": "2027-09-22",
             "vagueLabel": "Summer 2027?"
+        },
+        {
+            "id": "the-batman-2",
+            "label": "The Batman Part II",
+            "category": "Movie",
+            "releaseDate": "2027-10-01"
+        },
+        {
+            "id": "helldivers",
+            "label": "Helldivers",
+            "category": "Movie",
+            "releaseDate": "2027-11-10"
+        },
+        {
+            "id": "frozen-3",
+            "label": "Frozen III",
+            "category": "Movie",
+            "releaseDate": "2027-11-24"
+        },
+        {
+            "id": "lotr-gollum",
+            "label": "The Lord of the Rings: The Hunt for Gollum",
+            "category": "Movie",
+            "releaseDate": "2027-12-17"
+        },
+        {
+            "id": "avengers-secret-wars",
+            "label": "Avengers: Secret Wars",
+            "category": "Movie",
+            "releaseDate": "2027-12-17"
+        },
+        {
+            "id": "avatar-4",
+            "label": "Avatar 4: The Tulkun Rider",
+            "category": "Movie",
+            "releaseDate": "2029-12-21"
         },
         {
             "id": "diddy",
@@ -334,6 +494,12 @@
             "category": "Tech",
             "answer": "No.",
             "detail": "Announced November 2017. Still upcoming."
+        },
+        {
+            "id": "cold-fusion",
+            "label": "Cold Fusion",
+            "category": "Tech",
+            "answer": "No."
         },
         {
             "id": "sbemail-211",

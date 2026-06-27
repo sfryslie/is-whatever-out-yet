@@ -128,11 +128,14 @@ val ITEMS = listOf(
     Item("gpt-5-6",        "GPT-5.6",         "AI", Check.OpenAI("gpt-5.6"), "No.", "Sol/Terra/Luna Soon™ — I would've thought these were new Pokémon games."),
     Item("gemini-3-1-pro", "Gemini 3.1 Pro",   "AI", Check.Gemini("gemini-3.1-pro")),
     Item("grok-5",         "Grok 5",           "AI", Check.Grok("grok-5"), "No.", "... but do you care?"),
+    Item("agi",            "AGI",              "AI", Check.Hardcoded, "No."),
 
     // Games
     Item("half-life-3",     "Half-Life 3",     "Game", Check.Hardcoded, "No."),
     Item("ricochet-2",      "Ricochet 2",      "Game", Check.Hardcoded, "No."),
     Item("team-fortress-3", "Team Fortress 3", "Game", Check.Hardcoded, "No.",  "<a href=\"https://store.steampowered.com/app/3545060/Team_Fortress_2_Classified/\" target=\"_blank\" rel=\"noopener\">TF2 Classified is kinda fun, though.</a>"),
+    Item("left-4-dead-3",   "Left 4 Dead 3",   "Game", Check.Hardcoded, "No."),
+    Item("portal-3",        "Portal 3",        "Game", Check.Hardcoded, "No."),
     Item("palworld-1",      "Palworld 1.0",    "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 10))),
     Item("valheim-1",       "Valheim Deep North",     "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 9))),
     Item("deltarune-ch5",   "Deltarune Ch. 5", "Game", Check.Hardcoded, "Yes.",   "Released June 24, 2026."),
@@ -153,10 +156,17 @@ val ITEMS = listOf(
         defaultDetail = "Early access July 23."),
     Item("cod-mw4",         "Call of Duty: MW4",        "Game", Check.ScheduledDate(LocalDate.of(2026, 10, 23))),
     Item("ff7-revelation",  "Final Fantasy VII Revelation", "Game", Check.VagueDate(LocalDate.of(2027, 6, 20), "Spring 2027?")),
+    Item("bloodborne-2",    "Bloodborne 2",    "Game", Check.Hardcoded, "No."),
+    Item("bloodborne-pc",   "Bloodborne: Remastered (PC)", "Game", Check.Hardcoded, "No."),
+    Item("elden-ring-2",    "Elden Ring 2",    "Game", Check.Hardcoded, "No."),
+    Item("star-citizen",    "Star Citizen 1.0", "Game", Check.Hardcoded, "No."),
+    Item("marvels-wolverine", "Marvel's Wolverine", "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 15))),
+    Item("witcher-4",       "The Witcher IV",  "Game", Check.VagueDate(LocalDate.of(2028, 12, 31), "2028?")),
 
     // Books
     Item("winds-of-winter", "The Winds of Winter",      "Book", Check.Hardcoded, "No.", "GRRM started writing it in 2010. Watch the show again."),
     Item("dsm-6",           "DSM-6",                    "Book", Check.Hardcoded, "No.", "AI <a href=\"https://en.wikipedia.org/wiki/Chatbot_psychosis\" target=\"_blank\" rel=\"noopener\">chatbot psychosis</a> will likely be in there."),
+    Item("doors-of-stone",  "The Doors of Stone",       "Book", Check.Hardcoded, "No."),
 
     // Shows
     Item("rezero-s4-cour2",     "Re:Zero S4 Cour 2",      "Show", Check.ScheduledDate(LocalDate.of(2026, 8, 12))),
@@ -166,10 +176,28 @@ val ITEMS = listOf(
     Item("shangri-la-s3",       "Shangri-La Frontier S3", "Show", Check.VagueDate(LocalDate.of(2027, 1, 31), "January 2027")),
     Item("frieren-s3",          "Frieren S3",             "Show", Check.VagueDate(LocalDate.of(2027, 10, 31), "October 2027?")),
     Item("dbs-galactic-patrol", "Dragon Ball Super: The Galactic Patrol", "Show", Check.VagueDate(LocalDate.of(2027, 12, 31), "Late 2027?")),
+    Item("chainsaw-man-s2",     "Chainsaw Man Season 2",  "Show", Check.VagueDate(LocalDate.of(2027, 12, 31), "Late 2027?")),
 
-    // Movies
+    // Movies (date-ordered)
+    Item("dune-3",              "Dune: Part Three",       "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),
     Item("avengers-doomsday",   "Avengers: Doomsday",     "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),
+    Item("air-bud-returns",     "Air Bud Returns",        "Movie", Check.ScheduledDate(LocalDate.of(2027, 1, 22))),
+    Item("sonic-4",             "Sonic the Hedgehog 4",   "Movie", Check.ScheduledDate(LocalDate.of(2027, 3, 19))),
+    Item("spaceballs-new-one",  "Spaceballs: The New One", "Movie", Check.ScheduledDate(LocalDate.of(2027, 4, 23))),
+    Item("zelda-movie",         "The Legend of Zelda",    "Movie", Check.ScheduledDate(LocalDate.of(2027, 4, 30)),
+        defaultDetail = "I'm morbidly curious."),
+    Item("starwars-starfighter", "Star Wars: Starfighter", "Movie", Check.ScheduledDate(LocalDate.of(2027, 5, 28)),
+        defaultDetail = "It has Ryan Gosling, I guess? Did anyone actually go to the Mandalorian movie?"),
+    Item("spiderverse-3",       "Spider-Man: Beyond the Spider-Verse", "Movie", Check.ScheduledDate(LocalDate.of(2027, 6, 18))),
+    Item("shrek-5",             "Shrek 5",                "Movie", Check.ScheduledDate(LocalDate.of(2027, 6, 30))),
+    Item("quiet-place-3",       "A Quiet Place Part III", "Movie", Check.ScheduledDate(LocalDate.of(2027, 7, 30))),
     Item("demon-slayer-ic-2",   "Demon Slayer: Infinity Castle Part 2", "Movie", Check.VagueDate(LocalDate.of(2027, 9, 22), "Summer 2027?")),
+    Item("the-batman-2",        "The Batman Part II",     "Movie", Check.ScheduledDate(LocalDate.of(2027, 10, 1))),
+    Item("helldivers",          "Helldivers",             "Movie", Check.ScheduledDate(LocalDate.of(2027, 11, 10))),
+    Item("frozen-3",            "Frozen III",             "Movie", Check.ScheduledDate(LocalDate.of(2027, 11, 24))),
+    Item("lotr-gollum",         "The Lord of the Rings: The Hunt for Gollum", "Movie", Check.ScheduledDate(LocalDate.of(2027, 12, 17))),
+    Item("avengers-secret-wars", "Avengers: Secret Wars", "Movie", Check.ScheduledDate(LocalDate.of(2027, 12, 17))),
+    Item("avatar-4",            "Avatar 4: The Tulkun Rider", "Movie", Check.ScheduledDate(LocalDate.of(2029, 12, 21))),
 
     // People
     Item("diddy",           "Diddy",           "People",
@@ -198,6 +226,7 @@ val ITEMS = listOf(
     Item("tesla-roadster-2", "Tesla Roadster 2", "Tech",
         Check.WikipediaLead("Tesla_Roadster_(second_generation)", "is an upcoming"),
         defaultDetail = "Announced November 2017. Still upcoming."),
+    Item("cold-fusion",     "Cold Fusion",     "Tech", Check.Hardcoded, "No."),
 
     // Internet
     Item("sbemail-211",     "Sbemail 211",     "Internet", Check.HomestarRunner),
