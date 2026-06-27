@@ -142,6 +142,13 @@
             "detail": "Bethesda's been in development since 2018. Buy Skyrim again."
         },
         {
+            "id": "huniepop-3",
+            "label": "HuniePop 3",
+            "category": "Game",
+            "answer": "No.",
+            "detail": "I hope it's a roguelite deckbuilder."
+        },
+        {
             "id": "winds-of-winter",
             "label": "The Winds of Winter",
             "category": "Book",
