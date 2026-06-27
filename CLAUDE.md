@@ -44,7 +44,7 @@ Item(id, label, category, check, defaultAnswer, defaultDetail)
 | `Check.Gemini(pattern)` | Same for Google `/v1beta/models`; skipped if `GOOGLE_API_KEY` unset |
 | `Check.HomestarRunner` | Checks homestarrunner.com sitemap for sbemail211 |
 | `Check.WikipediaLead(article, phrase, latestDate?)` | Fetches the Wikipedia REST summary for `article`; phrase present in the lead extract → defaults (condition still holds), phrase missing → `"Yes."` with the full new extract + a Wikipedia link as the detail. Optional `latestDate` adds a display-only `countdownTo` while the condition still holds (the Wikipedia signal can flip earlier). Fails closed on network errors |
-| `Check.WikipediaHtml(article, phrase, yesDetail)` | Same idea but fetches the full rendered HTML so the check can see infobox fields the summary endpoint strips (e.g. `"Incarcerated at"` for prisoners). Case-sensitive match — infobox values have predictable capitalization. Phrase missing → `"Yes."` with `yesDetail` + Wikipedia link |
+| `Check.WikipediaHtml(article, phrase, flippedDetail)` | Same idea but fetches the full rendered HTML so the check can see infobox fields the summary endpoint strips (e.g. `"Incarcerated at"` for prisoners). Case-sensitive match — infobox values have predictable capitalization. Phrase missing → `"Maybe?"` (intentionally hedged — infobox edits can be template churn / transfer notation, not just release) with `flippedDetail` + Wikipedia link |
 
 ## Data shape
 

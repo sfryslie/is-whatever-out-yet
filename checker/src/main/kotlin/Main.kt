@@ -90,12 +90,14 @@ sealed class Check {
      * Like [WikipediaLead] but fetches the full rendered HTML (not just the summary extract),
      * so it can see infobox fields the summary endpoint strips. Case-sensitive substring match
      * — infobox values have predictable capitalization (e.g. "Incarcerated at") that body
-     * prose typically doesn't. Phrase missing → "Yes." with [yesDetail] + Wikipedia link.
+     * prose typically doesn't. Phrase missing → "Maybe?" with [flippedDetail] + Wikipedia link
+     * (intentionally not a confident "Yes." — infobox changes can be template churn or transfer
+     * notation, not just release).
      */
     data class WikipediaHtml(
         val article: String,
         val phrase: String,
-        val yesDetail: String,
+        val flippedDetail: String,
     ) : Check()
 }
 
@@ -156,7 +158,7 @@ val ITEMS = listOf(
 
     // People
     Item("diddy",           "Diddy",           "People",
-        Check.WikipediaHtml("Sean_Combs", "Incarcerated at", yesDetail = "He's out."),
+        Check.WikipediaHtml("Sean_Combs", "Incarcerated at", flippedDetail ="He's out."),
         defaultDetail = "Serving ~50 months in prison."),
     Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "Maybe?", "I think he's still in one of those Myst books?"),
     Item("donald-trump",    "Donald Trump",    "People",
@@ -166,10 +168,10 @@ val ITEMS = listOf(
         Check.WikipediaLead("Vladimir_Putin", "President of Russia since"),
         defaultDetail = "Still President of Russia. Has been since 2012."),
     Item("elizabeth-holmes", "Elizabeth Holmes", "People",
-        Check.WikipediaHtml("Elizabeth_Holmes", "Incarcerated at", yesDetail = "She's out."),
+        Check.WikipediaHtml("Elizabeth_Holmes", "Incarcerated at", flippedDetail ="She's out."),
         defaultDetail = "Serving 11+ years at FPC Bryan."),
     Item("sbf",              "Sam Bankman-Fried", "People",
-        Check.WikipediaHtml("Sam_Bankman-Fried", ">Imprisoned<", yesDetail = "He's out."),
+        Check.WikipediaHtml("Sam_Bankman-Fried", ">Imprisoned<", flippedDetail ="He's out."),
         defaultDetail = "25 years at FCI Lompoc I. Don't hold your breath."),
 
     // Resources
@@ -425,8 +427,8 @@ fun main(): Unit = runBlocking {
                     val articleUrl = "https://en.wikipedia.org/wiki/${check.article}"
                     ItemResult(
                         item.id, item.label, item.category,
-                        answer = "Yes.",
-                        detail = "${check.yesDetail} <a href=\"$articleUrl\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
+                        answer = "Maybe?",
+                        detail = "${check.flippedDetail} <a href=\"$articleUrl\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
                     )
                 }
             }
