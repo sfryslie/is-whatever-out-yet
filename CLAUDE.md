@@ -13,8 +13,21 @@ checker/
   src/main/kotlin/Main.kt         # All checker logic — items catalogue + check strategies
   build.gradle.kts                # Kotlin JVM + Ktor Client CIO + kotlinx-serialization
   settings.gradle.kts
+  gradlew / gradlew.bat           # Gradle wrapper — build without a system Gradle install
 .github/workflows/check-models.yml  # Cron job (every 30 min) that runs the checker and commits data.json
 ```
+
+## Building locally
+
+The repo ships the Gradle wrapper, so no system Gradle install is needed (only a JDK 21 on PATH):
+
+```
+cd checker
+./gradlew compileKotlin   # type-check after editing Main.kt
+./gradlew run             # run the checker (needs ANTHROPIC_API_KEY; other keys optional)
+```
+
+On Windows use `gradlew.bat`. The wrapper self-downloads Gradle 8.10.2 on first run.
 
 ## Adding or editing items
 

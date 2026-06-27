@@ -1,0 +1,5 @@
+# Keep the Gradle wrapper's line endings deterministic across platforms.
+# gradlew is a POSIX shell script and MUST stay LF or it breaks on Linux/CI.
+gradlew            text eol=lf
+gradlew.bat        text eol=crlf
+gradle-wrapper.jar binary
