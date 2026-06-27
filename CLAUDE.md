@@ -37,20 +37,33 @@ Item(id, label, category, check, defaultAnswer, defaultDetail)
 | Check | Behavior |
 |-------|----------|
 | `Check.Hardcoded` | Uses `defaultAnswer`/`defaultDetail`, never changes |
-| `Check.ScheduledDate(date)` | Shows countdown; flips to "Yes." on/after `date` |
+| `Check.ScheduledDate(date)` | Emits `releaseDate` (ISO) only — the frontend computes Yes/No, the formatted date, and "N days to go" from the user's local clock |
+| `Check.VagueDate(date, vagueLabel)` | Same as ScheduledDate plus a `vagueLabel` (e.g. `"January 2027?"`). Frontend shows the label and "~N months out" instead of the exact date. `date` is still the flip trigger |
 | `Check.Anthropic(pattern)` | Searches Anthropic `/v1/models` for an ID containing `pattern` |
 | `Check.OpenAI(pattern)` | Same for OpenAI `/v1/models`; skipped if `OPENAI_API_KEY` unset |
 | `Check.Gemini(pattern)` | Same for Google `/v1beta/models`; skipped if `GOOGLE_API_KEY` unset |
 | `Check.HomestarRunner` | Checks homestarrunner.com sitemap for sbemail211 |
+| `Check.WikipediaLead(article, phrase, latestDate?)` | Fetches the Wikipedia REST summary for `article`; phrase present in the lead extract → defaults (condition still holds), phrase missing → `"Yes."` with the full new extract + a Wikipedia link as the detail. Optional `latestDate` adds a display-only `countdownTo` while the condition still holds (the Wikipedia signal can flip earlier). Fails closed on network errors |
+| `Check.WikipediaHtml(article, phrase, flippedDetail)` | Same idea but fetches the full rendered HTML so the check can see infobox fields the summary endpoint strips (e.g. `"Incarcerated at"` for prisoners). Case-sensitive match — infobox values have predictable capitalization. Phrase missing → `"Maybe?"` (intentionally hedged — infobox edits can be template churn / transfer notation, not just release) with `flippedDetail` + Wikipedia link |
 
-## Card coloring
+## Data shape
 
-Driven by `cardClass()` in `index.html`:
+Each `ItemResult` carries either `answer` (hardcoded / API-driven) OR `releaseDate` + optional `vagueLabel` (date-driven). The frontend's `resolveItem()` in [index.html](index.html) turns a `releaseDate` item into the rendered answer + countdown against `new Date()`, so countdowns are always accurate to the user's local clock instead of whenever the last cron run happened to land.
+
+`countdownTo` is a third option that *layers* a display-only countdown on top of a server-authoritative `answer` — used when something other than the date drives the flip (e.g. the Wikipedia check on Donald Trump), but a "this could end by date X at the latest" countdown is still useful.
+
+## Card layout & coloring
+
+A card has up to four parts: label → `answer` (big headline) → optional countdown block (date + sub line) → optional `detail` (small note).
+
+Card class comes from `cardClass()` in `index.html` based on `answer`:
 
 - Starts with `"yes"` → green (`yes` class)
-- Starts with `"no"` or equals `"never."` → dark/muted (`no` class)
+- Starts with `"no"` or equals `"never."` → dark/muted (`no` class) — this is the case for every pre-release countdown card
 - Contains `"soon"` or `"next year"` → amber (`soon` class)
-- Anything else → blue (`other` class) — used for dates, "Chill.", etc.
+- Anything else → blue (`other` class) — `"Probably."`, `"Chill."`, etc.
+
+The countdown label is always rendered in the blue accent (`--other`) regardless of card class, so countdown cards still read as "No, but here's when".
 
 ## Secrets (GitHub Actions)
 
