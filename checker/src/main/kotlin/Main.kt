@@ -64,6 +64,13 @@ sealed class Check {
      */
     data class VagueDate(val date: LocalDate, val vagueLabel: String) : Check()
 
+    /**
+     * Hardcoded answer/detail plus a display-only countdown to [date] that never flips the card —
+     * for "not out, but here's the event to watch" cases (e.g. a CES reveal date). Emits the same
+     * [ItemResult.countdownTo] the frontend renders as a "N days to go" block.
+     */
+    data class CountdownTo(val date: LocalDate) : Check()
+
     /** Check the Anthropic /v1/models list for a model whose ID contains [pattern]. */
     data class Anthropic(val pattern: String) : Check()
 
@@ -241,6 +248,9 @@ val ITEMS = listOf(
         Check.WikipediaLead("Tesla_Roadster_(second_generation)", "is an upcoming"),
         defaultDetail = "Announced November 2017. Still upcoming."),
     Item("cold-fusion",     "Cold Fusion",     "Tech", Check.Hardcoded, "No."),
+    Item("amd-zen-6",       "AMD Zen 6",       "Tech", Check.CountdownTo(LocalDate.of(2027, 1, 6)), "No.", "Might be revealed then."),
+    Item("rtx-50-super",    "RTX 50 Super Series", "Tech", Check.CountdownTo(LocalDate.of(2027, 1, 6)), "No.", "Might be revealed then."),
+    Item("rtx-60",          "RTX 60 Series",   "Tech", Check.Hardcoded, "No.", "Blame AI / Jensen."),
 
     // Internet
     Item("sbemail-211",     "Sbemail 211",     "Internet", Check.HomestarRunner),
@@ -437,6 +447,13 @@ fun main(): Unit = runBlocking {
                 detail = item.defaultDetail,
                 releaseDate = check.date.toString(),
                 vagueLabel = check.vagueLabel,
+            )
+
+            is Check.CountdownTo -> ItemResult(
+                item.id, item.label, item.category,
+                answer = item.defaultAnswer,
+                detail = item.defaultDetail,
+                countdownTo = check.date.toString(),
             )
 
             is Check.Anthropic -> {

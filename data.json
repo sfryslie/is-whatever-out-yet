@@ -518,6 +518,29 @@
             "answer": "No."
         },
         {
+            "id": "amd-zen-6",
+            "label": "AMD Zen 6",
+            "category": "Tech",
+            "answer": "No.",
+            "detail": "Might be revealed then.",
+            "countdownTo": "2027-01-06"
+        },
+        {
+            "id": "rtx-50-super",
+            "label": "RTX 50 Super Series",
+            "category": "Tech",
+            "answer": "No.",
+            "detail": "Might be revealed then.",
+            "countdownTo": "2027-01-06"
+        },
+        {
+            "id": "rtx-60",
+            "label": "RTX 60 Series",
+            "category": "Tech",
+            "answer": "No.",
+            "detail": "Blame AI / Jensen."
+        },
+        {
             "id": "sbemail-211",
             "label": "Sbemail 211",
             "category": "Internet",
