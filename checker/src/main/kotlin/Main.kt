@@ -117,15 +117,19 @@ sealed class Check {
 
     /**
      * Like [WikipediaLead] but fetches the full rendered HTML (not just the summary extract),
-     * so it can see infobox fields the summary endpoint strips. Case-sensitive substring match
-     * — infobox values have predictable capitalization (e.g. "Incarcerated at") that body
-     * prose typically doesn't. Phrase missing → "Maybe?" with [flippedDetail] + Wikipedia link
-     * (intentionally not a confident "Yes." — infobox changes can be template churn or transfer
-     * notation, not just release).
+     * so it can see infobox fields the summary endpoint strips. [phrases] are OR-matched
+     * (case-sensitive substring) against the page: while ANY is present the card holds at the
+     * item default; only when ALL are gone does it flip. Pass several spellings of the same
+     * infobox signal (e.g. "Incarcerated at" / ">Imprisoned<") so a single editor reword doesn't
+     * false-flip the card. Keep them capitalized + tag-bounded — infobox values have predictable
+     * capitalization that lowercase body prose (which mentions past incarceration forever) does
+     * not, so a bare "incarcerated" would freeze the card on "No." Flip → "Maybe?" with
+     * [flippedDetail] + Wikipedia link (intentionally not a confident "Yes." — infobox changes
+     * can be template churn or transfer notation, not just release).
      */
     data class WikipediaHtml(
         val article: String,
-        val phrase: String,
+        val phrases: List<String>,
         val flippedDetail: String,
     ) : Check()
 }
@@ -140,6 +144,14 @@ data class Item(
     val defaultAnswer: String = "No.",
     val defaultDetail: String? = null,
 )
+
+// Infobox-anchored "still locked up" markers, OR-matched against the full rendered Wikipedia HTML
+// by Check.WikipediaHtml: the card stays "No." while ANY is present and flips only when all are
+// gone. Capitalized + tag-bounded on purpose so they match infobox value/label cells, not the
+// lowercase body prose that mentions past incarceration forever (which would freeze the card).
+// Covers the incarcerated↔imprisoned wording editors swap between. Defined before ITEMS so it's
+// initialized first.
+private val INCARCERATION_MARKERS = listOf("Incarcerated at", ">Incarcerated<", ">Imprisoned<")
 
 val ITEMS = listOf(
     // AI — Anthropic (live API check)
@@ -227,7 +239,7 @@ val ITEMS = listOf(
 
     // People
     Item("diddy",           "Diddy",           "People",
-        Check.WikipediaHtml("Sean_Combs", "Incarcerated at", flippedDetail ="He's out."),
+        Check.WikipediaHtml("Sean_Combs", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "Serving ~50 months in prison."),
     Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "Maybe?", "I think he's still in one of those Myst books?"),
     Item("donald-trump",    "Donald Trump",    "People",
@@ -237,10 +249,10 @@ val ITEMS = listOf(
         Check.WikipediaLead("Vladimir_Putin", "President of Russia since"),
         defaultDetail = "Still President of Russia. Has been since 2012."),
     Item("elizabeth-holmes", "Elizabeth Holmes", "People",
-        Check.WikipediaHtml("Elizabeth_Holmes", "Incarcerated at", flippedDetail ="She's out."),
+        Check.WikipediaHtml("Elizabeth_Holmes", INCARCERATION_MARKERS, flippedDetail = "She's out."),
         defaultDetail = "Serving 11+ years at FPC Bryan."),
     Item("sbf",              "Sam Bankman-Fried", "People",
-        Check.WikipediaHtml("Sam_Bankman-Fried", ">Imprisoned<", flippedDetail ="He's out."),
+        Check.WikipediaHtml("Sam_Bankman-Fried", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "25 years at FCI Lompoc I. Don't hold your breath."),
     // Cosby's already out of prison (conviction overturned 2021); the WikipediaLead instead tracks
     // the lead's "is/was an American" copula — when he dies the verb flips and the detail refreshes
@@ -250,16 +262,16 @@ val ITEMS = listOf(
         Check.WikipediaLead("Bill_Cosby", "is an American former comedian"),
         defaultAnswer = "Yes.", defaultDetail = "Released in 2021. It was kinda bullshit."),
     Item("harvey-weinstein", "Harvey Weinstein", "People",
-        Check.WikipediaHtml("Harvey_Weinstein", "Incarcerated at", flippedDetail ="He's out."),
+        Check.WikipediaHtml("Harvey_Weinstein", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "Held at Rikers Island."),
     Item("r-kelly",         "R. Kelly",        "People",
-        Check.WikipediaHtml("R._Kelly", ">Imprisoned<", flippedDetail ="He's out."),
+        Check.WikipediaHtml("R._Kelly", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "Serving 30 years at FCI Butner."),
     Item("jared-fogle",     "Jared Fogle",     "People",
-        Check.WikipediaHtml("Jared_Fogle", ">Imprisoned<", flippedDetail ="He's out."),
+        Check.WikipediaHtml("Jared_Fogle", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "~16 years at FCI Englewood. Out around 2029."),
     Item("joe-exotic",      "Joe Exotic",      "People",
-        Check.WikipediaHtml("Joe_Exotic", "Incarcerated at", flippedDetail ="He's out."),
+        Check.WikipediaHtml("Joe_Exotic", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "21 years at FMC Fort Worth. Still no pardon."),
     Item("ted-kaczynski",   "Ted Kaczynski",   "People", Check.Hardcoded, "Yes.",
         "Yeah, he died in 2023, dude. That was like... a while ago."),
@@ -614,7 +626,7 @@ fun main(): Unit = runBlocking {
             is Check.WikipediaHtml -> {
                 println("Checking Wikipedia HTML for ${check.article}…")
                 val html = fetchWikipediaHtml(client, check.article)
-                if (html == null || html.contains(check.phrase)) {
+                if (html == null || check.phrases.any { html.contains(it) }) {
                     ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
                 } else {
                     val articleUrl = "https://en.wikipedia.org/wiki/${check.article}"
