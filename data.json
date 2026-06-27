@@ -252,10 +252,42 @@
             "vagueLabel": "Late 2027?"
         },
         {
+            "id": "dune-3",
+            "label": "Dune: Part Three",
+            "category": "Movie",
+            "releaseDate": "2026-12-18"
+        },
+        {
             "id": "avengers-doomsday",
             "label": "Avengers: Doomsday",
             "category": "Movie",
             "releaseDate": "2026-12-18"
+        },
+        {
+            "id": "zelda-movie",
+            "label": "The Legend of Zelda",
+            "category": "Movie",
+            "detail": "I'm morbidly curious.",
+            "releaseDate": "2027-04-30"
+        },
+        {
+            "id": "starwars-starfighter",
+            "label": "Star Wars: Starfighter",
+            "category": "Movie",
+            "detail": "It has Ryan Gosling, I guess? Did anyone actually go to the Mandalorian movie?",
+            "releaseDate": "2027-05-28"
+        },
+        {
+            "id": "spiderverse-3",
+            "label": "Spider-Man: Beyond the Spider-Verse",
+            "category": "Movie",
+            "releaseDate": "2027-06-18"
+        },
+        {
+            "id": "shrek-5",
+            "label": "Shrek 5",
+            "category": "Movie",
+            "releaseDate": "2027-06-30"
         },
         {
             "id": "demon-slayer-ic-2",
@@ -263,6 +295,36 @@
             "category": "Movie",
             "releaseDate": "2027-09-22",
             "vagueLabel": "Summer 2027?"
+        },
+        {
+            "id": "the-batman-2",
+            "label": "The Batman Part II",
+            "category": "Movie",
+            "releaseDate": "2027-10-01"
+        },
+        {
+            "id": "frozen-3",
+            "label": "Frozen III",
+            "category": "Movie",
+            "releaseDate": "2027-11-24"
+        },
+        {
+            "id": "lotr-gollum",
+            "label": "The Lord of the Rings: The Hunt for Gollum",
+            "category": "Movie",
+            "releaseDate": "2027-12-17"
+        },
+        {
+            "id": "avengers-secret-wars",
+            "label": "Avengers: Secret Wars",
+            "category": "Movie",
+            "releaseDate": "2027-12-17"
+        },
+        {
+            "id": "avatar-4",
+            "label": "Avatar 4: The Tulkun Rider",
+            "category": "Movie",
+            "releaseDate": "2029-12-21"
         },
         {
             "id": "diddy",
