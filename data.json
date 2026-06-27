@@ -472,7 +472,7 @@
             "label": "Bill Cosby",
             "category": "People",
             "answer": "Yes.",
-            "detail": "Released in 2021. It was kinda bullshit."
+            "detail": "Released in 2021. <a href=\"https://en.wikipedia.org/wiki/Trial_of_Bill_Cosby#Overturned_conviction\" target=\"_blank\" rel=\"noopener\">It was kinda bullshit.</a>"
         },
         {
             "id": "harvey-weinstein",

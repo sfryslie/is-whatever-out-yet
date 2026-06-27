@@ -260,7 +260,7 @@ val ITEMS = listOf(
     // birth date itself isn't a usable signal here.)
     Item("bill-cosby",      "Bill Cosby",      "People",
         Check.WikipediaLead("Bill_Cosby", "is an American former comedian"),
-        defaultAnswer = "Yes.", defaultDetail = "Released in 2021. It was kinda bullshit."),
+        defaultAnswer = "Yes.", defaultDetail = "Released in 2021. <a href=\"https://en.wikipedia.org/wiki/Trial_of_Bill_Cosby#Overturned_conviction\" target=\"_blank\" rel=\"noopener\">It was kinda bullshit.</a>"),
     Item("harvey-weinstein", "Harvey Weinstein", "People",
         Check.WikipediaHtml("Harvey_Weinstein", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "Held at Rikers Island."),
