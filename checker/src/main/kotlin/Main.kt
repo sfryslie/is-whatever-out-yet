@@ -94,8 +94,9 @@ sealed class Check {
 
     /**
      * Scrape the AAA gas-prices page at [url] for the national average and surface it as a blue
-     * subheader (countdownLabel/Sub). Answer/detail stay at the item defaults. Fail-closed: on a
-     * network error or parse miss, the subheader is simply omitted.
+     * subheader (countdownLabel/Sub). The price also drives the answer: over $6/gal flips to
+     * "Yes.", over $5/gal to "Maybe?", otherwise the item defaults hold. Fail-closed: on a network
+     * error or parse miss, answer/detail fall back to defaults and the subheader is omitted.
      */
     data class GasPrices(val url: String) : Check()
 
@@ -241,11 +242,35 @@ val ITEMS = listOf(
     Item("sbf",              "Sam Bankman-Fried", "People",
         Check.WikipediaHtml("Sam_Bankman-Fried", ">Imprisoned<", flippedDetail ="He's out."),
         defaultDetail = "25 years at FCI Lompoc I. Don't hold your breath."),
+    // Cosby's already out of prison (conviction overturned 2021); the WikipediaLead instead tracks
+    // the lead's "is/was an American" copula — when he dies the verb flips and the detail refreshes
+    // to the obituary. (The summary endpoint strips the "(born July 12, 1937)" parenthetical, so the
+    // birth date itself isn't a usable signal here.)
+    Item("bill-cosby",      "Bill Cosby",      "People",
+        Check.WikipediaLead("Bill_Cosby", "is an American former comedian"),
+        defaultAnswer = "Yes.", defaultDetail = "Released in 2021. It was kinda bullshit."),
+    Item("harvey-weinstein", "Harvey Weinstein", "People",
+        Check.WikipediaHtml("Harvey_Weinstein", "Incarcerated at", flippedDetail ="He's out."),
+        defaultDetail = "Held at Rikers Island."),
+    Item("r-kelly",         "R. Kelly",        "People",
+        Check.WikipediaHtml("R._Kelly", ">Imprisoned<", flippedDetail ="He's out."),
+        defaultDetail = "Serving 30 years at FCI Butner."),
+    Item("jared-fogle",     "Jared Fogle",     "People",
+        Check.WikipediaHtml("Jared_Fogle", ">Imprisoned<", flippedDetail ="He's out."),
+        defaultDetail = "~16 years at FCI Englewood. Out around 2029."),
+    Item("joe-exotic",      "Joe Exotic",      "People",
+        Check.WikipediaHtml("Joe_Exotic", "Incarcerated at", flippedDetail ="He's out."),
+        defaultDetail = "21 years at FMC Fort Worth. Still no pardon."),
+    Item("ted-kaczynski",   "Ted Kaczynski",   "People", Check.Hardcoded, "Yes.",
+        "Yeah, he died in 2023, dude. That was like... a while ago."),
+    Item("oj-simpson",      "O.J. Simpson",    "People", Check.Hardcoded, "No.",
+        "The Juice is not loose, he died in 2024."),
 
     // Resources
     Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
     Item("ram",             "RAM",             "Resource", Check.Hardcoded, "Probably.",  "Blame AI."),
     Item("sand",            "Sand",            "Resource", Check.Hardcoded, "Maybe?", "It's actually a major problem, look it up."),
+    Item("sulfur",          "Sulfur",          "Resource", Check.Hardcoded, "Maybe?", "A lot of it comes from the Persian Gulf."),
     Item("bananas",         "Bananas",         "Resource", Check.Hardcoded, "Maybe?", "Panama disease for Cavendish bananas in stores."),
     Item("toilet-paper",    "Toilet Paper",    "Resource", Check.Hardcoded, "No.",  "Honestly, just get a <a href=\"https://www.costco.com/p/-/toto-drake-2-piece-elongated-toilet-with-c5-washlet-bidet-seat/4000380465\" target=\"_blank\" rel=\"noopener\">Toto bidet from Costco.</a> Y'know, with like a heated seat and warm water."),
     Item("water",           "Water",           "Resource", Check.Hardcoded, "Maybe?", "Take shorter showers, that water could go to a data center."),
@@ -270,6 +295,9 @@ val ITEMS = listOf(
 
     // Internet
     Item("sbemail-211",     "Sbemail 211",     "Internet", Check.HomestarRunner),
+    Item("scp-682",         "SCP-682",         "Internet", Check.Hardcoded, "Probably not.", "No need to panic."),
+    Item("scp-096",         "SCP-096",         "Internet", Check.Hardcoded, "No.",
+        "<a href=\"https://scp-wiki.wikidot.com/incident-096-1-a\" target=\"_blank\" rel=\"noopener\">Four pixels. Four fucking pixels.</a>"),
     Item("year-of-linux",   "Year of the Linux Desktop", "Internet", Check.RollingNewYear, "No."),
 )
 
@@ -389,15 +417,15 @@ suspend fun checkHomestarRunnerSitemap(client: HttpClient): Pair<String, String>
 }
 
 // Pull the national average out of the AAA gas-prices HTML. The value sits in server-rendered
-// markup as "National Average …<p class="numb"> $3.901". Returns a formatted "$X.XX/gal" or null.
+// markup as "National Average …<p class="numb"> $3.901". Returns the raw price (e.g. 3.901) or
+// null — the caller formats it for display and compares it against the threshold answers.
 private val GAS_AVG_REGEX = Regex("National Average[\\s\\S]{0,200}?\\\$\\s*([0-9]+\\.[0-9]{2,4})")
 
-suspend fun fetchNationalGasAverage(client: HttpClient, url: String): String? = try {
+suspend fun fetchNationalGasAverage(client: HttpClient, url: String): Double? = try {
     val html = client.get(url) {
         header("User-Agent", "Mozilla/5.0 (compatible; is-whatever-out-yet/1.0; +https://iswhateveroutyet.com)")
     }.bodyAsText()
     GAS_AVG_REGEX.find(html)?.groupValues?.get(1)?.toDoubleOrNull()
-        ?.let { "$" + "%.2f".format(it) + "/gal" }
 } catch (e: Exception) {
     null
 }
@@ -543,13 +571,22 @@ fun main(): Unit = runBlocking {
 
             is Check.GasPrices -> {
                 println("Checking AAA national gas average…")
-                val avg = fetchNationalGasAverage(client, check.url)
+                val price = fetchNationalGasAverage(client, check.url)
+                val label = price?.let { "$" + "%.2f".format(it) + "/gal" }
+                // The price drives the answer: over $6/gal it's "out," over $5/gal it's getting
+                // there. Below that (or on a parse/network miss) the item defaults hold.
+                val (answer, detail) = when {
+                    price == null -> item.defaultAnswer to item.defaultDetail
+                    price > 6.0   -> "Yes." to "Over six bucks a gallon. Yeah, it's a problem."
+                    price > 5.0   -> "Maybe?" to "Five-plus a gallon and climbing."
+                    else          -> item.defaultAnswer to item.defaultDetail
+                }
                 ItemResult(
                     item.id, item.label, item.category,
-                    answer = item.defaultAnswer,
-                    detail = item.defaultDetail,
-                    countdownLabel = avg,
-                    countdownSub = if (avg != null) "U.S. average · AAA" else null,
+                    answer = answer,
+                    detail = detail,
+                    countdownLabel = label,
+                    countdownSub = if (label != null) "U.S. average · AAA" else null,
                 )
             }
 

@@ -468,6 +468,55 @@
             "detail": "25 years at FCI Lompoc I. Don't hold your breath."
         },
         {
+            "id": "bill-cosby",
+            "label": "Bill Cosby",
+            "category": "People",
+            "answer": "Yes.",
+            "detail": "Released in 2021. It was kinda bullshit."
+        },
+        {
+            "id": "harvey-weinstein",
+            "label": "Harvey Weinstein",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Held at Rikers Island."
+        },
+        {
+            "id": "r-kelly",
+            "label": "R. Kelly",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Serving 30 years at FCI Butner."
+        },
+        {
+            "id": "jared-fogle",
+            "label": "Jared Fogle",
+            "category": "People",
+            "answer": "No.",
+            "detail": "~16 years at FCI Englewood. Out around 2029."
+        },
+        {
+            "id": "joe-exotic",
+            "label": "Joe Exotic",
+            "category": "People",
+            "answer": "No.",
+            "detail": "21 years at FMC Fort Worth. Still no pardon."
+        },
+        {
+            "id": "ted-kaczynski",
+            "label": "Ted Kaczynski",
+            "category": "People",
+            "answer": "Yes.",
+            "detail": "Yeah, he died in 2023, dude. That was like... a while ago."
+        },
+        {
+            "id": "oj-simpson",
+            "label": "O.J. Simpson",
+            "category": "People",
+            "answer": "No.",
+            "detail": "The Juice is not loose, he died in 2024."
+        },
+        {
             "id": "helium",
             "label": "Helium",
             "category": "Resource",
@@ -487,6 +536,13 @@
             "category": "Resource",
             "answer": "Maybe?",
             "detail": "It's actually a major problem, look it up."
+        },
+        {
+            "id": "sulfur",
+            "label": "Sulfur",
+            "category": "Resource",
+            "answer": "Maybe?",
+            "detail": "A lot of it comes from the Persian Gulf."
         },
         {
             "id": "bananas",
@@ -596,6 +652,20 @@
             "category": "Internet",
             "answer": "No.",
             "detail": "<a href=\"https://homestarrunner.com/sbemails/210-robots\" target=\"_blank\" rel=\"noopener\">Still on 210.</a>"
+        },
+        {
+            "id": "scp-682",
+            "label": "SCP-682",
+            "category": "Internet",
+            "answer": "Probably not.",
+            "detail": "No need to panic."
+        },
+        {
+            "id": "scp-096",
+            "label": "SCP-096",
+            "category": "Internet",
+            "answer": "No.",
+            "detail": "<a href=\"https://scp-wiki.wikidot.com/incident-096-1-a\" target=\"_blank\" rel=\"noopener\">Four pixels. Four fucking pixels.</a>"
         },
         {
             "id": "year-of-linux",
