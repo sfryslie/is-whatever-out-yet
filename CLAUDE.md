@@ -57,6 +57,7 @@ Item(id, label, category, check, defaultAnswer, defaultDetail)
 | `Check.Gemini(pattern)` | Same for Google `/v1beta/models`; skipped if `GOOGLE_API_KEY` unset |
 | `Check.Grok(pattern)` | Same for xAI `/v1/models` (OpenAI-compatible); skipped if `XAI_API_KEY` unset |
 | `Check.HomestarRunner` | Checks homestarrunner.com sitemap for sbemail211 |
+| `Check.GasPrices(url)` | Scrapes the AAA gas-prices page for the U.S. national average and surfaces it as a blue subheader (`countdownLabel`/`countdownSub`). Answer/detail stay at the item defaults. Fail-closed — subheader omitted on network error or parse miss |
 | `Check.WikipediaLead(article, phrase, latestDate?)` | Fetches the Wikipedia REST summary for `article`; phrase present in the lead extract → defaults (condition still holds), phrase missing → `"Yes."` with the full new extract + a Wikipedia link as the detail. Optional `latestDate` adds a display-only `countdownTo` while the condition still holds (the Wikipedia signal can flip earlier). Fails closed on network errors |
 | `Check.WikipediaHtml(article, phrase, flippedDetail)` | Same idea but fetches the full rendered HTML so the check can see infobox fields the summary endpoint strips (e.g. `"Incarcerated at"` for prisoners). Case-sensitive match — infobox values have predictable capitalization. Phrase missing → `"Maybe?"` (intentionally hedged — infobox edits can be template churn / transfer notation, not just release) with `flippedDetail` + Wikipedia link |
 
@@ -65,6 +66,8 @@ Item(id, label, category, check, defaultAnswer, defaultDetail)
 Each `ItemResult` carries either `answer` (hardcoded / API-driven) OR `releaseDate` + optional `vagueLabel` (date-driven). The frontend's `resolveItem()` in [index.html](index.html) turns a `releaseDate` item into the rendered answer + countdown against `new Date()`, so countdowns are always accurate to the user's local clock instead of whenever the last cron run happened to land.
 
 `countdownTo` is a third option that *layers* a display-only countdown on top of a server-authoritative `answer` — used when something other than the date drives the flip (e.g. the Wikipedia check on Donald Trump), but a "this could end by date X at the latest" countdown is still useful.
+
+`countdownLabel` + `countdownSub` render the blue subheader block directly. For date items the frontend *computes* these client-side; a check can also set them on the server to surface a live value (e.g. `Check.GasPrices` puts the AAA national average in `countdownLabel`). `resolveItem()` passes server-provided values straight through for non-date items.
 
 ## Card layout & coloring
 
