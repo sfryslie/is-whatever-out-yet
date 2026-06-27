@@ -167,9 +167,26 @@ val ITEMS = listOf(
     Item("frieren-s3",          "Frieren S3",             "Show", Check.VagueDate(LocalDate.of(2027, 10, 31), "October 2027?")),
     Item("dbs-galactic-patrol", "Dragon Ball Super: The Galactic Patrol", "Show", Check.VagueDate(LocalDate.of(2027, 12, 31), "Late 2027?")),
 
-    // Movies
+    // Movies (date-ordered)
+    Item("dune-3",              "Dune: Part Three",       "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),
     Item("avengers-doomsday",   "Avengers: Doomsday",     "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),
+    Item("air-bud-returns",     "Air Bud Returns",        "Movie", Check.ScheduledDate(LocalDate.of(2027, 1, 22))),
+    Item("sonic-4",             "Sonic the Hedgehog 4",   "Movie", Check.ScheduledDate(LocalDate.of(2027, 3, 19))),
+    Item("spaceballs-new-one",  "Spaceballs: The New One", "Movie", Check.ScheduledDate(LocalDate.of(2027, 4, 23))),
+    Item("zelda-movie",         "The Legend of Zelda",    "Movie", Check.ScheduledDate(LocalDate.of(2027, 4, 30)),
+        defaultDetail = "I'm morbidly curious."),
+    Item("starwars-starfighter", "Star Wars: Starfighter", "Movie", Check.ScheduledDate(LocalDate.of(2027, 5, 28)),
+        defaultDetail = "It has Ryan Gosling, I guess? Did anyone actually go to the Mandalorian movie?"),
+    Item("spiderverse-3",       "Spider-Man: Beyond the Spider-Verse", "Movie", Check.ScheduledDate(LocalDate.of(2027, 6, 18))),
+    Item("shrek-5",             "Shrek 5",                "Movie", Check.ScheduledDate(LocalDate.of(2027, 6, 30))),
+    Item("quiet-place-3",       "A Quiet Place Part III", "Movie", Check.ScheduledDate(LocalDate.of(2027, 7, 30))),
     Item("demon-slayer-ic-2",   "Demon Slayer: Infinity Castle Part 2", "Movie", Check.VagueDate(LocalDate.of(2027, 9, 22), "Summer 2027?")),
+    Item("the-batman-2",        "The Batman Part II",     "Movie", Check.ScheduledDate(LocalDate.of(2027, 10, 1))),
+    Item("helldivers",          "Helldivers",             "Movie", Check.ScheduledDate(LocalDate.of(2027, 11, 10))),
+    Item("frozen-3",            "Frozen III",             "Movie", Check.ScheduledDate(LocalDate.of(2027, 11, 24))),
+    Item("lotr-gollum",         "The Lord of the Rings: The Hunt for Gollum", "Movie", Check.ScheduledDate(LocalDate.of(2027, 12, 17))),
+    Item("avengers-secret-wars", "Avengers: Secret Wars", "Movie", Check.ScheduledDate(LocalDate.of(2027, 12, 17))),
+    Item("avatar-4",            "Avatar 4: The Tulkun Rider", "Movie", Check.ScheduledDate(LocalDate.of(2029, 12, 21))),
 
     // People
     Item("diddy",           "Diddy",           "People",
