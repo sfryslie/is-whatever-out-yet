@@ -47,4 +47,7 @@ Output is written to `../data.json` by default, or to `DATA_JSON_PATH` if set.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+[PolyForm Noncommercial 1.0.0](LICENSE) — free to use, study, modify, and share for any
+noncommercial purpose (personal projects, hobby use, education, research, nonprofits, etc.).
+Commercial use requires a separate license. This covers both the code and the site's content
+(the item copy). Not an OSI "open source" license, by design.
