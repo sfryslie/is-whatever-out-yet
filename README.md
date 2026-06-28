@@ -23,6 +23,8 @@ Tracks AI models, games, people, and other things that may or may not exist yet.
 | `ANTHROPIC_API_KEY` | Yes | Anthropic model list checks |
 | `OPENAI_API_KEY` | No | OpenAI model list checks |
 | `GOOGLE_API_KEY` | No | Gemini model list checks |
+| `XAI_API_KEY` | No | xAI/Grok model list checks |
+| `NTFY_TOPIC` | No | [ntfy](https://ntfy.sh) topic for push notifications when something flips to "out" or someone dies |
 
 Add these under Settings → Secrets and variables → Actions.
 

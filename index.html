@@ -171,6 +171,34 @@
     .switch input:checked + .track { background: var(--other); }
     .switch input:checked + .track::before { transform: translateX(16px); }
 
+    /* range slider (hide long-released) */
+    .settings-row-col { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+    .slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--no-answer);
+      outline: none;
+      cursor: pointer;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--other);
+      cursor: pointer;
+    }
+    .slider::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border: none;
+      border-radius: 50%;
+      background: var(--other);
+      cursor: pointer;
+    }
+
     /* ── search ── */
     .search-wrap {
       width: 100%;
@@ -355,16 +383,14 @@
           <span class="track"></span>
         </span>
       </label>
-      <label class="settings-row">
+      <div class="settings-row settings-row-col">
         <span class="settings-row-label">
           Hide long-released
-          <span class="settings-row-sub">Out more than ~3 months</span>
+          <span class="settings-row-sub" id="hide-old-value">Off</span>
         </span>
-        <span class="switch">
-          <input type="checkbox" id="toggle-hide-old" role="menuitemcheckbox">
-          <span class="track"></span>
-        </span>
-      </label>
+        <input type="range" id="hide-old-slider" class="slider" min="0" max="5" step="1" value="0"
+               aria-label="Hide items released longer than">
+      </div>
     </div>
   </div>
 
@@ -394,8 +420,16 @@
 
     let allItems = [];
 
-    // Items "out" longer than this are hidden when the "Hide long-released" toggle is on.
-    const HIDE_OLD_DAYS = 90;
+    // "Hide long-released" slider stops. Each level hides items that have been out longer than
+    // `days`; level 0 is off, and the last (-1) hides anything released at all.
+    const HIDE_LEVELS = [
+      { label: 'Off',                days: Infinity },
+      { label: 'Out over 2 years',   days: 730 },
+      { label: 'Out over 1.5 years', days: 548 },
+      { label: 'Out over 1 year',    days: 365 },
+      { label: 'Out over 6 months',  days: 183 },
+      { label: 'Anything released',  days: -1 },
+    ];
 
     const DATE_FMT = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -433,8 +467,12 @@
     const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
     applyTheme(storedTheme || (prefersLight ? 'light' : 'dark'));
 
-    let hideOld = localStorage.getItem('hideOld') === '1';
-    document.getElementById('toggle-hide-old').checked = hideOld;
+    const hideSlider = document.getElementById('hide-old-slider');
+    const hideValueLabel = document.getElementById('hide-old-value');
+    let hideLevel = Math.min(HIDE_LEVELS.length - 1, Math.max(0, +localStorage.getItem('hideOldLevel') || 0));
+    hideSlider.value = hideLevel;
+    function updateHideLabel() { hideValueLabel.textContent = HIDE_LEVELS[hideLevel].label; }
+    updateHideLabel();
 
     const settingsBtn = document.getElementById('settings-btn');
     const settingsPanel = document.getElementById('settings-panel');
@@ -459,9 +497,10 @@
       applyTheme(theme);
     });
 
-    document.getElementById('toggle-hide-old').addEventListener('change', (e) => {
-      hideOld = e.target.checked;
-      localStorage.setItem('hideOld', hideOld ? '1' : '0');
+    hideSlider.addEventListener('input', () => {
+      hideLevel = +hideSlider.value;
+      localStorage.setItem('hideOldLevel', String(hideLevel));
+      updateHideLabel();
       if (allItems.length > 0) renderGrid();
     });
 
@@ -477,10 +516,14 @@
       return null;
     }
 
-    function isLongReleased(item) {
+    // Hidden when the item has an out-date older than the current slider level's threshold.
+    // Level 0 (Off) hides nothing; the last level (days = -1) hides anything released at all.
+    function isHiddenByLevel(item) {
+      const days = HIDE_LEVELS[hideLevel].days;
+      if (days === Infinity) return false;
       const out = outDate(item);
       if (!out) return false;
-      return (midnightToday() - out) / 86_400_000 > HIDE_OLD_DAYS;
+      return (midnightToday() - out) / 86_400_000 > days;
     }
 
     // Resolve a date-driven item against the user's local clock: derive answer,
@@ -567,7 +610,7 @@
         ? allItems.filter(item => item.label.toLowerCase().includes(filter))
         : allItems;
 
-      if (hideOld) visibleItems = visibleItems.filter(item => !isLongReleased(item));
+      if (hideLevel > 0) visibleItems = visibleItems.filter(item => !isHiddenByLevel(item));
 
       content.innerHTML = '';
 
