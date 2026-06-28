@@ -437,7 +437,8 @@
             "label": "Henry Kissinger",
             "category": "People",
             "answer": "Maybe?",
-            "detail": "I think he's still in one of those Myst books?"
+            "detail": "I think he's still in one of those Myst books?",
+            "tone": "death"
         },
         {
             "id": "donald-trump",
@@ -518,7 +519,8 @@
             "label": "O.J. Simpson",
             "category": "People",
             "answer": "No.",
-            "detail": "The Juice is not loose, he died in 2024."
+            "detail": "The Juice is not loose, he died in 2024.",
+            "tone": "death"
         },
         {
             "id": "helium",

@@ -259,7 +259,7 @@ val ITEMS = listOf(
     Item("diddy",           "Diddy",           "People",
         Check.WikipediaHtml("Sean_Combs", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "Serving ~50 months in prison."),
-    Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "Maybe?", "I think he's still in one of those Myst books?"),
+    Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "Maybe?", "I think he's still in one of those Myst books?", tone = "death"),
     Item("donald-trump",    "Donald Trump",    "People",
         Check.WikipediaLead("Donald_Trump", "is the 47th president", LocalDate.of(2029, 1, 20)),
         defaultDetail = "Still the 47th president."),
@@ -296,7 +296,7 @@ val ITEMS = listOf(
         "Yeah, he died in 2023, dude. That was like... a while ago.",
         since = LocalDate.of(2023, 6, 10), tone = "death"),
     Item("oj-simpson",      "O.J. Simpson",    "People", Check.Hardcoded, "No.",
-        "The Juice is not loose, he died in 2024."),
+        "The Juice is not loose, he died in 2024.", tone = "death"),
 
     // Resources
     Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
