@@ -1,5 +1,5 @@
 {
-    "updated": "2026-06-28T05:05:53.113592653Z",
+    "updated": "2026-06-28T08:34:50.017702568Z",
     "items": [
         {
             "id": "claude-fable-5",
@@ -571,7 +571,7 @@
             "category": "Resource",
             "answer": "No?",
             "detail": "I think we still have reserves.",
-            "countdownLabel": "$3.88/gal",
+            "countdownLabel": "$3.87/gal",
             "countdownSub": "U.S. average · AAA"
         },
         {
