@@ -8,14 +8,22 @@ Static GitHub Pages site that tracks whether various things are "out yet." A Kot
 
 ```
 index.html                        # Frontend — vanilla JS, no build step
+manifest.webmanifest              # PWA manifest (installable home-screen app)
+sw.js                             # Service worker — cache-first shell, network-first data.json
+icons/                            # PWA/favicon icons (generated; green "?" on near-black)
 data.json                         # Written by the checker; read by the frontend
 checker/
   src/main/kotlin/Main.kt         # All checker logic — items catalogue + check strategies
+  src/test/kotlin/CheckerTest.kt  # Unit tests for matchModelId + the gas-price regex
   build.gradle.kts                # Kotlin JVM + Ktor Client CIO + kotlinx-serialization
   settings.gradle.kts
   gradlew / gradlew.bat           # Gradle wrapper — build without a system Gradle install
 .github/workflows/check-models.yml  # Cron job (every 30 min) that runs the checker and commits data.json
 ```
+
+## PWA
+
+The site is an installable PWA served straight off GitHub Pages — no extra hosting. `manifest.webmanifest` + `sw.js` + `icons/` are all that's needed; `index.html` links the manifest, sets `theme-color` (kept in sync with the active light/dark theme), and registers the service worker. The worker serves the shell cache-first (offline-capable once installed) and `data.json` network-first (always fresh while online). Bump `CACHE_VERSION` in `sw.js` when the shell changes. Regenerate icons with the generator in the PR history if the mark changes.
 
 ## Building locally
 
@@ -24,6 +32,7 @@ The repo ships the Gradle wrapper, so no system Gradle install is needed (only a
 ```
 cd checker
 ./gradlew compileKotlin   # type-check after editing Main.kt
+./gradlew test            # run the unit tests (no network/keys needed)
 ./gradlew run             # run the checker (needs ANTHROPIC_API_KEY; other keys optional)
 ```
 
@@ -40,10 +49,12 @@ When adding or changing an item, always update **both**:
 Each item in `ITEMS` is:
 
 ```kotlin
-Item(id, label, category, check, defaultAnswer, defaultDetail)
+Item(id, label, category, check, defaultAnswer, defaultDetail, since, tone)
 ```
 
 - `defaultAnswer` defaults to `"No."`, `defaultDetail` defaults to `null`
+- `since` (`LocalDate?`) — when an already-"out" item became available. Emitted as `ItemResult.since` and used by the frontend's "hide long-released" filter (and only meaningful on non-date-driven "Yes." items; date items already encode their flip date in `releaseDate`).
+- `tone` (`String?`) — semantic coloring override. Currently only `"death"`, which paints the card a somber slate instead of celebratory green for "they're out (deceased)" cards (e.g. Ted Kaczynski). `Check.WikipediaLead` takes an optional `flippedTone` so a copula death-flip (e.g. Cosby's "is" → "was") colors correctly when it triggers.
 
 ### Check types
 
@@ -75,14 +86,17 @@ Each `ItemResult` carries either `answer` (hardcoded / API-driven) OR `releaseDa
 
 A card has up to four parts: label → `answer` (big headline) → optional countdown block (date + sub line) → optional `detail` (small note).
 
-Card class comes from `cardClass()` in `index.html` based on `answer`:
+Card class comes from `cardClass()` in `index.html`, which checks `tone` first, then falls back to `answer`:
 
+- `tone === "death"` → somber slate (`gone` class) — overrides everything, so a deceased "Yes." doesn't read as celebratory green
 - Starts with `"yes"` → green (`yes` class)
 - Starts with `"no"` or equals `"never."` → dark/muted (`no` class) — this is the case for every pre-release countdown card
 - Contains `"soon"` or `"next year"` → amber (`soon` class)
 - Anything else → blue (`other` class) — `"Probably."`, `"Chill."`, etc.
 
 The countdown label is always rendered in the blue accent (`--other`) regardless of card class, so countdown cards still read as "No, but here's when".
+
+Theme is driven by CSS custom properties on `:root`, overridden by `[data-theme="light"]`. The choice is persisted in `localStorage` (falling back to `prefers-color-scheme`) and toggled from the settings menu (the gear/hamburger top-right), which also hosts the "hide long-released" filter (items out more than ~90 days per `since`/past `releaseDate`). Cards within a category are sorted soonest-upcoming-first by a stable sort, so imminent releases bubble up.
 
 ## Secrets (GitHub Actions)
 

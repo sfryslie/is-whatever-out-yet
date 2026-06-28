@@ -5,6 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Is whatever out yet?</title>
   <meta name="description" content="Tracking things that may or may not be out yet.">
+
+  <!-- theme-color is kept in sync with the active theme by applyTheme() below -->
+  <meta name="theme-color" content="#0a0a0a">
+
+  <!-- PWA: installable on Android/iOS home screens, served straight off GitHub Pages -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Out yet?">
+
+  <!-- Social previews -->
+  <meta property="og:title" content="Is whatever out yet?">
+  <meta property="og:description" content="Tracking things that may or may not be out yet.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://iswhateveroutyet.com">
+  <meta property="og:image" content="https://iswhateveroutyet.com/icons/icon-512.png">
+  <meta name="twitter:card" content="summary">
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -13,7 +33,8 @@
       --surface:     #141414;
       --border:      #222;
       --text:        #e8e8e8;
-      --muted:       #484848;
+      --muted:       #6a6a6a;
+      --no-answer:   #3a3a3a;
       --yes:         #22c55e;
       --yes-bg:      rgba(34, 197, 94, 0.07);
       --yes-border:  rgba(34, 197, 94, 0.3);
@@ -21,6 +42,29 @@
       --soon-bg:     rgba(245, 158, 11, 0.07);
       --soon-border: rgba(245, 158, 11, 0.3);
       --other:       #60a5fa;
+      /* "death" tone — somber slate instead of celebratory green for "they're out (deceased)" */
+      --gone:        #8b95a7;
+      --gone-bg:     rgba(139, 149, 167, 0.06);
+      --gone-border: rgba(139, 149, 167, 0.28);
+    }
+
+    [data-theme="light"] {
+      --bg:          #f7f7f8;
+      --surface:     #ffffff;
+      --border:      #e3e3e6;
+      --text:        #1a1a1a;
+      --muted:       #8a8a8a;
+      --no-answer:   #c4c4c8;
+      --yes:         #16a34a;
+      --yes-bg:      rgba(22, 163, 74, 0.08);
+      --yes-border:  rgba(22, 163, 74, 0.35);
+      --soon:        #d97706;
+      --soon-bg:     rgba(217, 119, 6, 0.09);
+      --soon-border: rgba(217, 119, 6, 0.35);
+      --other:       #2563eb;
+      --gone:        #5b6472;
+      --gone-bg:     rgba(91, 100, 114, 0.07);
+      --gone-border: rgba(91, 100, 114, 0.3);
     }
 
     body {
@@ -33,6 +77,7 @@
       align-items: center;
       padding: 5rem 1.25rem 5rem;
       gap: 4rem;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
     header { text-align: center; }
@@ -46,6 +91,85 @@
     }
 
     .subtitle { color: var(--muted); font-size: 0.9rem; }
+
+    /* ── settings menu ── */
+    .settings {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 20;
+    }
+
+    .settings-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s, background-color 0.2s;
+    }
+
+    .settings-btn:hover { border-color: #555; }
+    .settings-btn svg { width: 1.15rem; height: 1.15rem; display: block; }
+
+    .settings-panel {
+      position: absolute;
+      top: 3rem;
+      right: 0;
+      width: 250px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.5rem;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      display: none;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .settings-panel.open { display: flex; }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.65rem 0.7rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .settings-row:hover { background: var(--bg); }
+
+    .settings-row-label { display: flex; flex-direction: column; gap: 0.15rem; }
+    .settings-row-sub { font-size: 0.72rem; color: var(--muted); }
+
+    /* toggle switch */
+    .switch { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch .track {
+      position: absolute; inset: 0;
+      background: var(--no-answer);
+      border-radius: 999px;
+      transition: background-color 0.15s;
+      cursor: pointer;
+    }
+    .switch .track::before {
+      content: "";
+      position: absolute;
+      height: 16px; width: 16px;
+      left: 3px; top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.15s;
+    }
+    .switch input:checked + .track { background: var(--other); }
+    .switch input:checked + .track::before { transform: translateX(16px); }
 
     /* ── search ── */
     .search-wrap {
@@ -121,6 +245,7 @@
 
     .card.yes  { background: var(--yes-bg);  border-color: var(--yes-border); }
     .card.soon { background: var(--soon-bg); border-color: var(--soon-border); }
+    .card.gone { background: var(--gone-bg); border-color: var(--gone-border); }
 
     .card-name {
       font-size: 0.82rem;
@@ -138,10 +263,11 @@
       line-height: 1.15;
     }
 
-    .card.yes  .card-answer { color: var(--yes); }
-    .card.soon .card-answer { color: var(--soon); }
-    .card.no   .card-answer { color: #2c2c2c; }
+    .card.yes   .card-answer { color: var(--yes); }
+    .card.soon  .card-answer { color: var(--soon); }
+    .card.no    .card-answer { color: var(--no-answer); }
     .card.other .card-answer { color: var(--other); }
+    .card.gone  .card-answer { color: var(--gone); }
 
     .card-countdown {
       display: flex;
@@ -210,6 +336,38 @@
   </style>
 </head>
 <body>
+  <div class="settings">
+    <button class="settings-btn" id="settings-btn" aria-label="Settings" aria-expanded="false" aria-haspopup="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+    <div class="settings-panel" id="settings-panel" role="menu" aria-label="Settings">
+      <label class="settings-row">
+        <span class="settings-row-label">
+          Light mode
+          <span class="settings-row-sub">Switch the color theme</span>
+        </span>
+        <span class="switch">
+          <input type="checkbox" id="toggle-theme" role="menuitemcheckbox">
+          <span class="track"></span>
+        </span>
+      </label>
+      <label class="settings-row">
+        <span class="settings-row-label">
+          Hide long-released
+          <span class="settings-row-sub">Out more than ~3 months</span>
+        </span>
+        <span class="switch">
+          <input type="checkbox" id="toggle-hide-old" role="menuitemcheckbox">
+          <span class="track"></span>
+        </span>
+      </label>
+    </div>
+  </div>
+
   <header>
     <h1>Is whatever out yet?</h1>
   </header>
@@ -222,7 +380,7 @@
 
   <footer>
     <span id="updated"></span>
-    <span><a href="https://github.com" target="_blank" rel="noopener">Source</a></span>
+    <span><a href="https://github.com/sfryslie/is-whatever-out-yet" target="_blank" rel="noopener">Source</a></span>
   </footer>
 
   <script>
@@ -235,6 +393,9 @@
     if (initialSearch) searchInput.value = initialSearch;
 
     let allItems = [];
+
+    // Items "out" longer than this are hidden when the "Hide long-released" toggle is on.
+    const HIDE_OLD_DAYS = 90;
 
     const DATE_FMT = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -255,6 +416,71 @@
       let m = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
       if (to.getDate() < from.getDate()) m--;
       return Math.max(0, m);
+    }
+
+    // ── Settings: theme + filters ──────────────────────────────────────────────
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+
+    function applyTheme(theme) {
+      const isLight = theme === 'light';
+      document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
+      themeMeta.setAttribute('content', isLight ? '#f7f7f8' : '#0a0a0a');
+      document.getElementById('toggle-theme').checked = isLight;
+    }
+
+    // Stored choice wins; otherwise follow the OS preference.
+    const storedTheme = localStorage.getItem('theme');
+    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+    applyTheme(storedTheme || (prefersLight ? 'light' : 'dark'));
+
+    let hideOld = localStorage.getItem('hideOld') === '1';
+    document.getElementById('toggle-hide-old').checked = hideOld;
+
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsPanel = document.getElementById('settings-panel');
+
+    function setPanel(open) {
+      settingsPanel.classList.toggle('open', open);
+      settingsBtn.setAttribute('aria-expanded', String(open));
+    }
+
+    settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setPanel(!settingsPanel.classList.contains('open'));
+    });
+    document.addEventListener('click', (e) => {
+      if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) setPanel(false);
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setPanel(false); });
+
+    document.getElementById('toggle-theme').addEventListener('change', (e) => {
+      const theme = e.target.checked ? 'light' : 'dark';
+      localStorage.setItem('theme', theme);
+      applyTheme(theme);
+    });
+
+    document.getElementById('toggle-hide-old').addEventListener('change', (e) => {
+      hideOld = e.target.checked;
+      localStorage.setItem('hideOld', hideOld ? '1' : '0');
+      if (allItems.length > 0) renderGrid();
+    });
+
+    // The date an item became available, or null if it isn't out / we don't know when.
+    // `since` is the explicit signal (hardcoded/API "Yes." items); a past `releaseDate`
+    // is the implicit one (date-driven items the frontend has already flipped).
+    function outDate(item) {
+      if (item.since) return parseLocalDate(item.since);
+      if (item.releaseDate) {
+        const r = parseLocalDate(item.releaseDate);
+        if (midnightToday() >= r) return r;
+      }
+      return null;
+    }
+
+    function isLongReleased(item) {
+      const out = outDate(item);
+      if (!out) return false;
+      return (midnightToday() - out) / 86_400_000 > HIDE_OLD_DAYS;
     }
 
     // Resolve a date-driven item against the user's local clock: derive answer,
@@ -301,7 +527,20 @@
       return item;
     }
 
-    function cardClass(answer) {
+    // Soonest-first sort key within a category: an upcoming release/reveal date in ms,
+    // or Infinity for items with no future date (kept in catalogue order by stable sort).
+    function upcomingSortKey(item) {
+      const today = midnightToday();
+      const iso = item.releaseDate || item.countdownTo;
+      if (iso) {
+        const d = parseLocalDate(iso);
+        if (d > today) return d.getTime();
+      }
+      return Infinity;
+    }
+
+    function cardClass(item, answer) {
+      if (item.tone === 'death') return 'gone';
       const a = answer.toLowerCase();
       if (a.startsWith('yes'))                           return 'yes';
       if (a.startsWith('no') || a === 'never.')          return 'no';
@@ -324,9 +563,11 @@
 
     function renderGrid() {
       const filter = searchInput.value.trim().toLowerCase();
-      const visibleItems = filter
+      let visibleItems = filter
         ? allItems.filter(item => item.label.toLowerCase().includes(filter))
         : allItems;
+
+      if (hideOld) visibleItems = visibleItems.filter(item => !isLongReleased(item));
 
       content.innerHTML = '';
 
@@ -353,9 +594,14 @@
 
         const grid = document.createElement('div');
         grid.className = 'grid';
-        groups[cat].forEach(raw => {
+        // Stable sort floats imminent releases to the top of each category.
+        const sorted = groups[cat]
+          .map((raw, i) => ({ raw, i }))
+          .sort((a, b) => (upcomingSortKey(a.raw) - upcomingSortKey(b.raw)) || (a.i - b.i))
+          .map(x => x.raw);
+        sorted.forEach(raw => {
           const item = resolveItem(raw);
-          const cls = cardClass(item.answer);
+          const cls = cardClass(item, item.answer);
           grid.innerHTML += `
             <div class="card ${cls}">
               <div class="card-name">${item.label}</div>
@@ -401,6 +647,13 @@
       .catch(() => {
         content.innerHTML = '<p id="error">Could not load data.json — the GitHub Action may not have run yet.</p>';
       });
+
+    // Register the service worker for offline support + installability. Non-fatal if it fails.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
   </script>
 </body>
 </html>

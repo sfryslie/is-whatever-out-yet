@@ -41,6 +41,14 @@ data class ItemResult(
     // live value like the AAA national gas average.
     val countdownLabel: String? = null,
     val countdownSub: String? = null,
+    // ISO date (yyyy-MM-dd) for when an already-"out" item became available — powers the frontend's
+    // "hide things that have been out a while" filter and the "out for N months" hint. Date-driven
+    // items don't need it (their `releaseDate` already encodes when they flip); it's for hardcoded /
+    // API / Wikipedia "Yes." items that would otherwise carry no when.
+    val since: String? = null,
+    // Semantic tone that overrides answer-based card coloring. Currently only "death" — a somber
+    // slate instead of celebratory green for "they're out" cards that actually mean someone died.
+    val tone: String? = null,
 )
 
 @Serializable
@@ -113,6 +121,10 @@ sealed class Check {
         val article: String,
         val phrase: String,
         val latestDate: LocalDate? = null,
+        // Tone to stamp on the result if the phrase disappears (the card flips). Used for the
+        // copula-tracking death checks (e.g. Cosby's "is an American" → "was") so the flip colors
+        // as a death rather than a celebratory green.
+        val flippedTone: String? = null,
     ) : Check()
 
     /**
@@ -143,6 +155,12 @@ data class Item(
     val check: Check,
     val defaultAnswer: String = "No.",
     val defaultDetail: String? = null,
+    // ISO date the item became "out" — emitted as ItemResult.since for the frontend's hide-old
+    // filter. Only meaningful on already-"out" items that aren't date-driven.
+    val since: LocalDate? = null,
+    // Semantic coloring override; see ItemResult.tone. Set "death" on cards where a green "Yes." is
+    // tonally wrong (someone died rather than was released).
+    val tone: String? = null,
 )
 
 // Infobox-anchored "still locked up" markers, OR-matched against the full rendered Wikipedia HTML
@@ -176,7 +194,7 @@ val ITEMS = listOf(
     Item("portal-3",        "Portal 3",        "Game", Check.Hardcoded, "No."),
     Item("palworld-1",      "Palworld 1.0",    "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 10))),
     Item("valheim-1",       "Valheim Deep North",     "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 9))),
-    Item("deltarune-ch5",   "Deltarune Ch. 5", "Game", Check.Hardcoded, "Yes.",   "Released June 24, 2026."),
+    Item("deltarune-ch5",   "Deltarune Ch. 5", "Game", Check.Hardcoded, "Yes.",   "Released June 24, 2026.", since = LocalDate.of(2026, 6, 24)),
     Item("deltarune-ch6",   "Deltarune Ch. 6", "Game", Check.Hardcoded, "No.", "Chapter 5 just came out. Relax."),
     Item("persona-6",       "Persona 6",       "Game", Check.Hardcoded, "No."),
     Item("persona-4-revival", "Persona 4 Revival", "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 18))),
@@ -259,8 +277,9 @@ val ITEMS = listOf(
     // to the obituary. (The summary endpoint strips the "(born July 12, 1937)" parenthetical, so the
     // birth date itself isn't a usable signal here.)
     Item("bill-cosby",      "Bill Cosby",      "People",
-        Check.WikipediaLead("Bill_Cosby", "is an American former comedian"),
-        defaultAnswer = "Yes.", defaultDetail = "Released in 2021. <a href=\"https://en.wikipedia.org/wiki/Trial_of_Bill_Cosby#Overturned_conviction\" target=\"_blank\" rel=\"noopener\">It was kinda bullshit.</a>"),
+        Check.WikipediaLead("Bill_Cosby", "is an American former comedian", flippedTone = "death"),
+        defaultAnswer = "Yes.", defaultDetail = "Released in 2021. <a href=\"https://en.wikipedia.org/wiki/Trial_of_Bill_Cosby#Overturned_conviction\" target=\"_blank\" rel=\"noopener\">It was kinda bullshit.</a>",
+        since = LocalDate.of(2021, 6, 30)),
     Item("harvey-weinstein", "Harvey Weinstein", "People",
         Check.WikipediaHtml("Harvey_Weinstein", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "Held at Rikers Island."),
@@ -274,7 +293,8 @@ val ITEMS = listOf(
         Check.WikipediaHtml("Joe_Exotic", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "21 years at FMC Fort Worth. Still no pardon."),
     Item("ted-kaczynski",   "Ted Kaczynski",   "People", Check.Hardcoded, "Yes.",
-        "Yeah, he died in 2023, dude. That was like... a while ago."),
+        "Yeah, he died in 2023, dude. That was like... a while ago.",
+        since = LocalDate.of(2023, 6, 10), tone = "death"),
     Item("oj-simpson",      "O.J. Simpson",    "People", Check.Hardcoded, "No.",
         "The Juice is not loose, he died in 2024."),
 
@@ -318,7 +338,7 @@ val ITEMS = listOf(
 private val PREVIEW_SUFFIXES = listOf("-preview", "-experimental", "-exp", "-beta", "-alpha")
 private fun String.isPreviewVariant() = PREVIEW_SUFFIXES.any { contains(it, ignoreCase = true) }
 
-private fun matchModelId(ids: List<String>, pattern: String): String? =
+internal fun matchModelId(ids: List<String>, pattern: String): String? =
     ids.firstOrNull { !it.isPreviewVariant() && (it == pattern || it.startsWith("$pattern-") || it.contains(pattern)) }
 
 // ── Network helpers ───────────────────────────────────────────────────────────
@@ -431,7 +451,7 @@ suspend fun checkHomestarRunnerSitemap(client: HttpClient): Pair<String, String>
 // Pull the national average out of the AAA gas-prices HTML. The value sits in server-rendered
 // markup as "National Average …<p class="numb"> $3.901". Returns the raw price (e.g. 3.901) or
 // null — the caller formats it for display and compares it against the threshold answers.
-private val GAS_AVG_REGEX = Regex("National Average[\\s\\S]{0,200}?\\\$\\s*([0-9]+\\.[0-9]{2,4})")
+internal val GAS_AVG_REGEX = Regex("National Average[\\s\\S]{0,200}?\\\$\\s*([0-9]+\\.[0-9]{2,4})")
 
 suspend fun fetchNationalGasAverage(client: HttpClient, url: String): Double? = try {
     val html = client.get(url) {
@@ -491,7 +511,10 @@ fun main(): Unit = runBlocking {
 
     val results = ITEMS.map { item ->
         when (val check = item.check) {
-            is Check.Hardcoded -> ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+            is Check.Hardcoded -> ItemResult(
+                item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail,
+                since = item.since?.toString(), tone = item.tone,
+            )
 
             is Check.RollingNewYear -> ItemResult(
                 item.id, item.label, item.category,
@@ -611,6 +634,7 @@ fun main(): Unit = runBlocking {
                         answer = item.defaultAnswer,
                         detail = item.defaultDetail,
                         countdownTo = check.latestDate?.toString(),
+                        since = item.since?.toString(),
                     )
                 } else {
                     // Early flip — Wikipedia signal beat the deadline. Drop the countdown.
@@ -619,6 +643,7 @@ fun main(): Unit = runBlocking {
                         item.id, item.label, item.category,
                         answer = "Yes.",
                         detail = "${escapeHtmlText(extract)} <a href=\"$articleUrl\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
+                        tone = check.flippedTone,
                     )
                 }
             }

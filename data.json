@@ -112,7 +112,8 @@
             "label": "Deltarune Ch. 5",
             "category": "Game",
             "answer": "Yes.",
-            "detail": "Released June 24, 2026."
+            "detail": "Released June 24, 2026.",
+            "since": "2026-06-24"
         },
         {
             "id": "deltarune-ch6",
@@ -472,7 +473,8 @@
             "label": "Bill Cosby",
             "category": "People",
             "answer": "Yes.",
-            "detail": "Released in 2021. <a href=\"https://en.wikipedia.org/wiki/Trial_of_Bill_Cosby#Overturned_conviction\" target=\"_blank\" rel=\"noopener\">It was kinda bullshit.</a>"
+            "detail": "Released in 2021. <a href=\"https://en.wikipedia.org/wiki/Trial_of_Bill_Cosby#Overturned_conviction\" target=\"_blank\" rel=\"noopener\">It was kinda bullshit.</a>",
+            "since": "2021-06-30"
         },
         {
             "id": "harvey-weinstein",
@@ -507,7 +509,9 @@
             "label": "Ted Kaczynski",
             "category": "People",
             "answer": "Yes.",
-            "detail": "Yeah, he died in 2023, dude. That was like... a while ago."
+            "detail": "Yeah, he died in 2023, dude. That was like... a while ago.",
+            "since": "2023-06-10",
+            "tone": "death"
         },
         {
             "id": "oj-simpson",
