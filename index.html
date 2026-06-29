@@ -275,20 +275,24 @@
       gap: 0.5rem;
     }
 
-    /* 🔔 subscribe links (per-card, per-category, and the settings "everything" link) */
+    /* 🔔 subscribe toggles (per-card, per-category, and the settings "everything" button) */
+    button.bell { background: none; border: none; padding: 0; font: inherit; }
     .bell {
       color: var(--muted);
       opacity: 0.55;
       transition: opacity 0.15s, color 0.15s;
       flex-shrink: 0;
       line-height: 0;
+      cursor: pointer;
     }
     .bell:hover { opacity: 1; color: var(--other); }
+    .bell.on { opacity: 1; color: var(--other); }
     .bell svg { width: 0.95rem; height: 0.95rem; display: block; }
     .card-bell { position: absolute; top: 0.85rem; right: 0.85rem; }
     .cat-label .bell { margin-left: auto; }
-    .settings-link { text-decoration: none; color: inherit; }
-    .settings-bell { font-size: 0.95rem; opacity: 0.7; }
+    .settings-link { text-decoration: none; color: inherit; text-align: left; }
+    .settings-bell { opacity: 0.7; }
+    .settings-link.on .settings-bell { opacity: 1; color: var(--other); }
 
     .card.yes  { background: var(--yes-bg);  border-color: var(--yes-border); }
     .card.soon { background: var(--soon-bg); border-color: var(--soon-border); }
@@ -411,14 +415,16 @@
         <input type="range" id="hide-old-slider" class="slider" min="0" max="5" step="1" value="0"
                aria-label="Hide items released longer than">
       </div>
-      <a class="settings-row settings-link" href="https://ntfy.sh/iswhateveroutyet-all"
-         target="_blank" rel="noopener" role="menuitem">
+      <button class="settings-row settings-link" id="notify-all" type="button"
+              data-topic="iswhateveroutyet-all" role="menuitemcheckbox" aria-pressed="false" hidden>
         <span class="settings-row-label">
           Notify me about everything
-          <span class="settings-row-sub">Push when anything flips, via ntfy</span>
+          <span class="settings-row-sub">Browser push when anything flips</span>
         </span>
-        <span class="bell settings-bell">↗</span>
-      </a>
+        <span class="bell settings-bell">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        </span>
+      </button>
     </div>
   </div>
 
@@ -448,15 +454,99 @@
 
     let allItems = [];
 
-    // ntfy push links. The topic scheme mirrors the checker (its NTFY_TOPIC_PREFIX must equal
-    // NTFY_PREFIX here): a per-item topic, a per-category firehose, and a global one. ntfy has no
-    // wildcard subscribe, so each tier is its own topic. Opening the URL lets you subscribe via the
-    // ntfy web app or hand off to the installed app.
-    const NTFY_PREFIX = 'iswhateveroutyet';
+    // ── Web Push notifications ───────────────────────────────────────────────────
+    // PUSH_API is the deployed Cloudflare Worker base URL (no trailing slash). Leave '' to keep the
+    // 🔔 bells hidden (notifications off until the Worker is set up). TOPIC_PREFIX MUST match
+    // TOPIC_PREFIX in the checker so a card's topic equals what the checker pushes to.
+    const PUSH_API = '';  // e.g. 'https://iswhateveroutyet-push.YOURNAME.workers.dev'
+    const TOPIC_PREFIX = 'iswhateveroutyet';
+    const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    const pushEnabled = Boolean(PUSH_API) && pushSupported;
+
     const catSlug = c => c.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const ntfyItemUrl = item => `https://ntfy.sh/${NTFY_PREFIX}-${catSlug(item.category)}-${item.id}`;
-    const ntfyCatUrl = cat => `https://ntfy.sh/${NTFY_PREFIX}-${catSlug(cat)}-all`;
+    const topicItem = item => `${TOPIC_PREFIX}-${catSlug(item.category)}-${item.id}`;
+    const topicCat = cat => `${TOPIC_PREFIX}-${catSlug(cat)}-all`;
+    const TOPIC_ALL = `${TOPIC_PREFIX}-all`;
     const BELL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
+
+    // Bell as a toggle button carrying its topic; the delegated click handler subscribes/unsubscribes.
+    function bellHtml(topic, title, extraClass = '') {
+      return `<button class="bell ${extraClass}" type="button" data-topic="${topic}" title="${title}" aria-label="${title}" aria-pressed="false">${BELL_SVG}</button>`;
+    }
+
+    // Locally-cached set of topics this browser is subscribed to (the Worker is the real store; this
+    // just drives the bells' on/off state).
+    const subscribedTopics = () => {
+      try { return new Set(JSON.parse(localStorage.getItem('pushTopics') || '[]')); } catch (e) { return new Set(); }
+    };
+    const saveTopics = set => localStorage.setItem('pushTopics', JSON.stringify([...set]));
+
+    function refreshBells() {
+      const topics = subscribedTopics();
+      document.querySelectorAll('[data-topic]').forEach(el => {
+        const on = topics.has(el.dataset.topic);
+        el.classList.toggle('on', on);
+        el.setAttribute('aria-pressed', String(on));
+      });
+    }
+
+    function urlB64ToU8(base64) {
+      const pad = '='.repeat((4 - (base64.length % 4)) % 4);
+      const b64 = (base64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+      const raw = atob(b64);
+      const out = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+      return out;
+    }
+
+    // Return an active browser push subscription, prompting for permission on first use. null if declined.
+    async function ensureSubscription() {
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) return existing;
+      if (Notification.permission !== 'granted') {
+        if (await Notification.requestPermission() !== 'granted') return null;
+      }
+      const { key } = await (await fetch(PUSH_API + '/key')).json();
+      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToU8(key) });
+    }
+
+    async function toggleTopic(topic) {
+      if (!pushEnabled) return;
+      if (Notification.permission === 'denied') {
+        alert('Notifications are blocked for this site. Re-enable them in your browser settings.');
+        return;
+      }
+      let sub = null;
+      try { sub = await ensureSubscription(); } catch (e) { sub = null; }
+      if (!sub) return;
+      const topics = subscribedTopics();
+      topics.has(topic) ? topics.delete(topic) : topics.add(topic);
+      try {
+        if (topics.size === 0) {
+          await fetch(PUSH_API + '/unsubscribe', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+        } else {
+          await fetch(PUSH_API + '/subscribe', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription: sub.toJSON(), topics: [...topics] }),
+          });
+        }
+        saveTopics(topics);
+        refreshBells();
+      } catch (e) {
+        alert('Could not update notifications — please try again.');
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      const el = e.target.closest('[data-topic]');
+      if (!el) return;
+      e.preventDefault();
+      toggleTopic(el.dataset.topic);
+    });
 
     // "Hide long-released" slider stops. Each level hides items that have been out longer than
     // `days`; level 0 is off, and the last (-1) hides anything released at all.
@@ -672,8 +762,7 @@
         const section = document.createElement('section');
         section.className = 'section';
         section.innerHTML = `<h2 class="cat-label">${cat}
-          <a class="bell" href="${ntfyCatUrl(cat)}" target="_blank" rel="noopener"
-             title="Notify me about all ${cat}" aria-label="Notify me about all ${cat}">${BELL_SVG}</a>
+          ${pushEnabled ? bellHtml(topicCat(cat), `Notify me about all ${cat}`) : ''}
         </h2>`;
 
         const grid = document.createElement('div');
@@ -688,8 +777,7 @@
           const cls = cardClass(item, item.answer);
           grid.innerHTML += `
             <div class="card ${cls}">
-              <a class="bell card-bell" href="${ntfyItemUrl(item)}" target="_blank" rel="noopener"
-                 title="Notify me when this changes" aria-label="Notify me about ${item.label}">${BELL_SVG}</a>
+              ${pushEnabled ? bellHtml(topicItem(item), `Notify me about ${item.label}`, 'card-bell') : ''}
               <div class="card-name">${item.label}</div>
               <div class="card-answer">${item.answer}</div>
               ${item.countdownLabel ? `
@@ -705,6 +793,8 @@
         section.appendChild(grid);
         content.appendChild(section);
       });
+
+      refreshBells();
     }
 
     function renderData({ updated, items }) {
@@ -734,7 +824,11 @@
         content.innerHTML = '<p id="error">Could not load data.json — the GitHub Action may not have run yet.</p>';
       });
 
-    // Register the service worker for offline support + installability. Non-fatal if it fails.
+    // Reveal the "Notify me about everything" control only when push is configured + supported.
+    if (pushEnabled) document.getElementById('notify-all').hidden = false;
+    refreshBells();
+
+    // Register the service worker for offline support, installability, and push. Non-fatal if it fails.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').catch(() => {});

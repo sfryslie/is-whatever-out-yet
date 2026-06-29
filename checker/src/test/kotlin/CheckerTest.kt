@@ -74,7 +74,7 @@ class StateTrackingTest {
     }
 }
 
-class NtfyTopicTest {
+class TopicSchemeTest {
     @Test
     fun `category is slugged to lowercase`() {
         assertEquals("ai", categorySlug("AI"))
@@ -89,7 +89,7 @@ class NtfyTopicTest {
                 "iswhateveroutyet-game-all",
                 "iswhateveroutyet-all",
             ),
-            ntfyTopicsFor("iswhateveroutyet", "Game", "fable-game"),
+            topicsFor("iswhateveroutyet", "Game", "fable-game"),
         )
     }
 
@@ -97,7 +97,7 @@ class NtfyTopicTest {
     fun `AI item topic lowercases the category segment`() {
         assertEquals(
             "iswhateveroutyet-ai-claude-fable-5",
-            ntfyTopicsFor("iswhateveroutyet", "AI", "claude-fable-5").first(),
+            topicsFor("iswhateveroutyet", "AI", "claude-fable-5").first(),
         )
     }
 }

@@ -24,7 +24,8 @@ Tracks AI models, games, people, and other things that may or may not exist yet.
 | `OPENAI_API_KEY` | No | OpenAI model list checks |
 | `GOOGLE_API_KEY` | No | Gemini model list checks |
 | `XAI_API_KEY` | No | xAI/Grok model list checks |
-| `NTFY_TOPIC_PREFIX` | No | Public [ntfy](https://ntfy.sh) topic prefix (e.g. `iswhateveroutyet`) for push notifications when something flips to "out" or someone dies. Must match `NTFY_PREFIX` in `index.html`. Subscribe per-item, per-category, or to `<prefix>-all` via the 🔔 links on the site |
+| `PUSH_API_URL` | No | Deployed [`push-worker`](push-worker/) URL — enables Web Push notifications when something flips to "out" or someone dies. Subscribe per-item, per-category, or to everything via the 🔔 toggles on the site |
+| `PUSH_SEND_TOKEN` | No | Shared secret authenticating the checker to the Worker's `/send` (must equal the Worker's `SEND_TOKEN`) |
 
 Add these under Settings → Secrets and variables → Actions.
 

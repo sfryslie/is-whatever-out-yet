@@ -18,6 +18,7 @@ checker/
   build.gradle.kts                # Kotlin JVM + Ktor Client CIO + kotlinx-serialization
   settings.gradle.kts
   gradlew / gradlew.bat           # Gradle wrapper — build without a system Gradle install
+push-worker/                      # Cloudflare Worker — Web Push backend (VAPID + KV), see its README
 .github/workflows/check-models.yml  # Cron job (every 30 min) that runs the checker and commits data.json
 ```
 
@@ -103,7 +104,7 @@ Theme is driven by CSS custom properties on `:root`, overridden by `[data-theme=
 The checker is otherwise stateless, but each run **reads the previous `data.json`** (at `DATA_JSON_PATH`) before writing the new one, so it can diff run-to-run:
 
 - **`since` is auto-maintained.** `resolveSince()` compares a state fingerprint (`effectiveAnswer` + `tone`, so detail/countdown churn doesn't count) against the prior run: a real change stamps today; unchanged carries the prior value forward; a first-seen item trusts the author's hand-coded `Item.since` seed. This is what lets a long-hidden card (e.g. Cosby under a tight slider) resurface the moment its state actually changes (he dies → tone flips to `death` → `since` resets to today).
-- **ntfy notifications.** When an item transitions to "out" (`effectiveAnswer` becomes `Yes.`) or to `tone == "death"`, the run POSTs a push to [ntfy](https://ntfy.sh) (`NTFY_TOPIC_PREFIX`, optional `NTFY_SERVER`). Each change fans out to three topics — the item (`<prefix>-<category>-<id>`), its category firehose (`<prefix>-<category>-all`), and the global one (`<prefix>-all`) — because ntfy has no wildcard subscribe. `ntfyTopicsFor()` builds them and **must stay in sync with `NTFY_PREFIX` in `index.html`**, which builds the matching per-card / per-category / "everything" 🔔 subscribe links. ntfy fans out to subscribers, so there's no subscription store to keep. Fail-soft and skipped entirely if `NTFY_TOPIC_PREFIX` is unset; first-seen items never notify, so adding an item or a cold start won't spam. The topic prefix is public (it's in the frontend), so it isn't really a secret — the only real anti-spam protection would be ntfy ACLs (self-host / Pro). `effectiveAnswer`/`stateFingerprint`/`resolveSince`/`categorySlug`/`ntfyTopicsFor` are `internal` and unit-tested.
+- **Web Push notifications.** When an item transitions to "out" (`effectiveAnswer` becomes `Yes.`) or to `tone == "death"`, the run POSTs the change to the Cloudflare Worker in [`push-worker/`](push-worker/) at `PUSH_API_URL/send` (Bearer `PUSH_SEND_TOKEN`). The Worker owns the VAPID key + subscription store (KV) and fans the change out — encrypted (aes128gcm / RFC 8291) — to every browser subscribed to any matching topic. Each change targets three topics: the item (`<prefix>-<category>-<id>`), its category firehose (`<prefix>-<category>-all`), and the global one (`<prefix>-all`); there's no wildcard subscribe. `topicsFor()` builds them from `TOPIC_PREFIX` (a `const` in `Main.kt`) and **must stay in sync with `TOPIC_PREFIX` in `index.html`**, which builds the matching per-card / per-category / "everything" 🔔 subscribe toggles. The frontend hides all bells unless `PUSH_API` (the Worker URL) is set. Fail-soft and skipped entirely if `PUSH_API_URL`/`PUSH_SEND_TOKEN` are unset; first-seen items never notify, so adding an item or a cold start won't spam. `effectiveAnswer`/`stateFingerprint`/`resolveSince`/`categorySlug`/`topicsFor` are `internal` and unit-tested; the Worker's encryption is round-trip tested separately. See `push-worker/README.md` for deploy steps.
 
 ## Secrets (GitHub Actions)
 
@@ -111,7 +112,8 @@ The checker is otherwise stateless, but each run **reads the previous `data.json
 - `OPENAI_API_KEY` — optional, live OpenAI check skipped if absent
 - `GOOGLE_API_KEY` — optional, live Gemini check skipped if absent
 - `XAI_API_KEY` — optional, live Grok check skipped if absent
-- `NTFY_TOPIC_PREFIX` — optional, public topic prefix (e.g. `iswhateveroutyet`); also the on-switch — push notifications skipped if absent. Must equal `NTFY_PREFIX` in `index.html` (`NTFY_SERVER` defaults to `https://ntfy.sh`)
+- `PUSH_API_URL` — optional, the deployed `push-worker` URL; with `PUSH_SEND_TOKEN`, enables Web Push notifications (both unset → skipped)
+- `PUSH_SEND_TOKEN` — optional, shared secret authenticating the checker to the Worker's `/send` (must equal the Worker's `SEND_TOKEN`)
 
 ## Workflow notes
 

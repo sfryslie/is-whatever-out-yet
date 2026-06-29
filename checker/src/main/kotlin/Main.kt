@@ -507,8 +507,8 @@ internal fun resolveSince(prev: ItemResult?, base: ItemResult, seed: String?, to
 
 private fun stripHtml(s: String): String = s.replace(Regex("<[^>]*>"), "").trim()
 
-/** A state change worth notifying about — carries what the topic builder and message need. */
-internal data class NtfyEvent(
+/** A state change worth notifying about — carries what the topic builder and push payload need. */
+internal data class ChangeEvent(
     val id: String,
     val label: String,
     val category: String,
@@ -516,37 +516,49 @@ internal data class NtfyEvent(
     val death: Boolean,
 )
 
+/**
+ * Public topic prefix. MUST match TOPIC_PREFIX in index.html so the frontend's subscribe topics and
+ * the checker's push topics line up.
+ */
+internal const val TOPIC_PREFIX = "iswhateveroutyet"
+
 /** Lowercase, slug-safe form of a category for use in a topic name (e.g. "AI" → "ai"). */
 internal fun categorySlug(category: String): String =
     category.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
 
 /**
- * The ntfy topics a change should fan out to, given the public [prefix]: the specific item, its
- * category firehose, and the global firehose. Mirrors the link scheme the frontend builds, so a
- * card's 🔔 and the checker's POST target the same topic. ntfy has no wildcard subscribe, hence
- * the explicit `-<category>-all` and `-all` rollups.
+ * The topics a change fans out to: the specific item, its category firehose, and the global one.
+ * Mirrors the topics the frontend subscribes to from each 🔔, so the Web Push Worker can match a
+ * change to the right subscribers. There's no wildcard subscribe, hence the explicit rollups.
  */
-internal fun ntfyTopicsFor(prefix: String, category: String, id: String): List<String> {
+internal fun topicsFor(prefix: String, category: String, id: String): List<String> {
     val cat = categorySlug(category)
     return listOf("$prefix-$cat-$id", "$prefix-$cat-all", "$prefix-all")
 }
 
 /**
- * Publish a single notification to an ntfy topic (https://ntfy.sh/<topic> by default). Plain HTTP
- * POST — ntfy handles fan-out to anyone subscribed to the topic, so there's no subscription store to
- * maintain. Fail-soft: a delivery error never breaks the run.
+ * Hand a change to the Web Push Worker's /send endpoint, which fans it out (encrypted, per RFC 8291)
+ * to every browser subscribed to any of [topics]. Authenticated with the shared send token. The
+ * Worker owns the VAPID key and subscription store, so the checker just describes what changed.
+ * Fail-soft: a delivery error never breaks the run.
  */
-suspend fun sendNtfy(client: HttpClient, server: String, topic: String, label: String, message: String, death: Boolean) {
+internal suspend fun sendPush(client: HttpClient, apiUrl: String, token: String, event: ChangeEvent, topics: List<String>) {
     try {
-        client.post("$server/$topic") {
-            header("Title", label)
-            header("Tags", if (death) "skull" else "tada")
-            header("Click", "https://iswhateveroutyet.com/?search=" + java.net.URLEncoder.encode(label, "UTF-8"))
-            setBody(message)
+        val payload = buildJsonObject {
+            putJsonArray("topics") { topics.forEach { add(it) } }
+            put("title", event.label)
+            put("message", event.message)
+            put("url", "https://iswhateveroutyet.com/?search=" + java.net.URLEncoder.encode(event.label, "UTF-8"))
+            put("tag", event.id)
         }
-        println("  ntfy → $label")
+        val res = client.post(apiUrl.trimEnd('/') + "/send") {
+            header("Authorization", "Bearer $token")
+            contentType(ContentType.Application.Json)
+            setBody(payload.toString())
+        }
+        println("  push → ${event.label} (${res.status.value})")
     } catch (e: Exception) {
-        println("  ntfy send failed for $label: ${e.message}")
+        println("  push send failed for ${event.label}: ${e.message}")
     }
 }
 
@@ -558,11 +570,10 @@ fun main(): Unit = runBlocking {
     val googleKey    = System.getenv("GOOGLE_API_KEY")    // optional
     val xaiKey       = System.getenv("XAI_API_KEY")       // optional
     val outputPath   = System.getenv("DATA_JSON_PATH")    ?: "../data.json"
-    // Public topic prefix (e.g. "iswhateveroutyet"); also the on-switch — notifications are skipped
-    // if unset. Must match NTFY_PREFIX in index.html so the frontend's 🔔 links and the checker's
-    // pushes target the same topics.
-    val ntfyPrefix   = System.getenv("NTFY_TOPIC_PREFIX")
-    val ntfyServer   = System.getenv("NTFY_SERVER") ?: "https://ntfy.sh"
+    // Web Push Worker endpoint + shared send token. Both must be set to enable notifications;
+    // missing either skips them (e.g. local runs).
+    val pushApi      = System.getenv("PUSH_API_URL")
+    val pushToken    = System.getenv("PUSH_SEND_TOKEN")
 
     // Load the previous run's results so we can detect state changes (drives `since` and ntfy pings).
     // Missing/unparseable → empty, which means "everything is first-seen": no false notifications.
@@ -774,7 +785,7 @@ fun main(): Unit = runBlocking {
     // "just became out / just died" transitions worth a notification.
     val today = LocalDate.now()
     val seedById = ITEMS.associate { it.id to it.since?.toString() }
-    val transitions = mutableListOf<NtfyEvent>()
+    val transitions = mutableListOf<ChangeEvent>()
     val results = baseResults.map { base ->
         val prev = prevById[base.id]
         if (prev != null) {
@@ -784,21 +795,19 @@ fun main(): Unit = runBlocking {
             if (becameYes || becameDeath) {
                 val message = base.detail?.let { stripHtml(it) }?.ifBlank { null }
                     ?: if (becameDeath) "Looks like they're out." else "It's out!"
-                transitions += NtfyEvent(base.id, base.label, base.category, message, becameDeath)
+                transitions += ChangeEvent(base.id, base.label, base.category, message, becameDeath)
             }
         }
         base.copy(since = resolveSince(prev, base, seedById[base.id], today))
     }
 
-    if (ntfyPrefix == null) {
-        println("NTFY_TOPIC_PREFIX not set — skipping notifications.")
+    if (pushApi == null || pushToken == null) {
+        println("PUSH_API_URL / PUSH_SEND_TOKEN not set — skipping notifications.")
     } else if (transitions.isNotEmpty()) {
-        println("Sending notifications for ${transitions.size} change(s)…")
+        println("Sending push for ${transitions.size} change(s)…")
         transitions.take(8).forEach { ev ->
-            // Each change fans out to its item topic, its category firehose, and the global one.
-            ntfyTopicsFor(ntfyPrefix, ev.category, ev.id).forEach { topic ->
-                sendNtfy(client, ntfyServer, topic, ev.label, ev.message, ev.death)
-            }
+            // The Worker fans each change out to the item, category, and global topics' subscribers.
+            sendPush(client, pushApi, pushToken, ev, topicsFor(TOPIC_PREFIX, ev.category, ev.id))
         }
     }
 
