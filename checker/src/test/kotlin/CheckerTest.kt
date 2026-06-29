@@ -102,6 +102,78 @@ class TopicSchemeTest {
     }
 }
 
+class RunDiffTest {
+    private val today = LocalDate.of(2026, 6, 28)
+
+    @Test
+    fun `an answer flip is a meaningful change`() {
+        val prev = listOf(ItemResult("x", "X", "AI", answer = "No."))
+        val curr = listOf(ItemResult("x", "X", "AI", answer = "Yes."))
+        val changes = diffRuns(prev, today, curr, today)
+        assertEquals(1, changes.size)
+        assertEquals(true, changes.first().meaningful)
+        assertEquals("X: No. → Yes.", changes.first().description)
+    }
+
+    @Test
+    fun `a ticking gas price is a minor change`() {
+        val prev = listOf(ItemResult("gas", "Gas", "Resource", answer = "No?", countdownLabel = "$3.90/gal"))
+        val curr = listOf(ItemResult("gas", "Gas", "Resource", answer = "No?", countdownLabel = "$3.95/gal"))
+        val changes = diffRuns(prev, today, curr, today)
+        assertEquals(1, changes.size)
+        assertEquals(false, changes.first().meaningful)
+        assertEquals("Gas: $3.90/gal → $3.95/gal", changes.first().description)
+    }
+
+    @Test
+    fun `a date release that slipped past between runs is meaningful`() {
+        val item = ItemResult("gta", "GTA VI", "Game", releaseDate = "2026-11-19")
+        // Same stored item both runs; only the reference clock moved across the release date.
+        val changes = diffRuns(listOf(item), LocalDate.of(2026, 11, 18), listOf(item), LocalDate.of(2026, 11, 19))
+        assertEquals(1, changes.size)
+        assertEquals(true, changes.first().meaningful)
+        assertEquals("GTA VI: No. → Yes.", changes.first().description)
+    }
+
+    @Test
+    fun `an identical run produces no changes`() {
+        val item = ItemResult("x", "X", "AI", answer = "No.")
+        assertEquals(emptyList<RunChange>(), diffRuns(listOf(item), today, listOf(item), today))
+    }
+
+    @Test
+    fun `a death tone flip is meaningful`() {
+        val prev = listOf(ItemResult("c", "Cosby", "People", answer = "Yes."))
+        val curr = listOf(ItemResult("c", "Cosby", "People", answer = "Yes.", tone = "death"))
+        assertEquals(true, diffRuns(prev, today, curr, today).single().meaningful)
+    }
+}
+
+class CommitMessageTest {
+    @Test
+    fun `a single change is the whole subject`() {
+        assertEquals("X: No. → Yes.", buildCommitMessage(listOf(RunChange("X: No. → Yes.", true))))
+    }
+
+    @Test
+    fun `two meaningful changes summarize with a count plus a bullet body`() {
+        val msg = buildCommitMessage(listOf(
+            RunChange("X: No. → Yes.", true),
+            RunChange("Y: No. → Yes.", true),
+        ))
+        assertEquals("X: No. → Yes. (+1 more)\n\n- X: No. → Yes.\n- Y: No. → Yes.", msg)
+    }
+
+    @Test
+    fun `a meaningful change headlines over a minor one but the body lists both`() {
+        val msg = buildCommitMessage(listOf(
+            RunChange("X: No. → Yes.", true),
+            RunChange("Gas: $3.90/gal → $3.95/gal", false),
+        ))
+        assertEquals("X: No. → Yes.\n\n- X: No. → Yes.\n- Gas: $3.90/gal → $3.95/gal", msg)
+    }
+}
+
 class GasAverageRegexTest {
     @Test
     fun `extracts the national average price from AAA-style markup`() {

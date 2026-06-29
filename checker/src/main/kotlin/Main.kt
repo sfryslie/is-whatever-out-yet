@@ -13,6 +13,7 @@ import kotlinx.serialization.json.*
 import java.io.File
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 import kotlin.system.exitProcess
 
 // ── Data model ───────────────────────────────────────────────────────────────
@@ -505,6 +506,80 @@ internal fun resolveSince(prev: ItemResult?, base: ItemResult, seed: String?, to
     else -> prev.since ?: base.since ?: seed
 }
 
+// ── Run-to-run diff (drives `updated` + the commit message) ─────────────────────
+
+/** A described change between two runs. [meaningful] changes move the public `updated` stamp; minor
+ *  ones (e.g. the live gas price ticking) only justify a commit so the displayed value stays fresh. */
+internal data class RunChange(val description: String, val meaningful: Boolean)
+
+// Displayed fields whose change — absent an answer/tone change — is "minor": a fresh value worth
+// committing, but not a real state change. Excludes `since` (state-tied) and the id/label/category
+// identity fields.
+private fun displayFingerprint(r: ItemResult): String =
+    listOf(r.detail, r.releaseDate, r.vagueLabel, r.countdownTo, r.countdownLabel, r.countdownSub)
+        .joinToString("|") { it ?: "" }
+
+/**
+ * Diff the previous run ([prev], resolved against [prevClock] — the wall clock as of when it was
+ * recorded) against [current] (resolved against [today]) and describe what changed. A change is
+ * "meaningful" when a card's effective answer or tone flips, or an item is added/removed — that's
+ * what moves the public `updated` stamp. Pure display churn (the gas subheader, a reworded blurb)
+ * is minor: worth a commit so the page shows the fresh value, but it doesn't move `updated`.
+ *
+ * Resolving [prev] against its own clock is what catches a date-driven release that slipped past
+ * between runs: the stored `releaseDate` never changed, but its effective answer flipped from "No."
+ * (as of [prevClock]) to "Yes." (as of [today]).
+ */
+internal fun diffRuns(
+    prev: List<ItemResult>,
+    prevClock: LocalDate,
+    current: List<ItemResult>,
+    today: LocalDate,
+): List<RunChange> {
+    val prevById = prev.associateBy { it.id }
+    val currById = current.associateBy { it.id }
+    val changes = mutableListOf<RunChange>()
+
+    prev.filter { it.id !in currById }.forEach {
+        changes += RunChange("Removed ${it.label}", meaningful = true)
+    }
+
+    current.forEach { cur ->
+        val p = prevById[cur.id]
+        if (p == null) {
+            changes += RunChange("Added ${cur.label}", meaningful = true)
+            return@forEach
+        }
+        val prevAns = effectiveAnswer(p, prevClock)
+        val curAns = effectiveAnswer(cur, today)
+        when {
+            prevAns != curAns ->
+                changes += RunChange("${cur.label}: $prevAns → $curAns", meaningful = true)
+            cur.tone != p.tone && cur.tone == "death" ->
+                changes += RunChange("${cur.label}: $curAns (deceased)", meaningful = true)
+            cur.tone != p.tone ->
+                changes += RunChange("${cur.label}: tone ${p.tone ?: "none"} → ${cur.tone ?: "none"}", meaningful = true)
+            displayFingerprint(p) != displayFingerprint(cur) -> {
+                val desc = if (cur.countdownLabel != null && cur.countdownLabel != p.countdownLabel)
+                    "${cur.label}: ${p.countdownLabel ?: "—"} → ${cur.countdownLabel}"
+                else "Updated ${cur.label}"
+                changes += RunChange(desc, meaningful = false)
+            }
+        }
+    }
+    return changes
+}
+
+/** Build a git commit message from a run's [changes]: a one-line summary plus a bullet body. */
+internal fun buildCommitMessage(changes: List<RunChange>): String {
+    if (changes.isEmpty()) return "chore: update item status"
+    val headline = changes.filter { it.meaningful }.ifEmpty { changes }
+    val summary = if (headline.size == 1) headline.first().description
+                  else "${headline.first().description} (+${headline.size - 1} more)"
+    return if (changes.size == 1) summary
+           else summary + "\n\n" + changes.joinToString("\n") { "- ${it.description}" }
+}
+
 private fun stripHtml(s: String): String = s.replace(Regex("<[^>]*>"), "").trim()
 
 /** A state change worth notifying about — carries what the topic builder and push payload need. */
@@ -575,17 +650,19 @@ fun main(): Unit = runBlocking {
     val pushApi      = System.getenv("PUSH_API_URL")
     val pushToken    = System.getenv("PUSH_SEND_TOKEN")
 
-    // Load the previous run's results so we can detect state changes (drives `since` and ntfy pings).
-    // Missing/unparseable → empty, which means "everything is first-seen": no false notifications.
-    val prevById: Map<String, ItemResult> = try {
+    // Load the previous run's full output (items + the `updated` stamp) so we can detect state
+    // changes — which drive `since`, ntfy pings, the `updated` timestamp, and the commit message.
+    // Missing/unparseable → null, which means "everything is first-seen": no false notifications.
+    val prevData: OutputData? = try {
         val f = File(outputPath)
         if (f.exists())
-            Json { ignoreUnknownKeys = true }.decodeFromString<OutputData>(f.readText()).items.associateBy { it.id }
-        else emptyMap()
+            Json { ignoreUnknownKeys = true }.decodeFromString<OutputData>(f.readText())
+        else null
     } catch (e: Exception) {
         println("Could not read previous $outputPath (${e.message}) — treating all items as first-seen.")
-        emptyMap()
+        null
     }
+    val prevById: Map<String, ItemResult> = prevData?.items?.associateBy { it.id } ?: emptyMap()
 
     val client = HttpClient(CIO) {
         install(ContentNegotiation) { json() }
@@ -813,9 +890,35 @@ fun main(): Unit = runBlocking {
 
     client.close()
 
-    val output = OutputData(updated = Instant.now().toString(), items = results)
+    // Decide what (if anything) actually changed this run. `updated` only moves on a *meaningful*
+    // change (a card's answer/tone, or an added/removed item) — not on pure display churn like the
+    // live gas price ticking — so the public timestamp reflects the last real change, not the last
+    // poll. The commit message handed to the workflow names what changed; when nothing changed at
+    // all the file is byte-identical to last run and the workflow skips the commit entirely.
+    val prevClock = prevData?.updated?.let {
+        try { Instant.parse(it).atZone(ZoneOffset.UTC).toLocalDate() } catch (e: Exception) { today }
+    } ?: today
+    val changes = if (prevData == null) listOf(RunChange("Initialize tracked data", meaningful = true))
+                  else diffRuns(prevData.items, prevClock, results, today)
+    val meaningful = changes.any { it.meaningful }
+    val updated = if (prevData != null && !meaningful) prevData.updated else Instant.now().toString()
+
+    val output = OutputData(updated = updated, items = results)
     val json = Json { prettyPrint = true }
     File(outputPath).writeText(json.encodeToString(output))
+
+    // Hand the workflow a commit message naming the change(s). Only written when something changed;
+    // otherwise the file is unchanged and there's nothing to commit.
+    System.getenv("COMMIT_MSG_PATH")?.let { msgPath ->
+        if (changes.isNotEmpty()) File(msgPath).writeText(buildCommitMessage(changes))
+    }
+
+    if (changes.isEmpty()) {
+        println("\nNo changes since last run — $outputPath is identical, nothing to commit.")
+    } else {
+        println("\nChanges this run (updated ${if (meaningful) "→ $updated" else "unchanged: $updated"}):")
+        changes.forEach { println("  - ${it.description}${if (it.meaningful) "" else " (minor)"}") }
+    }
 
     println("\nWrote $outputPath:")
     results.forEach { r ->

@@ -118,6 +118,7 @@ The checker is otherwise stateless, but each run **reads the previous `data.json
 ## Workflow notes
 
 - The cron pushes `data.json` directly to `main` (branch protection bypassed via a PAT if configured, otherwise requires the Actions bot exemption)
+- **Commits only land when an item actually changes, and the message names what changed.** The checker diffs this run against the previous `data.json` (`diffRuns`): the `updated` timestamp moves only on a *meaningful* change (a card's effective answer or tone, or an added/removed item) — not on pure display churn like the live gas price ticking, which still gets committed so the page stays fresh but leaves `updated` alone. A date-driven release that slips past between runs is caught by resolving the prior run against its own `updated` clock vs `today`, even though the stored `releaseDate` never changes. When nothing changed at all the file is byte-identical and the workflow's `git diff --staged --quiet` guard skips the commit. The checker writes the commit message to `COMMIT_MSG_PATH` (a one-line summary + bullet body via `buildCommitMessage`); the workflow commits with `-F` that file, falling back to `chore: update item status`. `diffRuns`/`buildCommitMessage`/`RunChange` are `internal` and unit-tested.
 - `exitProcess(0)` at the end of `main()` is intentional — kills Ktor's CIO background threads cleanly
 - Model-list endpoints are free metadata calls, no token cost
 
