@@ -50,12 +50,13 @@ When adding or changing an item, always update **both**:
 Each item in `ITEMS` is:
 
 ```kotlin
-Item(id, label, category, check, defaultAnswer, defaultDetail, since, tone)
+Item(id, label, category, check, defaultAnswer, defaultDetail, since, tone, aliases)
 ```
 
 - `defaultAnswer` defaults to `"No."`, `defaultDetail` defaults to `null`
 - `since` (`LocalDate?`) — when an already-"out" item became available. Emitted as `ItemResult.since` and used by the frontend's "hide long-released" filter (and only meaningful on non-date-driven "Yes." items; date items already encode their flip date in `releaseDate`).
 - `tone` (`String?`) — semantic coloring override. Currently only `"death"`, which paints the card a somber slate instead of celebratory green for "they're out (deceased)" cards (e.g. Ted Kaczynski). `Check.WikipediaLead` takes an optional `flippedTone` so a copula death-flip (e.g. Cosby's "is" → "was") colors correctly when it triggers.
+- `aliases` (`List<String>?`) — optional alternative search terms emitted to `data.json` and matched by the frontend's filter alongside `label`. Use for common shorthands that differ from the canonical label (e.g. `["GTA 6", "GTAVI", "GTA6"]` for "Grand Theft Auto VI").
 
 ### Check types
 
@@ -98,6 +99,23 @@ Card class comes from `cardClass()` in `index.html`, which checks `tone` first, 
 The countdown label is always rendered in the blue accent (`--other`) regardless of card class, so countdown cards still read as "No, but here's when".
 
 Theme is driven by CSS custom properties on `:root`, overridden by `[data-theme="light"]`. The choice is persisted in `localStorage` (falling back to `prefers-color-scheme`) and toggled from the settings menu (the gear/hamburger top-right), which also hosts the "hide long-released" **slider** (`localStorage` key `hideOldLevel`): stops are Off · 2y · 1.5y · 1y · 6mo · "anything released", hiding items whose out-date (`since`, or a past `releaseDate`) is older than the chosen threshold. Cards within a category are sorted soonest-upcoming-first by a stable sort, so imminent releases bubble up.
+
+## Search & hero view
+
+The search box filters by `label` and `aliases` (case-insensitive substring). Result count drives the layout:
+
+- **0 results** → "I don't know." empty state (large centered text)
+- **1 result** → **hero view**: the H1 becomes "Is ~~whatever~~ [Item Name] out yet?" and the answer/countdown/detail scale up to match the empty-state size, colored by card class
+- **2+ results** → normal category grid
+
+The hero view also activates on deep-link landings via `?search=` (e.g. `iswhateveroutyet.com/?search=Claude+Sonnet+5`). Typing in the search box always re-evaluates the count and switches layouts accordingly.
+
+## Footer timestamps
+
+The footer shows two independent timestamps:
+
+- **Last updated** — from `data.json`'s `updated` field; only moves on a *meaningful* state change (answer/tone flip, item added/removed). Does not tick on every checker run.
+- **Last checked** — fetched live from the GitHub Actions API (`/actions/workflows/check-models.yml/runs`); always reflects when the checker workflow last ran, regardless of whether data changed. Omitted silently if the API is unavailable.
 
 ## State tracking & notifications
 
