@@ -1,3 +1,4 @@
+import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -31,6 +32,73 @@ class MatchModelIdTest {
     @Test
     fun `no match returns null`() {
         assertNull(matchModelId(listOf("claude-haiku-4-5"), "claude-opus-5"))
+    }
+}
+
+class StateTrackingTest {
+    private val today = LocalDate.of(2026, 6, 28)
+
+    @Test
+    fun `date-driven items resolve effective answer against today`() {
+        val past = ItemResult("a", "A", "Game", releaseDate = "2025-01-01")
+        val future = ItemResult("b", "B", "Game", releaseDate = "2027-01-01")
+        assertEquals("Yes.", effectiveAnswer(past, today))
+        assertEquals("No.", effectiveAnswer(future, today))
+    }
+
+    @Test
+    fun `a real state change stamps today`() {
+        val prev = ItemResult("x", "X", "AI", answer = "No.")
+        val base = ItemResult("x", "X", "AI", answer = "Yes.")
+        assertEquals("2026-06-28", resolveSince(prev, base, seed = null, today = today))
+    }
+
+    @Test
+    fun `tone-only change (a death) also counts as a state change`() {
+        val prev = ItemResult("c", "Cosby", "People", answer = "Yes.")
+        val base = ItemResult("c", "Cosby", "People", answer = "Yes.", tone = "death")
+        assertEquals("2026-06-28", resolveSince(prev, base, seed = "2021-06-30", today = today))
+    }
+
+    @Test
+    fun `an unchanged item carries its previous since forward`() {
+        val prev = ItemResult("d", "D", "Game", answer = "Yes.", since = "2025-09-04")
+        val base = ItemResult("d", "D", "Game", answer = "Yes.")
+        assertEquals("2025-09-04", resolveSince(prev, base, seed = null, today = today))
+    }
+
+    @Test
+    fun `a first-seen item trusts the author seed`() {
+        val base = ItemResult("e", "E", "Game", answer = "Yes.")
+        assertEquals("2024-08-23", resolveSince(prev = null, base = base, seed = "2024-08-23", today = today))
+    }
+}
+
+class NtfyTopicTest {
+    @Test
+    fun `category is slugged to lowercase`() {
+        assertEquals("ai", categorySlug("AI"))
+        assertEquals("people", categorySlug("People"))
+    }
+
+    @Test
+    fun `a change fans out to item, category, and global topics`() {
+        assertEquals(
+            listOf(
+                "iswhateveroutyet-game-fable-game",
+                "iswhateveroutyet-game-all",
+                "iswhateveroutyet-all",
+            ),
+            ntfyTopicsFor("iswhateveroutyet", "Game", "fable-game"),
+        )
+    }
+
+    @Test
+    fun `AI item topic lowercases the category segment`() {
+        assertEquals(
+            "iswhateveroutyet-ai-claude-fable-5",
+            ntfyTopicsFor("iswhateveroutyet", "AI", "claude-fable-5").first(),
+        )
     }
 }
 

@@ -96,7 +96,14 @@ Card class comes from `cardClass()` in `index.html`, which checks `tone` first, 
 
 The countdown label is always rendered in the blue accent (`--other`) regardless of card class, so countdown cards still read as "No, but here's when".
 
-Theme is driven by CSS custom properties on `:root`, overridden by `[data-theme="light"]`. The choice is persisted in `localStorage` (falling back to `prefers-color-scheme`) and toggled from the settings menu (the gear/hamburger top-right), which also hosts the "hide long-released" filter (items out more than ~90 days per `since`/past `releaseDate`). Cards within a category are sorted soonest-upcoming-first by a stable sort, so imminent releases bubble up.
+Theme is driven by CSS custom properties on `:root`, overridden by `[data-theme="light"]`. The choice is persisted in `localStorage` (falling back to `prefers-color-scheme`) and toggled from the settings menu (the gear/hamburger top-right), which also hosts the "hide long-released" **slider** (`localStorage` key `hideOldLevel`): stops are Off · 2y · 1.5y · 1y · 6mo · "anything released", hiding items whose out-date (`since`, or a past `releaseDate`) is older than the chosen threshold. Cards within a category are sorted soonest-upcoming-first by a stable sort, so imminent releases bubble up.
+
+## State tracking & notifications
+
+The checker is otherwise stateless, but each run **reads the previous `data.json`** (at `DATA_JSON_PATH`) before writing the new one, so it can diff run-to-run:
+
+- **`since` is auto-maintained.** `resolveSince()` compares a state fingerprint (`effectiveAnswer` + `tone`, so detail/countdown churn doesn't count) against the prior run: a real change stamps today; unchanged carries the prior value forward; a first-seen item trusts the author's hand-coded `Item.since` seed. This is what lets a long-hidden card (e.g. Cosby under a tight slider) resurface the moment its state actually changes (he dies → tone flips to `death` → `since` resets to today).
+- **ntfy notifications.** When an item transitions to "out" (`effectiveAnswer` becomes `Yes.`) or to `tone == "death"`, the run POSTs a push to [ntfy](https://ntfy.sh) (`NTFY_TOPIC_PREFIX`, optional `NTFY_SERVER`). Each change fans out to three topics — the item (`<prefix>-<category>-<id>`), its category firehose (`<prefix>-<category>-all`), and the global one (`<prefix>-all`) — because ntfy has no wildcard subscribe. `ntfyTopicsFor()` builds them and **must stay in sync with `NTFY_PREFIX` in `index.html`**, which builds the matching per-card / per-category / "everything" 🔔 subscribe links. ntfy fans out to subscribers, so there's no subscription store to keep. Fail-soft and skipped entirely if `NTFY_TOPIC_PREFIX` is unset; first-seen items never notify, so adding an item or a cold start won't spam. The topic prefix is public (it's in the frontend), so it isn't really a secret — the only real anti-spam protection would be ntfy ACLs (self-host / Pro). `effectiveAnswer`/`stateFingerprint`/`resolveSince`/`categorySlug`/`ntfyTopicsFor` are `internal` and unit-tested.
 
 ## Secrets (GitHub Actions)
 
@@ -104,6 +111,7 @@ Theme is driven by CSS custom properties on `:root`, overridden by `[data-theme=
 - `OPENAI_API_KEY` — optional, live OpenAI check skipped if absent
 - `GOOGLE_API_KEY` — optional, live Gemini check skipped if absent
 - `XAI_API_KEY` — optional, live Grok check skipped if absent
+- `NTFY_TOPIC_PREFIX` — optional, public topic prefix (e.g. `iswhateveroutyet`); also the on-switch — push notifications skipped if absent. Must equal `NTFY_PREFIX` in `index.html` (`NTFY_SERVER` defaults to `https://ntfy.sh`)
 
 ## Workflow notes
 

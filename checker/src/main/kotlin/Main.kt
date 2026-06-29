@@ -7,6 +7,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import java.io.File
@@ -218,6 +219,13 @@ val ITEMS = listOf(
     Item("star-citizen",    "Star Citizen 1.0", "Game", Check.Hardcoded, "No."),
     Item("marvels-wolverine", "Marvel's Wolverine", "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 15))),
     Item("witcher-4",       "The Witcher IV",  "Game", Check.VagueDate(LocalDate.of(2028, 12, 31), "2028?")),
+    // Already-out games — exercise the "hide long-released" slider at different age buckets.
+    Item("silksong",        "Hollow Knight: Silksong", "Game", Check.Hardcoded, "Yes.",
+        "Released September 4, 2025. Worth the wait.", since = LocalDate.of(2025, 9, 4)),
+    Item("deadlock",        "Deadlock",        "Game", Check.Hardcoded, "No.",
+        "<a href=\"https://store.steampowered.com/app/1422450/Deadlock/\" target=\"_blank\" rel=\"noopener\">Still in Early Access.</a>"),
+    Item("bloodlines-2",    "Vampire: The Masquerade - Bloodlines 2", "Game", Check.Hardcoded, "Yes.",
+        "Finally. Announced 2019, out 2025.", since = LocalDate.of(2025, 10, 21)),
 
     // Books
     Item("winds-of-winter", "The Winds of Winter",      "Book", Check.Hardcoded, "No.", "GRRM started writing it in 2010. Watch the show again."),
@@ -259,7 +267,8 @@ val ITEMS = listOf(
     Item("diddy",           "Diddy",           "People",
         Check.WikipediaHtml("Sean_Combs", INCARCERATION_MARKERS, flippedDetail = "He's out."),
         defaultDetail = "Serving ~50 months in prison."),
-    Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "Maybe?", "I think he's still in one of those Myst books?", tone = "death"),
+    Item("henry-kissinger", "Henry Kissinger", "People", Check.Hardcoded, "Maybe?", "I think he's still in one of those Myst books?",
+        since = LocalDate.of(2023, 11, 29), tone = "death"),
     Item("donald-trump",    "Donald Trump",    "People",
         Check.WikipediaLead("Donald_Trump", "is the 47th president", LocalDate.of(2029, 1, 20)),
         defaultDetail = "Still the 47th president."),
@@ -296,7 +305,7 @@ val ITEMS = listOf(
         "Yeah, he died in 2023, dude. That was like... a while ago.",
         since = LocalDate.of(2023, 6, 10), tone = "death"),
     Item("oj-simpson",      "O.J. Simpson",    "People", Check.Hardcoded, "No.",
-        "The Juice is not loose, he died in 2024.", tone = "death"),
+        "The Juice is not loose, he died in 2024.", since = LocalDate.of(2024, 4, 10), tone = "death"),
 
     // Resources
     Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
@@ -462,6 +471,85 @@ suspend fun fetchNationalGasAverage(client: HttpClient, url: String): Double? = 
     null
 }
 
+// ── State tracking + notifications ─────────────────────────────────────────────
+
+/**
+ * The card's current effective answer, resolving date-driven items against [today]. The frontend
+ * flips those client-side, but for run-to-run change detection the server needs the resolved value.
+ */
+internal fun effectiveAnswer(r: ItemResult, today: LocalDate): String = when {
+    r.answer != null -> r.answer
+    r.releaseDate != null -> if (!LocalDate.parse(r.releaseDate).isAfter(today)) "Yes." else "No."
+    else -> "?"
+}
+
+/**
+ * Fingerprint of the meaningful state — answer + tone. `since` resets (and notifications fire) when
+ * this changes between runs; detail/countdown churn deliberately doesn't count, so a reworded blurb
+ * or a ticking gas price won't reset the clock or spam a ping.
+ */
+internal fun stateFingerprint(r: ItemResult, today: LocalDate): String =
+    effectiveAnswer(r, today) + "|" + (r.tone ?: "")
+
+/**
+ * Resolve the `since` (current-state onset) for a freshly computed [base] result by diffing against
+ * the [prev] run:
+ *  - real state change vs prev → stamp [today]
+ *  - unchanged → carry the previous value forward (or adopt a newly-added author [seed])
+ *  - first-seen → trust the author [seed]; we can't know a dynamic item's real past flip date.
+ * This is what lets, e.g., a long-hidden Cosby card resurface under a tight filter the moment he dies.
+ */
+internal fun resolveSince(prev: ItemResult?, base: ItemResult, seed: String?, today: LocalDate): String? = when {
+    prev == null -> base.since ?: seed
+    stateFingerprint(prev, today) != stateFingerprint(base, today) -> today.toString()
+    else -> prev.since ?: base.since ?: seed
+}
+
+private fun stripHtml(s: String): String = s.replace(Regex("<[^>]*>"), "").trim()
+
+/** A state change worth notifying about — carries what the topic builder and message need. */
+internal data class NtfyEvent(
+    val id: String,
+    val label: String,
+    val category: String,
+    val message: String,
+    val death: Boolean,
+)
+
+/** Lowercase, slug-safe form of a category for use in a topic name (e.g. "AI" → "ai"). */
+internal fun categorySlug(category: String): String =
+    category.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
+
+/**
+ * The ntfy topics a change should fan out to, given the public [prefix]: the specific item, its
+ * category firehose, and the global firehose. Mirrors the link scheme the frontend builds, so a
+ * card's 🔔 and the checker's POST target the same topic. ntfy has no wildcard subscribe, hence
+ * the explicit `-<category>-all` and `-all` rollups.
+ */
+internal fun ntfyTopicsFor(prefix: String, category: String, id: String): List<String> {
+    val cat = categorySlug(category)
+    return listOf("$prefix-$cat-$id", "$prefix-$cat-all", "$prefix-all")
+}
+
+/**
+ * Publish a single notification to an ntfy topic (https://ntfy.sh/<topic> by default). Plain HTTP
+ * POST — ntfy handles fan-out to anyone subscribed to the topic, so there's no subscription store to
+ * maintain. Fail-soft: a delivery error never breaks the run.
+ */
+suspend fun sendNtfy(client: HttpClient, server: String, topic: String, label: String, message: String, death: Boolean) {
+    try {
+        client.post("$server/$topic") {
+            header("Title", label)
+            header("Tags", if (death) "skull" else "tada")
+            header("Click", "https://iswhateveroutyet.com/?search=" + java.net.URLEncoder.encode(label, "UTF-8"))
+            setBody(message)
+        }
+        println("  ntfy → $label")
+    } catch (e: Exception) {
+        println("  ntfy send failed for $label: ${e.message}")
+    }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 fun main(): Unit = runBlocking {
@@ -470,6 +558,23 @@ fun main(): Unit = runBlocking {
     val googleKey    = System.getenv("GOOGLE_API_KEY")    // optional
     val xaiKey       = System.getenv("XAI_API_KEY")       // optional
     val outputPath   = System.getenv("DATA_JSON_PATH")    ?: "../data.json"
+    // Public topic prefix (e.g. "iswhateveroutyet"); also the on-switch — notifications are skipped
+    // if unset. Must match NTFY_PREFIX in index.html so the frontend's 🔔 links and the checker's
+    // pushes target the same topics.
+    val ntfyPrefix   = System.getenv("NTFY_TOPIC_PREFIX")
+    val ntfyServer   = System.getenv("NTFY_SERVER") ?: "https://ntfy.sh"
+
+    // Load the previous run's results so we can detect state changes (drives `since` and ntfy pings).
+    // Missing/unparseable → empty, which means "everything is first-seen": no false notifications.
+    val prevById: Map<String, ItemResult> = try {
+        val f = File(outputPath)
+        if (f.exists())
+            Json { ignoreUnknownKeys = true }.decodeFromString<OutputData>(f.readText()).items.associateBy { it.id }
+        else emptyMap()
+    } catch (e: Exception) {
+        println("Could not read previous $outputPath (${e.message}) — treating all items as first-seen.")
+        emptyMap()
+    }
 
     val client = HttpClient(CIO) {
         install(ContentNegotiation) { json() }
@@ -509,7 +614,7 @@ fun main(): Unit = runBlocking {
         emptyList()
     }
 
-    val results = ITEMS.map { item ->
+    val baseResults = ITEMS.map { item ->
         when (val check = item.check) {
             is Check.Hardcoded -> ItemResult(
                 item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail,
@@ -661,6 +766,38 @@ fun main(): Unit = runBlocking {
                         detail = "${check.flippedDetail} <a href=\"$articleUrl\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
                     )
                 }
+            }
+        }
+    }
+
+    // Second pass: diff each result against the previous run to maintain `since` and collect the
+    // "just became out / just died" transitions worth a notification.
+    val today = LocalDate.now()
+    val seedById = ITEMS.associate { it.id to it.since?.toString() }
+    val transitions = mutableListOf<NtfyEvent>()
+    val results = baseResults.map { base ->
+        val prev = prevById[base.id]
+        if (prev != null) {
+            val becameYes = effectiveAnswer(base, today).startsWith("Yes") &&
+                !effectiveAnswer(prev, today).startsWith("Yes")
+            val becameDeath = base.tone == "death" && prev.tone != "death"
+            if (becameYes || becameDeath) {
+                val message = base.detail?.let { stripHtml(it) }?.ifBlank { null }
+                    ?: if (becameDeath) "Looks like they're out." else "It's out!"
+                transitions += NtfyEvent(base.id, base.label, base.category, message, becameDeath)
+            }
+        }
+        base.copy(since = resolveSince(prev, base, seedById[base.id], today))
+    }
+
+    if (ntfyPrefix == null) {
+        println("NTFY_TOPIC_PREFIX not set — skipping notifications.")
+    } else if (transitions.isNotEmpty()) {
+        println("Sending notifications for ${transitions.size} change(s)…")
+        transitions.take(8).forEach { ev ->
+            // Each change fans out to its item topic, its category firehose, and the global one.
+            ntfyTopicsFor(ntfyPrefix, ev.category, ev.id).forEach { topic ->
+                sendNtfy(client, ntfyServer, topic, ev.label, ev.message, ev.death)
             }
         }
     }

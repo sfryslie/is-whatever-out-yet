@@ -252,6 +252,29 @@
             "vagueLabel": "2028?"
         },
         {
+            "id": "silksong",
+            "label": "Hollow Knight: Silksong",
+            "category": "Game",
+            "answer": "Yes.",
+            "detail": "Released September 4, 2025. Worth the wait.",
+            "since": "2025-09-04"
+        },
+        {
+            "id": "deadlock",
+            "label": "Deadlock",
+            "category": "Game",
+            "answer": "No.",
+            "detail": "<a href=\"https://store.steampowered.com/app/1422450/Deadlock/\" target=\"_blank\" rel=\"noopener\">Still in Early Access.</a>"
+        },
+        {
+            "id": "bloodlines-2",
+            "label": "Vampire: The Masquerade - Bloodlines 2",
+            "category": "Game",
+            "answer": "Yes.",
+            "detail": "Finally. Announced 2019, out 2025.",
+            "since": "2025-10-21"
+        },
+        {
             "id": "winds-of-winter",
             "label": "The Winds of Winter",
             "category": "Book",
@@ -438,6 +461,7 @@
             "category": "People",
             "answer": "Maybe?",
             "detail": "I think he's still in one of those Myst books?",
+            "since": "2023-11-29",
             "tone": "death"
         },
         {
@@ -520,6 +544,7 @@
             "category": "People",
             "answer": "No.",
             "detail": "The Juice is not loose, he died in 2024.",
+            "since": "2024-04-10",
             "tone": "death"
         },
         {
