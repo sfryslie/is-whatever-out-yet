@@ -248,7 +248,7 @@ val ITEMS = listOf(
     Item("avengers-doomsday",   "Avengers: Doomsday",     "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),
     Item("air-bud-returns",     "Air Bud Returns",        "Movie", Check.ScheduledDate(LocalDate.of(2027, 1, 22))),
     Item("sonic-4",             "Sonic the Hedgehog 4",   "Movie", Check.ScheduledDate(LocalDate.of(2027, 3, 19))),
-    Item("spaceballs-new-one",  "Spaceballs: The New One", "Movie", Check.ScheduledDate(LocalDate.of(2027, 4, 23))),
+    Item("spaceballs-new-one",  "Spaceballs: The New One", "Movie", Check.ScheduledDate(LocalDate.of(2027, 4, 23)), defaultDetail = "I'm worried because it's not called Spaceballs III: The Search for Spaceballs II or Spaceballs 2: The Search for More Money"),
     Item("zelda-movie", "The Legend of Zelda", "Movie", Check.ScheduledDate(LocalDate.of(2027, 4, 30)),
         defaultDetail =
             """
