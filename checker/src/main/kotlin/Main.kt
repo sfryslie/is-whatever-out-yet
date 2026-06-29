@@ -205,10 +205,10 @@ val ITEMS = listOf(
     Item("how-many-dudes",  "How Many Dudes?",          "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 30)),
         defaultDetail = "<a href=\"https://store.steampowered.com/app/3934270/How_Many_Dudes/\" target=\"_blank\" rel=\"noopener\">Demo's out on Steam.</a>"),
     Item("fable-game",      "Fable",                    "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 23))),
-    Item("elder-scrolls-6", "The Elder Scrolls VI",     "Game", Check.Hardcoded, "No.", "Bethesda's been in development since 2018. Buy Skyrim again."),
+    Item("elder-scrolls-6", "The Elder Scrolls VI",     "Game", Check.Hardcoded, "No.", "I'm excited for the Skyrim Remake for the PS6"),
     Item("huniepop-3",      "HuniePop 3",               "Game", Check.Hardcoded, "No.", "I hope it's a roguelite deckbuilder."),
     Item("bge-2",           "Beyond Good and Evil 2",   "Game", Check.Hardcoded, "No.", "Announced 2008. Still waiting."),
-    Item("kotor-remake",    "Star Wars: KOTOR Remake",  "Game", Check.Hardcoded, "No.", "In development limbo since 2021."),
+    Item("kotor-remake",    "Star Wars: KOTOR Remake",  "Game", Check.Hardcoded, "No.", "Aspyr's teaser baited me into buying a PS5."),
     Item("onimusha-sword",  "Onimusha: Way of the Sword", "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 25))),
     Item("halo-campaign-evolved", "Halo: Campaign Evolved", "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 28)),
         defaultDetail = "Early access July 23."),
@@ -222,15 +222,15 @@ val ITEMS = listOf(
     Item("witcher-4",       "The Witcher IV",  "Game", Check.VagueDate(LocalDate.of(2028, 12, 31), "2028?")),
     // Already-out games — exercise the "hide long-released" slider at different age buckets.
     Item("silksong",        "Hollow Knight: Silksong", "Game", Check.Hardcoded, "Yes.",
-        "Released September 4, 2025. Worth the wait.", since = LocalDate.of(2025, 9, 4)),
+        "Silkposting is a art", since = LocalDate.of(2025, 9, 4)),
     Item("deadlock",        "Deadlock",        "Game", Check.Hardcoded, "No.",
         "<a href=\"https://store.steampowered.com/app/1422450/Deadlock/\" target=\"_blank\" rel=\"noopener\">Still in Early Access.</a>"),
     Item("bloodlines-2",    "Vampire: The Masquerade - Bloodlines 2", "Game", Check.Hardcoded, "Yes.",
-        "Finally. Announced 2019, out 2025.", since = LocalDate.of(2025, 10, 21)),
+        "It's okay. I just like that the devs are The Chinese Room, that's a fun name.", since = LocalDate.of(2025, 10, 21)),
 
     // Books
-    Item("winds-of-winter", "The Winds of Winter",      "Book", Check.Hardcoded, "No.", "GRRM started writing it in 2010. Watch the show again."),
-    Item("dsm-6",           "DSM-6",                    "Book", Check.Hardcoded, "No.", "AI <a href=\"https://en.wikipedia.org/wiki/Chatbot_psychosis\" target=\"_blank\" rel=\"noopener\">chatbot psychosis</a> will likely be in there."),
+    Item("winds-of-winter", "The Winds of Winter",      "Book", Check.Hardcoded, "No."),
+    Item("dsm-6",           "DSM-6",                    "Book", Check.Hardcoded, "No.", "<a href=\"https://en.wikipedia.org/wiki/Chatbot_psychosis\" target=\"_blank\" rel=\"noopener\">Chatbot psychosis</a> will likely be in there."),
     Item("doors-of-stone",  "The Doors of Stone",       "Book", Check.Hardcoded, "No."),
 
     // Shows
@@ -249,8 +249,14 @@ val ITEMS = listOf(
     Item("air-bud-returns",     "Air Bud Returns",        "Movie", Check.ScheduledDate(LocalDate.of(2027, 1, 22))),
     Item("sonic-4",             "Sonic the Hedgehog 4",   "Movie", Check.ScheduledDate(LocalDate.of(2027, 3, 19))),
     Item("spaceballs-new-one",  "Spaceballs: The New One", "Movie", Check.ScheduledDate(LocalDate.of(2027, 4, 23))),
-    Item("zelda-movie",         "The Legend of Zelda",    "Movie", Check.ScheduledDate(LocalDate.of(2027, 4, 30)),
-        defaultDetail = "I'm morbidly curious."),
+    Item("zelda-movie", "The Legend of Zelda", "Movie", Check.ScheduledDate(LocalDate.of(2027, 4, 30)),
+        defaultDetail =
+            """
+            corpos can't triforce
+             ▲
+            ▲ ▲
+            """.trimIndent() // The space before the top ▲ is a non-breaking space - I think it'll work.
+    ),
     Item("starwars-starfighter", "Star Wars: Starfighter", "Movie", Check.ScheduledDate(LocalDate.of(2027, 5, 28)),
         defaultDetail = "It has Ryan Gosling, I guess? Did anyone actually go to the Mandalorian movie?"),
     Item("spiderverse-3",       "Spider-Man: Beyond the Spider-Verse", "Movie", Check.ScheduledDate(LocalDate.of(2027, 6, 18))),
@@ -331,8 +337,8 @@ val ITEMS = listOf(
         defaultDetail = "JDK 28 preview."),
     Item("fsd-level-5",     "Level 5 Full Self-Driving", "Tech", Check.Hardcoded, "No."),
     Item("cold-fusion",     "Cold Fusion",     "Tech", Check.Hardcoded, "No."),
-    Item("amd-zen-6",       "AMD Zen 6",       "Tech", Check.CountdownTo(LocalDate.of(2027, 1, 6)), "No.", "Might be revealed then."),
-    Item("rtx-50-super",    "RTX 50 Super Series", "Tech", Check.CountdownTo(LocalDate.of(2027, 1, 6)), "No.", "Might be revealed then."),
+    Item("amd-zen-6",       "AMD Zen 6",       "Tech", Check.CountdownTo(LocalDate.of(2027, 1, 6)), "No.", "Might be revealed at CES 2027."),
+    Item("rtx-50-super",    "RTX 50 Super Series", "Tech", Check.CountdownTo(LocalDate.of(2027, 1, 6)), "No.", "Might be revealed at CES 2027."),
     Item("rtx-60",          "RTX 60 Series",   "Tech", Check.Hardcoded, "No.", "Blame AI / Jensen."),
 
     // Internet
