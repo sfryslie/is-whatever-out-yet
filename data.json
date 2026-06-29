@@ -138,14 +138,26 @@
             "id": "gta-vi",
             "label": "Grand Theft Auto VI",
             "category": "Game",
-            "releaseDate": "2026-11-19"
+            "releaseDate": "2026-11-19",
+            "aliases": [
+                "GTA 6",
+                "GTA VI",
+                "GTAVI",
+                "GTA6"
+            ]
         },
         {
             "id": "gta-vi-pc",
             "label": "Grand Theft Auto VI (PC)",
             "category": "Game",
             "answer": "No.",
-            "detail": "Rip"
+            "detail": "Rip",
+            "aliases": [
+                "GTA 6 PC",
+                "GTA VI PC",
+                "GTAVI PC",
+                "GTA6 PC"
+            ]
         },
         {
             "id": "how-many-dudes",

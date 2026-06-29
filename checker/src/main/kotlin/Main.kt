@@ -51,6 +51,8 @@ data class ItemResult(
     // Semantic tone that overrides answer-based card coloring. Currently only "death" — a somber
     // slate instead of celebratory green for "they're out" cards that actually mean someone died.
     val tone: String? = null,
+    // Alternative search terms — e.g. ["GTA 6", "GTAVI", "GTA6"] for "Grand Theft Auto VI".
+    val aliases: List<String>? = null,
 )
 
 @Serializable
@@ -163,6 +165,8 @@ data class Item(
     // Semantic coloring override; see ItemResult.tone. Set "death" on cards where a green "Yes." is
     // tonally wrong (someone died rather than was released).
     val tone: String? = null,
+    // Optional search aliases surfaced in ItemResult for the frontend's filter (e.g. "GTA6", "GTAVI").
+    val aliases: List<String>? = null,
 )
 
 // Infobox-anchored "still locked up" markers, OR-matched against the full rendered Wikipedia HTML
@@ -200,8 +204,10 @@ val ITEMS = listOf(
     Item("deltarune-ch6",   "Deltarune Ch. 6", "Game", Check.Hardcoded, "No.", "Chapter 5 just came out. Relax."),
     Item("persona-6",       "Persona 6",       "Game", Check.Hardcoded, "No."),
     Item("persona-4-revival", "Persona 4 Revival", "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 18))),
-    Item("gta-vi",          "Grand Theft Auto VI",      "Game", Check.ScheduledDate(LocalDate.of(2026, 11, 19))),
-    Item("gta-vi-pc",       "Grand Theft Auto VI (PC)", "Game", Check.Hardcoded, "No.", "Rip"),
+    Item("gta-vi",          "Grand Theft Auto VI",      "Game", Check.ScheduledDate(LocalDate.of(2026, 11, 19)),
+        aliases = listOf("GTA 6", "GTA VI", "GTAVI", "GTA6")),
+    Item("gta-vi-pc",       "Grand Theft Auto VI (PC)", "Game", Check.Hardcoded, "No.", "Rip",
+        aliases = listOf("GTA 6 PC", "GTA VI PC", "GTAVI PC", "GTA6 PC")),
     Item("how-many-dudes",  "How Many Dudes?",          "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 30)),
         defaultDetail = "<a href=\"https://store.steampowered.com/app/3934270/How_Many_Dudes/\" target=\"_blank\" rel=\"noopener\">Demo's out on Steam.</a>"),
     Item("fable-game",      "Fable",                    "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 23))),
@@ -709,7 +715,7 @@ fun main(): Unit = runBlocking {
     }
 
     val baseResults = ITEMS.map { item ->
-        when (val check = item.check) {
+        val result = when (val check = item.check) {
             is Check.Hardcoded -> ItemResult(
                 item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail,
                 since = item.since?.toString(), tone = item.tone,
@@ -862,6 +868,7 @@ fun main(): Unit = runBlocking {
                 }
             }
         }
+        result.copy(aliases = item.aliases)
     }
 
     // Second pass: diff each result against the previous run to maintain `since` and collect the
