@@ -538,6 +538,7 @@
     // isclaudesonnet5outyet.com redirect to land on the Sonnet 5 card.
     const initialSearch = new URLSearchParams(window.location.search).get('search');
     if (initialSearch) searchInput.value = initialSearch;
+    let paramMode = Boolean(initialSearch);
 
     let allItems = [];
 
@@ -824,7 +825,11 @@
     function renderHero(raw) {
       const item = resolveItem(raw);
       const cls = cardClass(item, item.answer);
-      titleWord.innerHTML = `<del class="title-del">whatever</del> ${item.label}`;
+      if (paramMode) {
+        titleWord.innerHTML = `<del class="title-del">whatever</del> ${item.label}`;
+      } else {
+        titleWord.textContent = 'whatever';
+      }
       content.innerHTML = `
         <div class="hero ${cls}">
           <div class="hero-name">${item.label}</div>
@@ -928,6 +933,7 @@
     }
 
     searchInput.addEventListener('input', () => {
+      paramMode = false;
       if (allItems.length > 0) renderGrid();
     });
 
