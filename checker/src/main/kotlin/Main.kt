@@ -247,6 +247,9 @@ val ITEMS = listOf(
     Item("frieren-s3",          "Frieren S3",             "Show", Check.VagueDate(LocalDate.of(2027, 10, 31), "October 2027?")),
     Item("dbs-galactic-patrol", "Dragon Ball Super: The Galactic Patrol", "Show", Check.VagueDate(LocalDate.of(2027, 12, 31), "Late 2027?")),
     Item("chainsaw-man-s2",     "Chainsaw Man Season 2",  "Show", Check.VagueDate(LocalDate.of(2027, 12, 31), "Late 2027?")),
+    Item("cyberpunk-edgerunners-2", "Cyberpunk: Edgerunners 2", "Show", Check.VagueDate(LocalDate.of(2026, 10, 15), "Fall 2026?"),
+        defaultDetail = "<a href=\"https://www.youtube.com/watch?v=mV7451mcw-E\" target=\"_blank\" rel=\"noopener\">Teaser out.</a>"),
+    Item("invincible-s5",       "Invincible Season 5",    "Show", Check.VagueDate(LocalDate.of(2027, 4, 15), "Spring 2027?")),
 
     // Movies (date-ordered)
     Item("dune-3",              "Dune: Part Three",       "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),

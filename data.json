@@ -344,6 +344,21 @@
             "vagueLabel": "Late 2027?"
         },
         {
+            "id": "cyberpunk-edgerunners-2",
+            "label": "Cyberpunk: Edgerunners 2",
+            "category": "Show",
+            "detail": "<a href=\"https://www.youtube.com/watch?v=mV7451mcw-E\" target=\"_blank\" rel=\"noopener\">Teaser out.</a>",
+            "releaseDate": "2026-10-15",
+            "vagueLabel": "Fall 2026?"
+        },
+        {
+            "id": "invincible-s5",
+            "label": "Invincible Season 5",
+            "category": "Show",
+            "releaseDate": "2027-04-15",
+            "vagueLabel": "Spring 2027?"
+        },
+        {
             "id": "dune-3",
             "label": "Dune: Part Three",
             "category": "Movie",
