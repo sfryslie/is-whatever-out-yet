@@ -273,22 +273,46 @@
       justify-content: center;
     }
 
-    #search {
+    .search-field {
+      position: relative;
       width: 100%;
       max-width: 420px;
+    }
+
+    #search {
+      width: 100%;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text);
-      padding: 0.7rem 0.95rem;
+      padding: 0.7rem 2.4rem 0.7rem 0.95rem;
       font-size: 0.95rem;
       font-family: inherit;
       outline: none;
       transition: border-color 0.15s;
     }
 
+    #search::-webkit-search-cancel-button { -webkit-appearance: none; }
     #search:focus { border-color: #444; }
     #search::placeholder { color: var(--muted); }
+
+    #search-clear {
+      position: absolute;
+      right: 0.6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0.2rem 0.3rem;
+      display: none;
+    }
+
+    #search-clear:hover { color: var(--text); }
+    .search-field.has-value #search-clear { display: block; }
 
     .no-results {
       font-size: clamp(2.5rem, 7vw, 4.25rem);
@@ -519,7 +543,10 @@
   </header>
 
   <div class="search-wrap">
-    <input id="search" type="search" placeholder="Filter by name…" autocomplete="off" />
+    <div class="search-field">
+      <input id="search" type="search" placeholder="Filter by name…" autocomplete="off" />
+      <button id="search-clear" aria-label="Clear search">×</button>
+    </div>
   </div>
 
   <div id="content"></div>
@@ -536,9 +563,25 @@
 
     // Allow deep-linking a prepopulated filter via ?search=... — used by the
     // isclaudesonnet5outyet.com redirect to land on the Sonnet 5 card.
+    const searchField = document.querySelector('.search-field');
+    const clearBtn = document.getElementById('search-clear');
+
+    function updateClearBtn() {
+      searchField.classList.toggle('has-value', searchInput.value.length > 0);
+    }
+
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      paramMode = false;
+      updateClearBtn();
+      if (allItems.length > 0) renderGrid();
+      searchInput.focus();
+    });
+
     const initialSearch = new URLSearchParams(window.location.search).get('search');
     if (initialSearch) searchInput.value = initialSearch;
     let paramMode = Boolean(initialSearch);
+    updateClearBtn();
 
     let allItems = [];
 
@@ -934,6 +977,7 @@
 
     searchInput.addEventListener('input', () => {
       paramMode = false;
+      updateClearBtn();
       if (allItems.length > 0) renderGrid();
     });
 
