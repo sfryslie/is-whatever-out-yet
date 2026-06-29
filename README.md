@@ -50,5 +50,5 @@ Output is written to `../data.json` by default, or to `DATA_JSON_PATH` if set.
 
 ## License
 
-[GNU General Public License v3.0 or later](LICENSE) (GPL-3.0-or-later) — free to use, study,
-modify, and distribute, including commercially, as long as derivative works are also GPL-3.0-or-later.
+[GNU General Public License v3.0](LICENSE) (GPL-3.0) — free to use, study, modify, and
+distribute, including commercially, as long as derivative works are also GPL-3.0.
