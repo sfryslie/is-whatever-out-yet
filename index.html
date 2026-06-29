@@ -252,6 +252,9 @@
       color: var(--muted);
       padding-bottom: 0.25rem;
       border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
 
     .grid {
@@ -262,6 +265,7 @@
 
     /* ── cards ── */
     .card {
+      position: relative;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -270,6 +274,21 @@
       flex-direction: column;
       gap: 0.5rem;
     }
+
+    /* 🔔 subscribe links (per-card, per-category, and the settings "everything" link) */
+    .bell {
+      color: var(--muted);
+      opacity: 0.55;
+      transition: opacity 0.15s, color 0.15s;
+      flex-shrink: 0;
+      line-height: 0;
+    }
+    .bell:hover { opacity: 1; color: var(--other); }
+    .bell svg { width: 0.95rem; height: 0.95rem; display: block; }
+    .card-bell { position: absolute; top: 0.85rem; right: 0.85rem; }
+    .cat-label .bell { margin-left: auto; }
+    .settings-link { text-decoration: none; color: inherit; }
+    .settings-bell { font-size: 0.95rem; opacity: 0.7; }
 
     .card.yes  { background: var(--yes-bg);  border-color: var(--yes-border); }
     .card.soon { background: var(--soon-bg); border-color: var(--soon-border); }
@@ -282,6 +301,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding-right: 1.3rem;
     }
 
     .card-answer {
@@ -391,6 +411,14 @@
         <input type="range" id="hide-old-slider" class="slider" min="0" max="5" step="1" value="0"
                aria-label="Hide items released longer than">
       </div>
+      <a class="settings-row settings-link" href="https://ntfy.sh/iswhateveroutyet-all"
+         target="_blank" rel="noopener" role="menuitem">
+        <span class="settings-row-label">
+          Notify me about everything
+          <span class="settings-row-sub">Push when anything flips, via ntfy</span>
+        </span>
+        <span class="bell settings-bell">↗</span>
+      </a>
     </div>
   </div>
 
@@ -419,6 +447,16 @@
     if (initialSearch) searchInput.value = initialSearch;
 
     let allItems = [];
+
+    // ntfy push links. The topic scheme mirrors the checker (its NTFY_TOPIC_PREFIX must equal
+    // NTFY_PREFIX here): a per-item topic, a per-category firehose, and a global one. ntfy has no
+    // wildcard subscribe, so each tier is its own topic. Opening the URL lets you subscribe via the
+    // ntfy web app or hand off to the installed app.
+    const NTFY_PREFIX = 'iswhateveroutyet';
+    const catSlug = c => c.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const ntfyItemUrl = item => `https://ntfy.sh/${NTFY_PREFIX}-${catSlug(item.category)}-${item.id}`;
+    const ntfyCatUrl = cat => `https://ntfy.sh/${NTFY_PREFIX}-${catSlug(cat)}-all`;
+    const BELL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
 
     // "Hide long-released" slider stops. Each level hides items that have been out longer than
     // `days`; level 0 is off, and the last (-1) hides anything released at all.
@@ -633,7 +671,10 @@
       order.forEach(cat => {
         const section = document.createElement('section');
         section.className = 'section';
-        section.innerHTML = `<h2 class="cat-label">${cat}</h2>`;
+        section.innerHTML = `<h2 class="cat-label">${cat}
+          <a class="bell" href="${ntfyCatUrl(cat)}" target="_blank" rel="noopener"
+             title="Notify me about all ${cat}" aria-label="Notify me about all ${cat}">${BELL_SVG}</a>
+        </h2>`;
 
         const grid = document.createElement('div');
         grid.className = 'grid';
@@ -647,6 +688,8 @@
           const cls = cardClass(item, item.answer);
           grid.innerHTML += `
             <div class="card ${cls}">
+              <a class="bell card-bell" href="${ntfyItemUrl(item)}" target="_blank" rel="noopener"
+                 title="Notify me when this changes" aria-label="Notify me about ${item.label}">${BELL_SVG}</a>
               <div class="card-name">${item.label}</div>
               <div class="card-answer">${item.answer}</div>
               ${item.countdownLabel ? `

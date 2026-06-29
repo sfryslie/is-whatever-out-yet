@@ -507,6 +507,30 @@ internal fun resolveSince(prev: ItemResult?, base: ItemResult, seed: String?, to
 
 private fun stripHtml(s: String): String = s.replace(Regex("<[^>]*>"), "").trim()
 
+/** A state change worth notifying about — carries what the topic builder and message need. */
+internal data class NtfyEvent(
+    val id: String,
+    val label: String,
+    val category: String,
+    val message: String,
+    val death: Boolean,
+)
+
+/** Lowercase, slug-safe form of a category for use in a topic name (e.g. "AI" → "ai"). */
+internal fun categorySlug(category: String): String =
+    category.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
+
+/**
+ * The ntfy topics a change should fan out to, given the public [prefix]: the specific item, its
+ * category firehose, and the global firehose. Mirrors the link scheme the frontend builds, so a
+ * card's 🔔 and the checker's POST target the same topic. ntfy has no wildcard subscribe, hence
+ * the explicit `-<category>-all` and `-all` rollups.
+ */
+internal fun ntfyTopicsFor(prefix: String, category: String, id: String): List<String> {
+    val cat = categorySlug(category)
+    return listOf("$prefix-$cat-$id", "$prefix-$cat-all", "$prefix-all")
+}
+
 /**
  * Publish a single notification to an ntfy topic (https://ntfy.sh/<topic> by default). Plain HTTP
  * POST — ntfy handles fan-out to anyone subscribed to the topic, so there's no subscription store to
@@ -534,7 +558,10 @@ fun main(): Unit = runBlocking {
     val googleKey    = System.getenv("GOOGLE_API_KEY")    // optional
     val xaiKey       = System.getenv("XAI_API_KEY")       // optional
     val outputPath   = System.getenv("DATA_JSON_PATH")    ?: "../data.json"
-    val ntfyTopic    = System.getenv("NTFY_TOPIC")        // optional — notifications skipped if unset
+    // Public topic prefix (e.g. "iswhateveroutyet"); also the on-switch — notifications are skipped
+    // if unset. Must match NTFY_PREFIX in index.html so the frontend's 🔔 links and the checker's
+    // pushes target the same topics.
+    val ntfyPrefix   = System.getenv("NTFY_TOPIC_PREFIX")
     val ntfyServer   = System.getenv("NTFY_SERVER") ?: "https://ntfy.sh"
 
     // Load the previous run's results so we can detect state changes (drives `since` and ntfy pings).
@@ -747,7 +774,7 @@ fun main(): Unit = runBlocking {
     // "just became out / just died" transitions worth a notification.
     val today = LocalDate.now()
     val seedById = ITEMS.associate { it.id to it.since?.toString() }
-    val transitions = mutableListOf<Triple<String, String, Boolean>>()  // label, message, isDeath
+    val transitions = mutableListOf<NtfyEvent>()
     val results = baseResults.map { base ->
         val prev = prevById[base.id]
         if (prev != null) {
@@ -757,18 +784,21 @@ fun main(): Unit = runBlocking {
             if (becameYes || becameDeath) {
                 val message = base.detail?.let { stripHtml(it) }?.ifBlank { null }
                     ?: if (becameDeath) "Looks like they're out." else "It's out!"
-                transitions += Triple(base.label, message, becameDeath)
+                transitions += NtfyEvent(base.id, base.label, base.category, message, becameDeath)
             }
         }
         base.copy(since = resolveSince(prev, base, seedById[base.id], today))
     }
 
-    if (ntfyTopic == null) {
-        println("NTFY_TOPIC not set — skipping notifications.")
+    if (ntfyPrefix == null) {
+        println("NTFY_TOPIC_PREFIX not set — skipping notifications.")
     } else if (transitions.isNotEmpty()) {
-        println("Sending ${transitions.size} ntfy notification(s)…")
-        transitions.take(8).forEach { (label, message, death) ->
-            sendNtfy(client, ntfyServer, ntfyTopic, label, message, death)
+        println("Sending notifications for ${transitions.size} change(s)…")
+        transitions.take(8).forEach { ev ->
+            // Each change fans out to its item topic, its category firehose, and the global one.
+            ntfyTopicsFor(ntfyPrefix, ev.category, ev.id).forEach { topic ->
+                sendNtfy(client, ntfyServer, topic, ev.label, ev.message, ev.death)
+            }
         }
     }
 

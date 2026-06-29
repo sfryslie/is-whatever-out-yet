@@ -74,6 +74,34 @@ class StateTrackingTest {
     }
 }
 
+class NtfyTopicTest {
+    @Test
+    fun `category is slugged to lowercase`() {
+        assertEquals("ai", categorySlug("AI"))
+        assertEquals("people", categorySlug("People"))
+    }
+
+    @Test
+    fun `a change fans out to item, category, and global topics`() {
+        assertEquals(
+            listOf(
+                "iswhateveroutyet-game-fable-game",
+                "iswhateveroutyet-game-all",
+                "iswhateveroutyet-all",
+            ),
+            ntfyTopicsFor("iswhateveroutyet", "Game", "fable-game"),
+        )
+    }
+
+    @Test
+    fun `AI item topic lowercases the category segment`() {
+        assertEquals(
+            "iswhateveroutyet-ai-claude-fable-5",
+            ntfyTopicsFor("iswhateveroutyet", "AI", "claude-fable-5").first(),
+        )
+    }
+}
+
 class GasAverageRegexTest {
     @Test
     fun `extracts the national average price from AAA-style markup`() {
