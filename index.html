@@ -308,7 +308,9 @@
       font-size: 0.82rem;
       color: var(--muted);
       font-weight: 500;
-      white-space: nowrap;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
       padding-right: 1.3rem;
@@ -368,6 +370,7 @@
       color: var(--muted);
       line-height: 1.4;
       margin-top: 0.1rem;
+      white-space: pre-wrap;
     }
 
     .card-detail a { color: inherit; text-underline-offset: 3px; }
@@ -757,7 +760,10 @@
     function renderGrid() {
       const filter = searchInput.value.trim().toLowerCase();
       let visibleItems = filter
-        ? allItems.filter(item => item.label.toLowerCase().includes(filter))
+        ? allItems.filter(item =>
+            item.label.toLowerCase().includes(filter) ||
+            (item.aliases && item.aliases.some(a => a.toLowerCase().includes(filter)))
+          )
         : allItems;
 
       if (hideLevel > 0) visibleItems = visibleItems.filter(item => !isHiddenByLevel(item));
