@@ -10,7 +10,7 @@ Static GitHub Pages site that tracks whether various things are "out yet." A Kot
 index.html                        # Frontend — vanilla JS, no build step
 manifest.webmanifest              # PWA manifest (installable home-screen app)
 sw.js                             # Service worker — cache-first shell, network-first data.json
-icons/                            # PWA/favicon icons (generated; green "?" on near-black)
+icons/                            # PWA/favicon icons ("iwoy?" wordmark on #0d0f12)
 data.json                         # Written by the checker; read by the frontend
 checker/
   src/main/kotlin/Main.kt         # All checker logic — items catalogue + check strategies
