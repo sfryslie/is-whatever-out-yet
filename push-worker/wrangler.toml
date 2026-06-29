@@ -1,0 +1,13 @@
+name = "iswhateveroutyet-push"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Created with: wrangler kv namespace create SUBS
+# Paste the returned id below.
+kv_namespaces = [
+  { binding = "SUBS", id = "REPLACE_WITH_KV_NAMESPACE_ID" }
+]
+
+# Optional: lock CORS to the site origin instead of "*".
+# [vars]
+# ALLOWED_ORIGIN = "https://iswhateveroutyet.com"

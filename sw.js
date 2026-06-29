@@ -7,7 +7,7 @@
 //     to the last cached copy when offline.
 //
 // Bump CACHE_VERSION whenever the shell changes to evict the old cache.
-const CACHE_VERSION = 'iwoy-v1';
+const CACHE_VERSION = 'iwoy-v2';
 const SHELL = [
   './',
   './index.html',
@@ -64,6 +64,36 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => cached);
       return cached || network;
+    })
+  );
+});
+
+// ── Web Push ──────────────────────────────────────────────────────────────────
+// The push Worker delivers a JSON payload: { title, body, url, tag }.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { /* keep defaults */ }
+  const title = data.title || 'Is whatever out yet?';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: 'icons/icon-192.png',
+      badge: 'icons/icon-192.png',
+      tag: data.tag || undefined,
+      data: { url: data.url || 'https://iswhateveroutyet.com' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || 'https://iswhateveroutyet.com';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if (client.url === url && 'focus' in client) return client.focus();
+      }
+      return clients.openWindow(url);
     })
   );
 });
