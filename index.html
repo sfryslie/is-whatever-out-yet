@@ -97,6 +97,67 @@
 
     .subtitle { color: var(--muted); font-size: 0.9rem; }
 
+    /* ── param-search title crossout ── */
+    .title-del { text-decoration: line-through; color: var(--muted); }
+
+    /* ── hero view: single-result URL-param landing ── */
+    .hero {
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 2.5rem 0;
+    }
+
+    .hero-name {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .hero-answer {
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+    }
+
+    .hero.yes   .hero-answer { color: var(--yes); }
+    .hero.soon  .hero-answer { color: var(--soon); }
+    .hero.no    .hero-answer { color: var(--no-answer); }
+    .hero.other .hero-answer { color: var(--other); }
+    .hero.gone  .hero-answer { color: var(--gone); }
+
+    .hero-countdown {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      margin-top: 0.25rem;
+    }
+
+    .hero-countdown-label {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--other);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hero-countdown-sub { font-size: 0.85rem; color: var(--muted); }
+
+    .hero-detail {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.5;
+      max-width: 420px;
+      margin-top: 0.25rem;
+      white-space: pre-wrap;
+    }
+
+    .hero-detail a { color: inherit; text-underline-offset: 3px; }
+
     /* ── settings menu ── */
     .settings {
       position: fixed;
@@ -454,7 +515,7 @@
   </div>
 
   <header>
-    <h1>Is whatever out yet?</h1>
+    <h1>Is <span id="title-word">whatever</span> out yet?</h1>
   </header>
 
   <div class="search-wrap">
@@ -477,6 +538,10 @@
     // isclaudesonnet5outyet.com redirect to land on the Sonnet 5 card.
     const initialSearch = new URLSearchParams(window.location.search).get('search');
     if (initialSearch) searchInput.value = initialSearch;
+
+    // True while the page was landed on via ?search= and the user hasn't typed yet.
+    // Hero view activates in this mode when the filter resolves to exactly one item.
+    let paramMode = Boolean(initialSearch);
 
     let allItems = [];
 
@@ -758,6 +823,26 @@
       content.appendChild(grid);
     }
 
+    const titleWord = document.getElementById('title-word');
+
+    function renderHero(raw) {
+      const item = resolveItem(raw);
+      const cls = cardClass(item, item.answer);
+      titleWord.innerHTML = `<del class="title-del">whatever</del> ${item.label}`;
+      content.innerHTML = `
+        <div class="hero ${cls}">
+          <div class="hero-name">${item.label}</div>
+          <div class="hero-answer">${item.answer}</div>
+          ${item.countdownLabel ? `
+            <div class="hero-countdown">
+              <div class="hero-countdown-label">${item.countdownLabel}</div>
+              <div class="hero-countdown-sub">${item.countdownSub}</div>
+            </div>
+          ` : ''}
+          ${item.detail ? `<div class="hero-detail">${item.detail}</div>` : ''}
+        </div>`;
+    }
+
     function renderGrid() {
       const filter = searchInput.value.trim().toLowerCase();
       let visibleItems = filter
@@ -769,6 +854,12 @@
 
       if (hideLevel > 0) visibleItems = visibleItems.filter(item => !isHiddenByLevel(item));
 
+      if (paramMode && visibleItems.length === 1) {
+        renderHero(visibleItems[0]);
+        return;
+      }
+
+      titleWord.textContent = 'whatever';
       content.innerHTML = '';
 
       if (visibleItems.length === 0) {
@@ -841,6 +932,7 @@
     }
 
     searchInput.addEventListener('input', () => {
+      paramMode = false;
       if (allItems.length > 0) renderGrid();
     });
 
