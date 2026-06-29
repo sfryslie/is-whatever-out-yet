@@ -539,10 +539,6 @@
     const initialSearch = new URLSearchParams(window.location.search).get('search');
     if (initialSearch) searchInput.value = initialSearch;
 
-    // True while the page was landed on via ?search= and the user hasn't typed yet.
-    // Hero view activates in this mode when the filter resolves to exactly one item.
-    let paramMode = Boolean(initialSearch);
-
     let allItems = [];
 
     // ── Web Push notifications ───────────────────────────────────────────────────
@@ -854,7 +850,7 @@
 
       if (hideLevel > 0) visibleItems = visibleItems.filter(item => !isHiddenByLevel(item));
 
-      if (paramMode && visibleItems.length === 1) {
+      if (visibleItems.length === 1) {
         renderHero(visibleItems[0]);
         return;
       }
@@ -932,7 +928,6 @@
     }
 
     searchInput.addEventListener('input', () => {
-      paramMode = false;
       if (allItems.length > 0) renderGrid();
     });
 
