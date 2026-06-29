@@ -222,8 +222,8 @@ val ITEMS = listOf(
     // Already-out games — exercise the "hide long-released" slider at different age buckets.
     Item("silksong",        "Hollow Knight: Silksong", "Game", Check.Hardcoded, "Yes.",
         "Released September 4, 2025. Worth the wait.", since = LocalDate.of(2025, 9, 4)),
-    Item("deadlock",        "Deadlock",        "Game", Check.Hardcoded, "Yes.",
-        "In open beta since 2024.", since = LocalDate.of(2024, 8, 23)),
+    Item("deadlock",        "Deadlock",        "Game", Check.Hardcoded, "No.",
+        "<a href=\"https://store.steampowered.com/app/1422450/Deadlock/\" target=\"_blank\" rel=\"noopener\">Still in Early Access.</a>"),
     Item("bloodlines-2",    "Vampire: The Masquerade - Bloodlines 2", "Game", Check.Hardcoded, "Yes.",
         "Finally. Announced 2019, out 2025.", since = LocalDate.of(2025, 10, 21)),
 

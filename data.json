@@ -263,9 +263,8 @@
             "id": "deadlock",
             "label": "Deadlock",
             "category": "Game",
-            "answer": "Yes.",
-            "detail": "In open beta since 2024.",
-            "since": "2024-08-23"
+            "answer": "No.",
+            "detail": "<a href=\"https://store.steampowered.com/app/1422450/Deadlock/\" target=\"_blank\" rel=\"noopener\">Still in Early Access.</a>"
         },
         {
             "id": "bloodlines-2",
