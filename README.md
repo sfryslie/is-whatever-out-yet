@@ -1,52 +1,47 @@
-# Is whatever out yet?
+# is whatever out yet?
 
 A multi-item release tracker hosted on GitHub Pages at [iswhateveroutyet.com](https://iswhateveroutyet.com).
 
-Tracks AI models, games, people, and other things that may or may not exist yet. Checks run every 30 minutes via GitHub Actions and write results to `data.json`, which the static frontend reads.
+Tracks AI models, games, people, and other things that may or may not be out yet.
 
-## How it works
+There are redirects to this site from other sites I bought, including but not limited to... 
+* [isclaudesonnet5outyet.com](https://isclaudesonnet5outyet.com/) -> https://iswhateveroutyet.com?search=Claude+Sonnet+5
+* [isclaudefable5outyet.com](https://isclaudefable5outyet.com/) -> https://iswhateveroutyet.com?search=Claude+Fable+5
+* [isgrandtheftauto6outyet.com](https://isgrandtheftauto6outyet.com/) -> https://iswhateveroutyet.com?search=GTA6
+* [ispersona6outyet.com](https://ispersona6outyet.com/) -> https://iswhateveroutyet.com?search=Persona+6
 
-- **Frontend** — `index.html`, vanilla JS, no build step. Fetches `data.json` and renders cards grouped by category.
-- **Checker** — Kotlin + Ktor Client (`checker/`), runs as a GitHub Actions cron job. Writes updated `data.json` back to the repo.
-- **Check types:**
-  - `Hardcoded` — answer never changes, set in code
-  - `ScheduledDate` — shows countdown, flips to "Yes." on release day
-  - `Anthropic` — live check against `/v1/models`
-  - `OpenAI` — live check against `/v1/models` (optional, skipped if no key)
-  - `Gemini` — live check against `/v1beta/models` (optional, skipped if no key)
-  - `HomestarRunner` — checks homestarrunner.com sitemap for sbemail211
+## Why did you make this?
 
-## Required secrets
+Because I think I am very funny and clever and you should laugh at my jokes and clap.
 
-| Secret | Required | Purpose |
-|--------|----------|---------|
-| `ANTHROPIC_API_KEY` | Yes | Anthropic model list checks |
-| `OPENAI_API_KEY` | No | OpenAI model list checks |
-| `GOOGLE_API_KEY` | No | Gemini model list checks |
-| `XAI_API_KEY` | No | xAI/Grok model list checks |
-| `PUSH_API_URL` | No | Deployed [`push-worker`](push-worker/) URL — enables Web Push notifications when something flips to "out" or someone dies. Subscribe per-item, per-category, or to everything via the 🔔 toggles on the site |
-| `PUSH_SEND_TOKEN` | No | Shared secret authenticating the checker to the Worker's `/send` (must equal the Worker's `SEND_TOKEN`) |
+Eh, basically I just want to play around with different AI models and stuff to see how good it is at building frontends and everything end-to-end, reading API docs for me, etc. The app is relatively simple and has a lot of boilerplate code just doing basic CRUD.
 
-Add these under Settings → Secrets and variables → Actions.
+It's a fun learning exercise in my freetime while I'm goofing off. I don't usually code for free.
 
-## Adding an item
+## How does it work?
 
-In [`checker/src/main/kotlin/Main.kt`](checker/src/main/kotlin/Main.kt), add an entry to `ITEMS`:
+Basically, I just have the checks hit some of the various read-only / public APIs or hit a website directly and scrape for content to see if something is out yet. 
 
-```kotlin
-Item("my-item-id", "My Item Label", "Category", Check.Hardcoded, "No.", "Optional detail text."),
-```
+Some are jokes, some are not. Some are live-updated, some aren't. I think I am very funny and clever.
 
-Then add a matching placeholder entry to `data.json` so the frontend shows something before the next Action run.
+* Animes check AniList's GraphQL APIs - https://docs.anilist.co/
+* Games check the Internet Game Database (IGDB) via a Twitch dev token - https://api-docs.igdb.com
+* People check Wikipedia
+* Big blockbuster movies usually have pretty static release dates so they're just a countdown timer
+* Homestar Runner checks their sitemap.xml
+* etc.
 
-## Running locally
+Checks run every 30 minutes via GitHub Actions and write results to `data.json`, which the frontend reads. If I start hitting rate-limits, then maybe I'll split out the checks and data.json or something and make this better, or I might not. Maybe I'll make an actual app with like KMP or something.
 
-```bash
-cd checker
-ANTHROPIC_API_KEY=sk-ant-... gradle run
-```
+If something changes, the runner will also send out notifications on the topics to people who are subscribed to them, so they should receive it if the page is open on their desktop or if they installed the PWA. Or maybe if I make an actual app. IDK. I just am goofing around.
 
-Output is written to `../data.json` by default, or to `DATA_JSON_PATH` if set.
+## Buy Me a Coffee
+
+If you thought my jokes were funny, here ya go, here's the Buy Me a Coffee link.
+
+<img width="400" height="400" alt="bmc_qr" src="https://github.com/user-attachments/assets/dc28f229-310a-47c6-b7c3-2e2ec83f5dd3" />
+
+buymeacoffee.com/sfryslie 
 
 ## License
 
