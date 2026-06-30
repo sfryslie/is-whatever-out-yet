@@ -14,6 +14,7 @@ import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import kotlin.system.exitProcess
 
 // ── Data model ───────────────────────────────────────────────────────────────
@@ -148,6 +149,16 @@ sealed class Check {
         val phrases: List<String>,
         val flippedDetail: String,
     ) : Check()
+
+    /**
+     * Query the AniList GraphQL API for a show's current status and next airing episode.
+     * NOT_YET_RELEASED → emits [releaseDate] from startDate (frontend flips + counts down).
+     * RELEASING / HIATUS → "Yes." + countdownLabel/Sub for next episode if scheduled.
+     * FINISHED / CANCELLED → "Yes." with no countdown.
+     * No API key required — public data queries are unauthenticated.
+     * Fails closed on any network or parse error.
+     */
+    data class AniList(val mediaId: Int) : Check()
 }
 
 // ── Item catalogue ────────────────────────────────────────────────────────────
@@ -239,7 +250,11 @@ val ITEMS = listOf(
     Item("doors-of-stone",  "The Doors of Stone",       "Book", Check.Hardcoded, "No."),
 
     // Shows
-    Item("rezero-s4-cour2",     "Re:Zero S4 Cour 2",      "Show", Check.ScheduledDate(LocalDate.of(2026, 8, 12))),
+    // AniList-backed: live status + next-episode countdowns (no API key needed)
+    Item("rezero-s4-cour2", "Re:Zero Season 4", "Show", Check.AniList(189046),
+        aliases = listOf("Re:Zero S4", "Re:Zero S4 Cour 2", "ReZero Season 4", "Re:Zero kara Hajimeru Isekai Seikatsu")),
+    Item("youjo-senki-s2", "Saga of Tanya the Evil Season 2", "Show", Check.AniList(135865),
+        aliases = listOf("Youjo Senki", "Youjo Senki S2", "Youjo Senki Season 2", "Tanya the Evil", "Tanya the Evil Season 2")),
     Item("jjk-s4",              "Jujutsu Kaisen S4",      "Show", Check.VagueDate(LocalDate.of(2027, 1, 31), "January 2027?")),
     Item("steel-ball-run-ep2",  "Steel Ball Run Ep. 2",   "Show", Check.VagueDate(LocalDate.of(2026, 12, 31), "Late 2026?"),
         defaultDetail = "Fuck Netflix."),
@@ -445,6 +460,40 @@ suspend fun fetchWikipediaHtml(client: HttpClient, article: String): String? = t
         header("User-Agent", "is-whatever-out-yet (https://iswhateveroutyet.com)")
     }.bodyAsText()
 } catch (e: Exception) {
+    null
+}
+
+private data class AniListMedia(
+    val status: String,
+    val startDate: LocalDate?,
+    val nextAiringEpisode: Pair<Long, Int>?,  // airingAt unix timestamp to episode number
+)
+
+private val ANILIST_DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy")
+
+private suspend fun fetchAniListMedia(client: HttpClient, mediaId: Int): AniListMedia? = try {
+    val query = """{"query":"{ Media(id: $mediaId, type: ANIME) { status startDate { year month day } nextAiringEpisode { airingAt episode } } }"}"""
+    val body = client.post("https://graphql.anilist.co") {
+        contentType(ContentType.Application.Json)
+        setBody(query)
+    }.bodyAsText().let { Json.parseToJsonElement(it).jsonObject }
+    val media = body["data"]?.jsonObject?.get("Media")?.jsonObject ?: return null
+    val status = media["status"]?.jsonPrimitive?.content ?: return null
+    val sd = media["startDate"]?.jsonObject
+    val startDate = if (sd != null) {
+        val y = sd["year"]?.jsonPrimitive?.intOrNull
+        val m = sd["month"]?.jsonPrimitive?.intOrNull
+        val d = sd["day"]?.jsonPrimitive?.intOrNull
+        if (y != null && m != null && d != null) LocalDate.of(y, m, d) else null
+    } else null
+    val nextAiring = media["nextAiringEpisode"]?.jsonObject?.let {
+        val at = it["airingAt"]?.jsonPrimitive?.longOrNull ?: return@let null
+        val ep = it["episode"]?.jsonPrimitive?.intOrNull ?: return@let null
+        at to ep
+    }
+    AniListMedia(status, startDate, nextAiring)
+} catch (e: Exception) {
+    println("  AniList fetch failed for mediaId=$mediaId: ${e.message}")
     null
 }
 
@@ -867,6 +916,38 @@ fun main(): Unit = runBlocking {
                         answer = "Maybe?",
                         detail = "${check.flippedDetail} <a href=\"$articleUrl\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
                     )
+                }
+            }
+
+            is Check.AniList -> {
+                println("Checking AniList for ${item.label} (id=${check.mediaId})…")
+                val media = fetchAniListMedia(client, check.mediaId)
+                if (media == null) {
+                    ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+                } else when (media.status) {
+                    "NOT_YET_RELEASED" -> {
+                        val releaseDate = media.startDate?.toString()
+                        ItemResult(
+                            item.id, item.label, item.category,
+                            detail = item.defaultDetail,
+                            releaseDate = releaseDate,
+                        )
+                    }
+                    "RELEASING", "HIATUS" -> {
+                        val (countdownLabel, countdownSub) = media.nextAiringEpisode?.let { (airingAt, episode) ->
+                            val date = Instant.ofEpochSecond(airingAt).atZone(ZoneOffset.UTC).toLocalDate()
+                            "Ep. $episode airs" to ANILIST_DATE_FMT.format(date)
+                        } ?: (null to null)
+                        ItemResult(
+                            item.id, item.label, item.category,
+                            answer = "Yes.",
+                            detail = item.defaultDetail,
+                            countdownLabel = countdownLabel,
+                            countdownSub = countdownSub,
+                        )
+                    }
+                    else -> // FINISHED, CANCELLED
+                        ItemResult(item.id, item.label, item.category, answer = "Yes.", detail = item.defaultDetail)
                 }
             }
         }

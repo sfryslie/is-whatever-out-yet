@@ -296,9 +296,31 @@
         },
         {
             "id": "rezero-s4-cour2",
-            "label": "Re:Zero S4 Cour 2",
+            "label": "Re:Zero Season 4",
             "category": "Show",
-            "releaseDate": "2026-08-12"
+            "answer": "Yes.",
+            "since": "2026-06-29",
+            "countdownLabel": "Ep. 12 airs",
+            "countdownSub": "Aug 12, 2026",
+            "aliases": [
+                "Re:Zero S4",
+                "Re:Zero S4 Cour 2",
+                "ReZero Season 4",
+                "Re:Zero kara Hajimeru Isekai Seikatsu"
+            ]
+        },
+        {
+            "id": "youjo-senki-s2",
+            "label": "Saga of Tanya the Evil Season 2",
+            "category": "Show",
+            "releaseDate": "2026-07-08",
+            "aliases": [
+                "Youjo Senki",
+                "Youjo Senki S2",
+                "Youjo Senki Season 2",
+                "Tanya the Evil",
+                "Tanya the Evil Season 2"
+            ]
         },
         {
             "id": "jjk-s4",
