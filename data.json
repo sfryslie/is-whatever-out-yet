@@ -1,5 +1,5 @@
 {
-    "updated": "2026-06-29T20:00:00.000000000Z",
+    "updated": "2026-06-30T18:12:21.937830748Z",
     "items": [
         {
             "id": "claude-fable-5",
@@ -11,7 +11,9 @@
             "id": "claude-sonnet-5",
             "label": "Claude Sonnet 5",
             "category": "AI",
-            "answer": "No."
+            "answer": "Yes.",
+            "detail": "claude-sonnet-5",
+            "since": "2026-06-30"
         },
         {
             "id": "claude-opus-5",
@@ -152,7 +154,7 @@
             "id": "fable-game",
             "label": "Fable",
             "category": "Game",
-            "releaseDate": "2027-02-23"
+            "releaseDate": "2027-02-18"
         },
         {
             "id": "elder-scrolls-6",
@@ -192,8 +194,8 @@
             "id": "halo-campaign-evolved",
             "label": "Halo: Campaign Evolved",
             "category": "Game",
-            "detail": "Early access July 23.",
-            "releaseDate": "2026-07-28"
+            "detail": "PC: Jul 28, 2026",
+            "releaseDate": "2026-07-23"
         },
         {
             "id": "cod-mw4",
@@ -210,8 +212,7 @@
             "id": "ff7-revelation",
             "label": "Final Fantasy VII Revelation",
             "category": "Game",
-            "releaseDate": "2027-06-20",
-            "vagueLabel": "Spring 2027?"
+            "releaseDate": "2027-06-30"
         },
         {
             "id": "bloodborne-2",
@@ -247,8 +248,7 @@
             "id": "witcher-4",
             "label": "The Witcher IV",
             "category": "Game",
-            "releaseDate": "2028-12-31",
-            "vagueLabel": "2028?"
+            "answer": "No."
         },
         {
             "id": "truck-kun",
@@ -267,7 +267,8 @@
             "id": "gears-of-war-eday",
             "label": "Gears of War: E-Day",
             "category": "Game",
-            "releaseDate": "2026-10-06"
+            "detail": "PC: Oct 06, 2026",
+            "releaseDate": "2026-10-01"
         },
         {
             "id": "enshrouded",
@@ -321,10 +322,8 @@
             "id": "rezero-s4-cour2",
             "label": "Re:Zero Season 4",
             "category": "Show",
-            "answer": "Yes.",
-            "since": "2026-06-29",
-            "countdownLabel": "Ep. 12 airs",
-            "countdownSub": "Aug 12, 2026",
+            "answer": "No.",
+            "since": "2026-06-30",
             "aliases": [
                 "Re:Zero S4",
                 "Re:Zero S4 Cour 2",
@@ -336,7 +335,7 @@
             "id": "youjo-senki-s2",
             "label": "Saga of Tanya the Evil Season 2",
             "category": "Show",
-            "releaseDate": "2026-07-08",
+            "answer": "No.",
             "aliases": [
                 "Youjo Senki",
                 "Youjo Senki S2",
@@ -349,7 +348,7 @@
             "id": "mushoku-tensei-s3",
             "label": "Mushoku Tensei: Jobless Reincarnation Season 3",
             "category": "Show",
-            "releaseDate": "2026-07-06",
+            "answer": "No.",
             "aliases": [
                 "Mushoku Tensei",
                 "Mushoku Tensei S3",
@@ -361,7 +360,7 @@
             "id": "smoking-supermarket",
             "label": "Smoking Behind the Supermarket with You",
             "category": "Show",
-            "releaseDate": "2026-07-09",
+            "answer": "No.",
             "aliases": [
                 "Smoking Supermarket",
                 "Super no Ura de Yani Suu Futari",
@@ -372,7 +371,7 @@
             "id": "bleach-tybw-calamity",
             "label": "BLEACH: Thousand-Year Blood War — The Calamity",
             "category": "Show",
-            "releaseDate": "2026-07-25",
+            "answer": "No.",
             "aliases": [
                 "BLEACH",
                 "Bleach",
@@ -385,10 +384,8 @@
             "id": "slime-s4",
             "label": "That Time I Got Reincarnated as a Slime Season 4",
             "category": "Show",
-            "answer": "Yes.",
-            "since": "2026-04-03",
-            "countdownLabel": "Ep. 13 airs",
-            "countdownSub": "Jul 3, 2026",
+            "answer": "No.",
+            "since": "2026-06-30",
             "aliases": [
                 "TenSura",
                 "Slime S4",
@@ -401,6 +398,7 @@
             "id": "jjk-s4",
             "label": "Jujutsu Kaisen: The Culling Game Part 2",
             "category": "Show",
+            "answer": "No.",
             "detail": "<a href=\"https://www.youtube.com/watch?v=HGCsAcFzaFw\" target=\"_blank\" rel=\"noopener\">Teaser out.</a>",
             "releaseDate": "2027-01-31",
             "vagueLabel": "January 2027?",
@@ -417,6 +415,7 @@
             "id": "steel-ball-run-ep2",
             "label": "Steel Ball Run",
             "category": "Show",
+            "answer": "No.",
             "detail": "Fuck Netflix.",
             "releaseDate": "2026-12-31",
             "vagueLabel": "Late 2026?",
@@ -432,6 +431,7 @@
             "id": "shangri-la-s3",
             "label": "Shangri-La Frontier Season 3",
             "category": "Show",
+            "answer": "No.",
             "releaseDate": "2027-01-31",
             "vagueLabel": "January 2027",
             "aliases": [
@@ -444,6 +444,7 @@
             "id": "frieren-s3",
             "label": "Frieren: Beyond Journey's End Season 3",
             "category": "Show",
+            "answer": "No.",
             "releaseDate": "2027-10-31",
             "vagueLabel": "October 2027?",
             "aliases": [
@@ -457,6 +458,7 @@
             "id": "dbs-galactic-patrol",
             "label": "Dragon Ball Super: The Galactic Patrol",
             "category": "Show",
+            "answer": "No.",
             "releaseDate": "2027-12-31",
             "vagueLabel": "Late 2027?",
             "aliases": [
@@ -469,6 +471,7 @@
             "id": "chainsaw-man-s2",
             "label": "Chainsaw Man: The Assassins Arc",
             "category": "Show",
+            "answer": "No.",
             "releaseDate": "2027-12-31",
             "vagueLabel": "Late 2027?",
             "aliases": [
@@ -482,6 +485,7 @@
             "id": "cyberpunk-edgerunners-2",
             "label": "Cyberpunk: Edgerunners 2",
             "category": "Show",
+            "answer": "No.",
             "detail": "<a href=\"https://www.youtube.com/watch?v=mV7451mcw-E\" target=\"_blank\" rel=\"noopener\">Teaser out.</a>",
             "releaseDate": "2026-10-15",
             "vagueLabel": "Fall 2026?",
@@ -538,7 +542,7 @@
             "id": "spaceballs-new-one",
             "label": "Spaceballs: The New One",
             "category": "Movie",
-            "detail": "I'm worried because it's not called Spaceballs III: The Search for Spaceballs II or Spaceballs 2: The Search for More Money.",
+            "detail": "I'm worried because it's not called Spaceballs III: The Search for Spaceballs II or Spaceballs 2: The Search for More Money",
             "releaseDate": "2027-04-23"
         },
         {
@@ -784,7 +788,7 @@
             "category": "Resource",
             "answer": "No?",
             "detail": "I think we still have reserves.",
-            "countdownLabel": "$3.87/gal",
+            "countdownLabel": "$3.85/gal",
             "countdownSub": "U.S. average · AAA"
         },
         {
