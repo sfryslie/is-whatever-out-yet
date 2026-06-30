@@ -236,6 +236,14 @@ class AniListBatchParseTest {
     fun `no data key returns an empty map`() {
         assertEquals(emptyMap(), parseAniListBatchResponse(buildJsonObject {}, listOf(1)))
     }
+
+    @Test
+    fun `a top-level null data field (GraphQL error response) returns an empty map`() {
+        // AniList returns {"data": null, "errors": [...]} on e.g. a rate limit — "data" is an
+        // explicit JSON null, not a missing key.
+        val body = buildJsonObject { put("data", JsonNull) }
+        assertEquals(emptyMap(), parseAniListBatchResponse(body, listOf(1, 2)))
+    }
 }
 
 // ── IGDB helpers ─────────────────────────────────────────────────────────────
