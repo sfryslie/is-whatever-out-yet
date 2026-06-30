@@ -3,9 +3,11 @@ import java.time.ZoneOffset
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 
 class MatchModelIdTest {
     @Test
@@ -192,6 +194,47 @@ class CommitMessageTest {
             RunChange("Gas: $3.90/gal → $3.95/gal", false),
         ))
         assertEquals("X: No. → Yes.\n\n- X: No. → Yes.\n- Gas: $3.90/gal → $3.95/gal", msg)
+    }
+}
+
+// ── AniList helpers ───────────────────────────────────────────────────────────
+
+class AniListBatchParseTest {
+    @Test
+    fun `a null media entry is skipped, not treated as a parse failure for the whole batch`() {
+        // AniList returns an explicit JSON null (not a missing key) for an ID it can't resolve.
+        val body = buildJsonObject {
+            putJsonObject("data") {
+                put("m1", JsonNull)
+                putJsonObject("m2") {
+                    put("status", "FINISHED")
+                    putJsonObject("startDate") {
+                        put("year", 2026); put("month", 1); put("day", 1)
+                    }
+                }
+            }
+        }
+        val result = parseAniListBatchResponse(body, listOf(1, 2))
+        assertEquals(setOf(2), result.keys)
+        assertEquals("FINISHED", result.getValue(2).status)
+    }
+
+    @Test
+    fun `a missing key is skipped same as a null entry`() {
+        val body = buildJsonObject {
+            putJsonObject("data") {
+                putJsonObject("m2") {
+                    put("status", "RELEASING")
+                }
+            }
+        }
+        val result = parseAniListBatchResponse(body, listOf(1, 2))
+        assertEquals(setOf(2), result.keys)
+    }
+
+    @Test
+    fun `no data key returns an empty map`() {
+        assertEquals(emptyMap(), parseAniListBatchResponse(buildJsonObject {}, listOf(1)))
     }
 }
 
@@ -392,12 +435,22 @@ class BuildIgdbResultTest {
     }
 
     @Test
-    fun `no release date info — falls back to item defaults`() {
+    fun `no release date info — falls back to item defaults when there's no previous run`() {
         val g = buildJsonObject { put("id", 999) }
         val r = buildIgdbResult(item, g, today)
         assertEquals("No.", r.answer)
         assertEquals("Not for PC though, rip.", r.detail)
         assertNull(r.releaseDate)
+    }
+
+    @Test
+    fun `no release date info — falls back to the previous run's confirmed date instead of item defaults`() {
+        val g = buildJsonObject { put("id", 999) }
+        val prev = ItemResult(item.id, item.label, item.category, releaseDate = "2028-12-31", vagueLabel = "2028?")
+        val r = buildIgdbResult(item, g, today, prev)
+        assertEquals("2028-12-31", r.releaseDate)
+        assertEquals("2028?", r.vagueLabel)
+        assertNull(r.answer)
     }
 
     @Test
