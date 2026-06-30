@@ -166,6 +166,17 @@ sealed class Check {
         val vagueDate: LocalDate? = null,
         val vagueLabel: String? = null,
     ) : Check()
+
+    /**
+     * Fetch platform-specific release dates from IGDB for the game at [slug]. The earliest
+     * confirmed console/non-PC date drives the card flip; PC (platform 6) is tracked separately
+     * and surfaces as detail text (pre-release) or a display-only countdown via
+     * [ItemResult.countdownTo] once the primary platform has launched. Requires
+     * IGDB_CLIENT_ID + IGDB_CLIENT_SECRET env vars (Twitch app credentials); fails closed to
+     * [Item.defaultAnswer]/[Item.defaultDetail] if the API is unreachable, the slug returns
+     * no results, or credentials are absent.
+     */
+    data class IGDB(val slug: String) : Check()
 }
 
 // ── Item catalogue ────────────────────────────────────────────────────────────
@@ -195,6 +206,140 @@ data class Item(
 // initialized first.
 private val INCARCERATION_MARKERS = listOf("Incarcerated at", ">Incarcerated<", ">Imprisoned<")
 
+// ── IGDB release-date helpers ─────────────────────────────────────────────────
+
+internal const val IGDB_PC_PLATFORM = 6
+// PS4=48, Xbox One=49, Switch=130, PS5=167, Xbox Series X|S=169
+internal val IGDB_CONSOLE_PLATFORMS = setOf(48, 49, 130, 167, 169)
+
+internal data class IgdbReleaseDate(
+    val platformId: Int?,
+    val category:   Int,     // 0=exact, 1=month+year, 2=year, 3=Q1…6=Q4, 7=TBD
+    val unixDate:   Long?,   // Unix seconds; only set for category 0
+    val year:       Int?,
+    val month:      Int?,    // 1–12
+    val human:      String?, // human-readable label from IGDB, e.g. "Nov 19, 2026"
+)
+
+// Maps an IGDB release date to the LocalDate used as our flip trigger / countdown end.
+// For vague categories we pick a conservative end-of-period so the card doesn't flip early.
+internal fun IgdbReleaseDate.toLocalDate(): LocalDate? = when (category) {
+    0    -> unixDate?.let { Instant.ofEpochSecond(it).atZone(ZoneOffset.UTC).toLocalDate() }
+    1    -> if (year != null && month != null) LocalDate.of(year, month, 1) else null
+    2    -> year?.let { LocalDate.of(it, 12, 31) }
+    3    -> year?.let { LocalDate.of(it,  3, 31) }  // Q1
+    4    -> year?.let { LocalDate.of(it,  6, 30) }  // Q2
+    5    -> year?.let { LocalDate.of(it,  9, 30) }  // Q3
+    6    -> year?.let { LocalDate.of(it, 12, 31) }  // Q4
+    else -> null                                     // 7 = TBD
+}
+
+internal fun IgdbReleaseDate.toVagueLabel(): String? = when (category) {
+    0    -> null
+    1    -> if (year != null && month != null)
+                "${java.time.Month.of(month).getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.US)} $year?"
+            else null
+    2    -> year?.let { "$it?" }
+    3    -> year?.let { "Q1 $it?" }
+    4    -> year?.let { "Q2 $it?" }
+    5    -> year?.let { "Q3 $it?" }
+    6    -> year?.let { "Q4 $it?" }
+    else -> null
+}
+
+internal fun parseIgdbReleaseDates(obj: JsonObject): List<IgdbReleaseDate> =
+    obj["release_dates"]?.jsonArray?.map { rd ->
+        val o = rd.jsonObject
+        IgdbReleaseDate(
+            platformId = o["platform"]?.jsonPrimitive?.intOrNull,
+            // IGDB omits category=0 (exact date) from responses — infer it from the timestamp.
+            category   = o["category"]?.jsonPrimitive?.intOrNull
+                         ?: if (o["date"] != null) 0 else 7,
+            unixDate   = o["date"]?.jsonPrimitive?.longOrNull,
+            year       = o["y"]?.jsonPrimitive?.intOrNull,
+            month      = o["m"]?.jsonPrimitive?.intOrNull,
+            human      = o["human"]?.jsonPrimitive?.contentOrNull,
+        )
+    } ?: emptyList()
+
+/**
+ * Build an [ItemResult] from a raw IGDB game JSON object ([game]). Primary release date is the
+ * earliest confirmed date among console platforms (falling back to all non-PC, then all dates).
+ * PC (platform 6) is tracked separately:
+ * - Pre-release: if PC has a confirmed date that differs from primary, it appears as detail text.
+ *   TBD PC entries are silent so the item's [Item.defaultDetail] (e.g. "Not for PC though, rip.")
+ *   can serve as the human-authored fallback.
+ * - Post-primary-release: if PC has a future confirmed date, [ItemResult.countdownTo] is set so
+ *   the frontend can compute "N days to go" against the user's clock.
+ */
+internal fun buildIgdbResult(item: Item, game: JsonObject, today: LocalDate): ItemResult {
+    val status   = game["status"]?.jsonPrimitive?.intOrNull  // 0 = Released
+    val allDates = parseIgdbReleaseDates(game)
+
+    val pcDate = allDates.firstOrNull { it.platformId == IGDB_PC_PLATFORM }
+
+    // Prefer console dates for primary; fall back to non-PC, then everything.
+    val primary = (allDates.filter { it.platformId in IGDB_CONSOLE_PLATFORMS }
+        .ifEmpty { allDates.filter { it.platformId != IGDB_PC_PLATFORM } }
+        .ifEmpty { allDates })
+        .filter { it.category != 7 }
+        .minByOrNull { it.toLocalDate() ?: LocalDate.MAX }
+
+    val primaryDate = primary?.toLocalDate()
+    val pcLocalDate = pcDate?.toLocalDate()
+
+    val gameReleased = status == 0 || (primaryDate != null && !primaryDate.isAfter(today))
+    val pcReleased   = pcLocalDate != null && !pcLocalDate.isAfter(today)
+
+    // "PC: <date>" note — only when IGDB has a confirmed PC date that differs from primary.
+    // Omitted for TBD (no resolvable date) so defaultDetail can provide context instead.
+    val pcNote = if (pcLocalDate != null && !pcReleased && pcLocalDate != primaryDate)
+        pcDate?.human?.let { "PC: $it" } ?: pcDate?.toVagueLabel()?.let { "PC: $it" }
+    else null
+
+    return when {
+        // All platforms out (or no separate PC tracking needed)
+        gameReleased && (pcDate == null || pcReleased) -> ItemResult(
+            item.id, item.label, item.category,
+            answer = "Yes.",
+            detail = item.defaultDetail,
+            since  = primaryDate?.toString(),
+        )
+
+        // Primary platform is out; PC has a confirmed future date — countdownTo so the
+        // frontend computes "N days to go" against the user's local clock.
+        gameReleased && pcLocalDate != null -> ItemResult(
+            item.id, item.label, item.category,
+            answer      = "Yes.",
+            countdownTo = pcLocalDate.toString(),
+            detail      = "PC release",
+        )
+
+        // Primary platform is out; no confirmed PC date
+        gameReleased -> ItemResult(
+            item.id, item.label, item.category,
+            answer = "Yes.",
+            detail = item.defaultDetail,
+        )
+
+        // Not yet released — date-driven card
+        primaryDate != null -> ItemResult(
+            item.id, item.label, item.category,
+            releaseDate = primaryDate.toString(),
+            vagueLabel  = primary?.toVagueLabel(),
+            detail      = pcNote ?: item.defaultDetail,
+        )
+
+        // No date info — fall back to item defaults
+        else -> ItemResult(
+            item.id, item.label, item.category,
+            answer = item.defaultAnswer,
+            detail = item.defaultDetail,
+        )
+    }
+}
+
+
 val ITEMS = listOf(
     // AI — Anthropic (live API check)
     Item("claude-fable-5",  "Claude Fable 5",  "AI", Check.Anthropic("claude-fable-5")),
@@ -221,28 +366,28 @@ val ITEMS = listOf(
     Item("deltarune-ch5",   "Deltarune Ch. 5", "Game", Check.Hardcoded, "Yes.",   "Released June 24, 2026.", since = LocalDate.of(2026, 6, 24)),
     Item("deltarune-ch6",   "Deltarune Ch. 6", "Game", Check.Hardcoded, "No.", "Chapter 5 just came out. Relax."),
     Item("persona-6",       "Persona 6",       "Game", Check.Hardcoded, "No."),
-    Item("persona-4-revival", "Persona 4 Revival", "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 18))),
-    Item("gta-vi",          "Grand Theft Auto VI",      "Game", Check.ScheduledDate(LocalDate.of(2026, 11, 19)),
+    Item("persona-4-revival", "Persona 4 Revival", "Game", Check.IGDB("persona-4-revival")),
+    Item("gta-vi",          "Grand Theft Auto VI",      "Game", Check.IGDB("grand-theft-auto-vi"),
         defaultDetail = "Not for PC though, rip.",
         aliases = listOf("GTA 6", "GTA VI", "GTAVI", "GTA6")),
     Item("how-many-dudes",  "How Many Dudes?",          "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 30)),
         defaultDetail = "<a href=\"https://store.steampowered.com/app/3934270/How_Many_Dudes/\" target=\"_blank\" rel=\"noopener\">Demo's out on Steam.</a>"),
-    Item("fable-game",      "Fable",                    "Game", Check.ScheduledDate(LocalDate.of(2027, 2, 23))),
+    Item("fable-game",      "Fable",                    "Game", Check.IGDB("fable--1")),
     Item("elder-scrolls-6", "The Elder Scrolls VI",     "Game", Check.Hardcoded, "No.", "I'm excited for the Skyrim Remake for the PS6"),
     Item("huniepop-3",      "HuniePop 3",               "Game", Check.Hardcoded, "No.", "I hope it's a roguelite deckbuilder."),
     Item("bge-2",           "Beyond Good and Evil 2",   "Game", Check.Hardcoded, "No.", "Announced 2008. Still waiting."),
     Item("kotor-remake",    "Star Wars: KOTOR Remake",  "Game", Check.Hardcoded, "No.", "Aspyr's teaser baited me into buying a PS5."),
-    Item("onimusha-sword",  "Onimusha: Way of the Sword", "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 25))),
-    Item("halo-campaign-evolved", "Halo: Campaign Evolved", "Game", Check.ScheduledDate(LocalDate.of(2026, 7, 28)),
+    Item("onimusha-sword",  "Onimusha: Way of the Sword", "Game", Check.IGDB("onimusha-way-of-the-sword")),
+    Item("halo-campaign-evolved", "Halo: Campaign Evolved", "Game", Check.IGDB("halo-campaign-evolved"),
         defaultDetail = "Early access July 23."),
-    Item("cod-mw4",         "Call of Duty: MW4",        "Game", Check.ScheduledDate(LocalDate.of(2026, 10, 23))),
-    Item("ff7-revelation",  "Final Fantasy VII Revelation", "Game", Check.VagueDate(LocalDate.of(2027, 6, 20), "Spring 2027?")),
+    Item("cod-mw4",         "Call of Duty: MW4",        "Game", Check.IGDB("call-of-duty-modern-warfare-4")),
+    Item("ff7-revelation",  "Final Fantasy VII Revelation", "Game", Check.IGDB("final-fantasy-vii-revelation")),
     Item("bloodborne-2",    "Bloodborne 2",    "Game", Check.Hardcoded, "No."),
     Item("bloodborne-pc",   "Bloodborne: Remastered (PC)", "Game", Check.Hardcoded, "No."),
     Item("elden-ring-2",    "Elden Ring 2",    "Game", Check.Hardcoded, "No."),
     Item("star-citizen",    "Star Citizen 1.0", "Game", Check.Hardcoded, "No."),
-    Item("marvels-wolverine", "Marvel's Wolverine", "Game", Check.ScheduledDate(LocalDate.of(2026, 9, 15))),
-    Item("witcher-4",       "The Witcher IV",  "Game", Check.VagueDate(LocalDate.of(2028, 12, 31), "2028?")),
+    Item("marvels-wolverine", "Marvel's Wolverine", "Game", Check.IGDB("marvels-wolverine")),
+    Item("witcher-4",       "The Witcher IV",  "Game", Check.IGDB("the-witcher-iv")),
     // Already-out games — exercise the "hide long-released" slider at different age buckets.
     Item("silksong",        "Hollow Knight: Silksong", "Game", Check.Hardcoded, "Yes.",
         "Silkposting is a art", since = LocalDate.of(2025, 9, 4)),
@@ -541,6 +686,35 @@ internal suspend fun fetchAniListBatch(client: HttpClient, mediaIds: List<Int>):
     }
 }
 
+// Exchange Twitch app credentials for a short-lived bearer token used on all IGDB requests.
+// The token lasts ~60 days; for a 30-minute cron it's fine to fetch a fresh one each run.
+suspend fun fetchIgdbToken(client: HttpClient, clientId: String, secret: String): String? = try {
+    val body = client.post("https://id.twitch.tv/oauth2/token") {
+        parameter("client_id", clientId)
+        parameter("client_secret", secret)
+        parameter("grant_type", "client_credentials")
+    }.bodyAsText()
+    Json.parseToJsonElement(body).jsonObject["access_token"]?.jsonPrimitive?.contentOrNull
+} catch (e: Exception) {
+    null
+}
+
+suspend fun fetchIgdbGame(client: HttpClient, clientId: String, token: String, slug: String): JsonObject? = try {
+    val body = client.post("https://api.igdb.com/v4/games") {
+        header("Client-ID", clientId)
+        header("Authorization", "Bearer $token")
+        contentType(ContentType.Text.Plain)
+        setBody(
+            "fields name, status, release_dates.category, release_dates.date, " +
+            "release_dates.human, release_dates.m, release_dates.platform, release_dates.y; " +
+            "where slug = \"$slug\"; limit 1;"
+        )
+    }.bodyAsText()
+    Json.parseToJsonElement(body).jsonArray.firstOrNull()?.jsonObject
+} catch (e: Exception) {
+    null
+}
+
 private fun escapeHtmlText(s: String): String = s
     .replace("&", "&amp;")
     .replace("<", "&lt;")
@@ -760,6 +934,8 @@ fun main(): Unit = runBlocking {
     // missing either skips them (e.g. local runs).
     val pushApi      = System.getenv("PUSH_API_URL")
     val pushToken    = System.getenv("PUSH_SEND_TOKEN")
+    val igdbClientId = System.getenv("IGDB_CLIENT_ID")
+    val igdbSecret   = System.getenv("IGDB_CLIENT_SECRET")
 
     // Load the previous run's full output (items + the `updated` stamp) so we can detect state
     // changes — which drive `since`, ntfy pings, the `updated` timestamp, and the commit message.
@@ -820,6 +996,19 @@ fun main(): Unit = runBlocking {
             println("  Got ${it.size}/${aniListIds.size} result(s)")
         }
     } else emptyMap()
+
+    val igdbToken: String? = if (igdbClientId != null && igdbSecret != null) {
+        println("Fetching IGDB access token…")
+        fetchIgdbToken(client, igdbClientId, igdbSecret).also {
+            if (it == null) println("  Failed — IGDB checks will fall back to item defaults.")
+            else            println("  Got IGDB token.")
+        }
+    } else {
+        println("IGDB_CLIENT_ID / IGDB_CLIENT_SECRET not set — IGDB checks will use item defaults.")
+        null
+    }
+
+    val today = LocalDate.now()
 
     val baseResults = ITEMS.map { item ->
         val result = when (val check = item.check) {
@@ -937,6 +1126,21 @@ fun main(): Unit = runBlocking {
                 )
             }
 
+            is Check.IGDB -> {
+                if (igdbClientId == null || igdbToken == null) {
+                    ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+                } else {
+                    println("Checking IGDB for ${item.label} (slug: ${check.slug})…")
+                    val game = fetchIgdbGame(client, igdbClientId, igdbToken, check.slug)
+                    if (game == null) {
+                        println("  IGDB: no result for '${check.slug}' — using defaults")
+                        ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+                    } else {
+                        buildIgdbResult(item, game, today)
+                    }
+                }
+            }
+
             is Check.WikipediaLead -> {
                 println("Checking Wikipedia lead for ${check.article}…")
                 val extract = fetchWikipediaExtract(client, check.article)
@@ -1015,7 +1219,6 @@ fun main(): Unit = runBlocking {
 
     // Second pass: diff each result against the previous run to maintain `since` and collect the
     // "just became out / just died" transitions worth a notification.
-    val today = LocalDate.now()
     val seedById = ITEMS.associate { it.id to it.since?.toString() }
     val transitions = mutableListOf<ChangeEvent>()
     val results = baseResults.map { base ->

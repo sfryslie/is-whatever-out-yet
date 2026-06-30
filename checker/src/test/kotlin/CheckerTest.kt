@@ -1,7 +1,11 @@
 import java.time.LocalDate
+import java.time.ZoneOffset
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class MatchModelIdTest {
     @Test
@@ -188,6 +192,219 @@ class CommitMessageTest {
             RunChange("Gas: $3.90/gal → $3.95/gal", false),
         ))
         assertEquals("X: No. → Yes.\n\n- X: No. → Yes.\n- Gas: $3.90/gal → $3.95/gal", msg)
+    }
+}
+
+// ── IGDB helpers ─────────────────────────────────────────────────────────────
+
+private fun ts(y: Int, m: Int, d: Int): Long =
+    LocalDate.of(y, m, d).atStartOfDay(ZoneOffset.UTC).toEpochSecond()
+
+class IgdbReleaseDateTest {
+    @Test
+    fun `exact date (category 0) maps to LocalDate via unix timestamp`() {
+        val rd = IgdbReleaseDate(167, category = 0, unixDate = ts(2026, 11, 19), year = 2026, month = 11, human = "Nov 19, 2026")
+        assertEquals(LocalDate.of(2026, 11, 19), rd.toLocalDate())
+    }
+
+    @Test
+    fun `month-year (category 1) maps to first of month`() {
+        val rd = IgdbReleaseDate(167, category = 1, unixDate = null, year = 2027, month = 2, human = "Feb 2027")
+        assertEquals(LocalDate.of(2027, 2, 1), rd.toLocalDate())
+    }
+
+    @Test
+    fun `year-only (category 2) maps to Dec 31`() {
+        val rd = IgdbReleaseDate(null, category = 2, unixDate = null, year = 2028, month = null, human = "2028")
+        assertEquals(LocalDate.of(2028, 12, 31), rd.toLocalDate())
+    }
+
+    @Test
+    fun `Q3 (category 5) maps to Sep 30`() {
+        val rd = IgdbReleaseDate(null, category = 5, unixDate = null, year = 2026, month = null, human = "Q3 2026")
+        assertEquals(LocalDate.of(2026, 9, 30), rd.toLocalDate())
+    }
+
+    @Test
+    fun `TBD (category 7) maps to null`() {
+        val rd = IgdbReleaseDate(null, category = 7, unixDate = null, year = null, month = null, human = "TBD")
+        assertNull(rd.toLocalDate())
+    }
+
+    @Test
+    fun `exact date has null vague label`() {
+        val rd = IgdbReleaseDate(167, category = 0, unixDate = ts(2026, 11, 19), year = 2026, month = 11, human = "Nov 19, 2026")
+        assertNull(rd.toVagueLabel())
+    }
+
+    @Test
+    fun `Q4 year produces correct vague label`() {
+        val rd = IgdbReleaseDate(null, category = 6, unixDate = null, year = 2026, month = null, human = "Q4 2026")
+        assertEquals("Q4 2026?", rd.toVagueLabel())
+    }
+
+    @Test
+    fun `month-year produces full month name`() {
+        val rd = IgdbReleaseDate(null, category = 1, unixDate = null, year = 2027, month = 9, human = "Sep 2027")
+        assertEquals("September 2027?", rd.toVagueLabel())
+    }
+}
+
+class ParseIgdbReleaseDatesTest {
+    @Test
+    fun `parses release_dates array into data class list`() {
+        val consolets = ts(2026, 11, 19)
+        val game = buildJsonObject {
+            put("id", 11169)
+            put("status", 7)
+            put("release_dates", buildJsonArray {
+                add(buildJsonObject {
+                    put("platform", 167)
+                    put("category", 0)
+                    put("date", consolets)
+                    put("y", 2026)
+                    put("m", 11)
+                    put("human", "Nov 19, 2026")
+                })
+                add(buildJsonObject {
+                    put("platform", 6)
+                    put("category", 7)
+                    put("human", "TBD")
+                })
+            })
+        }
+        val dates = parseIgdbReleaseDates(game)
+        assertEquals(2, dates.size)
+        assertEquals(167, dates[0].platformId)
+        assertEquals(0, dates[0].category)
+        assertEquals(consolets, dates[0].unixDate)
+        assertEquals(6, dates[1].platformId)
+        assertEquals(7, dates[1].category)
+        assertNull(dates[1].unixDate)
+    }
+
+    @Test
+    fun `category absent but date present infers category 0 (IGDB strips zero fields)`() {
+        // IGDB omits category from the response when it's 0 (exact date) — this is the real API shape.
+        val consolets = ts(2026, 11, 19)
+        val game = buildJsonObject {
+            put("release_dates", buildJsonArray {
+                add(buildJsonObject {
+                    put("platform", 167)
+                    // no "category" field — IGDB strips it when value is 0
+                    put("date", consolets)
+                    put("y", 2026)
+                    put("m", 11)
+                    put("human", "Nov 19, 2026")
+                })
+            })
+        }
+        val dates = parseIgdbReleaseDates(game)
+        assertEquals(0, dates[0].category)
+        assertEquals(LocalDate.of(2026, 11, 19), dates[0].toLocalDate())
+    }
+
+    @Test
+    fun `returns empty list when release_dates is absent`() {
+        val game = buildJsonObject { put("id", 999) }
+        assertEquals(emptyList<IgdbReleaseDate>(), parseIgdbReleaseDates(game))
+    }
+}
+
+class BuildIgdbResultTest {
+    private val today = LocalDate.of(2026, 6, 29)
+    private val item  = Item("gta-vi", "Grand Theft Auto VI", "Game", Check.IGDB("grand-theft-auto-vi"),
+                            defaultDetail = "Not for PC though, rip.")
+
+    private fun game(status: Int?, vararg dates: IgdbReleaseDate) = buildJsonObject {
+        if (status != null) put("status", status)
+        put("release_dates", buildJsonArray {
+            for (d in dates) add(buildJsonObject {
+                if (d.platformId != null) put("platform", d.platformId)
+                put("category", d.category)
+                if (d.unixDate != null) put("date", d.unixDate)
+                if (d.year     != null) put("y", d.year)
+                if (d.month    != null) put("m", d.month)
+                if (d.human    != null) put("human", d.human)
+            })
+        })
+    }
+
+    private fun consoleExact(date: LocalDate) =
+        IgdbReleaseDate(167, 0, ts(date.year, date.monthValue, date.dayOfMonth), date.year, date.monthValue, date.toString())
+    private fun pcTbd() = IgdbReleaseDate(IGDB_PC_PLATFORM, 7, null, null, null, "TBD")
+    private fun pcExact(date: LocalDate) =
+        IgdbReleaseDate(IGDB_PC_PLATFORM, 0, ts(date.year, date.monthValue, date.dayOfMonth), date.year, date.monthValue, date.toString())
+
+    @Test
+    fun `future console date — no PC entry — date-driven card with defaultDetail`() {
+        val nov19 = LocalDate.of(2026, 11, 19)
+        val r = buildIgdbResult(item, game(null, consoleExact(nov19)), today)
+        assertEquals("2026-11-19", r.releaseDate)
+        assertNull(r.vagueLabel)
+        assertEquals("Not for PC though, rip.", r.detail)
+        assertNull(r.answer)
+    }
+
+    @Test
+    fun `future console date — PC TBD — defaultDetail preserved`() {
+        val nov19 = LocalDate.of(2026, 11, 19)
+        val r = buildIgdbResult(item, game(null, consoleExact(nov19), pcTbd()), today)
+        assertEquals("2026-11-19", r.releaseDate)
+        assertEquals("Not for PC though, rip.", r.detail)
+    }
+
+    @Test
+    fun `future console date — confirmed different PC date — PC note in detail`() {
+        val nov19 = LocalDate.of(2026, 11, 19)
+        val mar15 = LocalDate.of(2027, 3, 15)
+        val r = buildIgdbResult(item, game(null, consoleExact(nov19), pcExact(mar15)), today)
+        assertEquals("2026-11-19", r.releaseDate)
+        assertEquals("PC: $mar15", r.detail)
+    }
+
+    @Test
+    fun `released (status=0) — no PC — Yes with defaultDetail and since`() {
+        val jan1 = LocalDate.of(2026, 1, 1)
+        val r = buildIgdbResult(item, game(0, consoleExact(jan1)), today)
+        assertEquals("Yes.", r.answer)
+        assertEquals("Not for PC though, rip.", r.detail)
+        assertEquals("2026-01-01", r.since)
+    }
+
+    @Test
+    fun `released — PC has future confirmed date — Yes with countdownTo`() {
+        val jan1  = LocalDate.of(2026, 1, 1)
+        val nov19 = LocalDate.of(2026, 11, 19)
+        val r = buildIgdbResult(item, game(0, consoleExact(jan1), pcExact(nov19)), today)
+        assertEquals("Yes.", r.answer)
+        assertEquals("2026-11-19", r.countdownTo)
+        assertEquals("PC release", r.detail)
+    }
+
+    @Test
+    fun `released — PC also past — Yes with defaultDetail, no countdownTo`() {
+        val jan1 = LocalDate.of(2026, 1, 1)
+        val r = buildIgdbResult(item, game(0, consoleExact(jan1), pcExact(jan1)), today)
+        assertEquals("Yes.", r.answer)
+        assertNull(r.countdownTo)
+        assertEquals("Not for PC though, rip.", r.detail)
+    }
+
+    @Test
+    fun `no release date info — falls back to item defaults`() {
+        val g = buildJsonObject { put("id", 999) }
+        val r = buildIgdbResult(item, g, today)
+        assertEquals("No.", r.answer)
+        assertEquals("Not for PC though, rip.", r.detail)
+        assertNull(r.releaseDate)
+    }
+
+    @Test
+    fun `vague Q4 date produces vagueLabel and Dec 31 trigger`() {
+        val r = buildIgdbResult(item, game(null, IgdbReleaseDate(167, 6, null, 2026, null, "Q4 2026")), today)
+        assertEquals("2026-12-31", r.releaseDate)
+        assertEquals("Q4 2026?", r.vagueLabel)
     }
 }
 

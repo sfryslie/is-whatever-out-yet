@@ -27,6 +27,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          IGDB_CLIENT_ID: ${{ secrets.IGDB_CLIENT_ID }}
+          IGDB_CLIENT_SECRET: ${{ secrets.IGDB_CLIENT_SECRET }}
           PUSH_API_URL: ${{ secrets.PUSH_API_URL }}
           PUSH_SEND_TOKEN: ${{ secrets.PUSH_SEND_TOKEN }}
           DATA_JSON_PATH: ${{ github.workspace }}/data.json
