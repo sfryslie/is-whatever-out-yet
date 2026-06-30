@@ -11,9 +11,7 @@
             "id": "claude-sonnet-5",
             "label": "Claude Sonnet 5",
             "category": "AI",
-            "answer": "Yes.",
-            "detail": "claude-sonnet-5",
-            "since": "2026-06-30"
+            "answer": "No."
         },
         {
             "id": "claude-opus-5",
