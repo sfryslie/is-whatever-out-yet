@@ -536,6 +536,82 @@
     footer a { color: var(--muted); text-underline-offset: 3px; }
 
     #error { color: #ef4444; font-size: 0.9rem; }
+
+    /* ── buy me a coffee ── */
+    button.coffee-btn {
+      display: inline-flex;
+      align-items: center;
+      align-self: center;
+      gap: 0.45rem;
+      margin-top: 0.5rem;
+      padding: 0.6rem 1.25rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: var(--muted);
+      cursor: pointer;
+      opacity: 0.7;
+      transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+    }
+    button.coffee-btn:hover { border-color: var(--other); color: var(--other); opacity: 1; }
+
+    .coffee-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .coffee-overlay.open { display: flex; }
+
+    .coffee-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      max-width: 260px;
+      width: 90%;
+      position: relative;
+    }
+    .coffee-modal-close {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.75rem;
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 1.1rem;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 2px 6px;
+      line-height: 1;
+    }
+    .coffee-modal-close:hover { color: var(--text); }
+    .coffee-modal-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+    .coffee-modal-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.9rem;
+    }
+    .coffee-qr {
+      background: white;
+      border-radius: 8px;
+      padding: 10px;
+      display: inline-block;
+      margin-bottom: 0.85rem;
+    }
+    .coffee-qr img { display: block; width: 160px; height: 160px; }
+    .coffee-modal a { color: var(--other); font-size: 0.75rem; text-underline-offset: 3px; }
   </style>
 </head>
 <body>
@@ -595,7 +671,20 @@
   <footer>
     <span id="updated"></span>
     <span id="last-checked"></span>
+    <button class="coffee-btn" id="coffee-btn" aria-label="Buy me a coffee"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;flex-shrink:0"><path d="M3 14c.83.642 2.077 1.017 3.5 1 1.423.017 2.67-.358 3.5-1 .83-.642 2.077-1.017 3.5-1 1.423-.017 2.67.358 3.5 1"/><path d="M8 3a2.4 2.4 0 0 0-1 2 2.4 2.4 0 0 0 1 2"/><path d="M12 3a2.4 2.4 0 0 0-1 2 2.4 2.4 0 0 0 1 2"/><path d="M3 10h14v5a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6v-5z"/><path d="M16.746 16.726a3 3 0 1 0 .252-5.555"/></svg> buy me a coffee</button>
   </footer>
+
+  <div class="coffee-overlay" id="coffee-overlay" role="dialog" aria-modal="true" aria-labelledby="coffee-title">
+    <div class="coffee-modal">
+      <button class="coffee-modal-close" id="coffee-close" aria-label="Close">×</button>
+      <p class="coffee-modal-title" id="coffee-title">buy me a coffee?</p>
+      <p class="coffee-modal-sub">scan or click below</p>
+      <div class="coffee-qr">
+        <img src="bmc_qr.png" alt="QR code for buymeacoffee.com/sfryslie" width="160" height="160">
+      </div>
+      <a href="https://buymeacoffee.com/sfryslie" target="_blank" rel="noopener">buymeacoffee.com/sfryslie</a>
+    </div>
+  </div>
 
   <script>
     const content = document.getElementById('content');
@@ -1048,6 +1137,19 @@
     // Reveal the "Notify me about everything" control only when push is configured + supported.
     if (pushEnabled) document.getElementById('notify-all').hidden = false;
     refreshBells();
+
+    // Buy me a coffee modal
+    (function() {
+      const overlay = document.getElementById('coffee-overlay');
+      const btn     = document.getElementById('coffee-btn');
+      const close   = document.getElementById('coffee-close');
+      const open  = () => { overlay.classList.add('open');    document.body.style.overflow = 'hidden'; close.focus(); };
+      const shut  = () => { overlay.classList.remove('open'); document.body.style.overflow = '';       btn.focus(); };
+      btn.addEventListener('click', open);
+      close.addEventListener('click', shut);
+      overlay.addEventListener('click', e => { if (e.target === overlay) shut(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) shut(); });
+    })();
 
     // Register the service worker for offline support, installability, and push. Non-fatal if it fails.
     if ('serviceWorker' in navigator) {
