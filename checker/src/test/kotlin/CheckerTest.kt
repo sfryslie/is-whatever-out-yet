@@ -147,6 +147,23 @@ class RunDiffTest {
         val curr = listOf(ItemResult("c", "Cosby", "People", answer = "Yes.", tone = "death"))
         assertEquals(true, diffRuns(prev, today, curr, today).single().meaningful)
     }
+
+    @Test
+    fun `fuzzy to exact date is a meaningful change`() {
+        val prev = listOf(ItemResult("a", "Anime", "Show", releaseDate = "2027-01-31", vagueLabel = "January 2027?"))
+        val curr = listOf(ItemResult("a", "Anime", "Show", releaseDate = "2027-01-15"))
+        val changes = diffRuns(prev, today, curr, today)
+        assertEquals(1, changes.size)
+        assertEquals(true, changes.first().meaningful)
+        assertEquals("Anime: premiere confirmed → 2027-01-15", changes.first().description)
+    }
+
+    @Test
+    fun `fuzzy date staying fuzzy is a minor change if dates differ`() {
+        val prev = listOf(ItemResult("a", "Anime", "Show", releaseDate = "2027-01-31", vagueLabel = "January 2027?"))
+        val curr = listOf(ItemResult("a", "Anime", "Show", releaseDate = "2027-01-31", vagueLabel = "January 2027?"))
+        assertEquals(emptyList<RunChange>(), diffRuns(prev, today, curr, today))
+    }
 }
 
 class CommitMessageTest {

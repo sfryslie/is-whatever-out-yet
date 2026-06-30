@@ -14,6 +14,7 @@ import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import kotlin.system.exitProcess
 
 // ── Data model ───────────────────────────────────────────────────────────────
@@ -148,6 +149,23 @@ sealed class Check {
         val phrases: List<String>,
         val flippedDetail: String,
     ) : Check()
+
+    /**
+     * Query the AniList GraphQL API for a show's current status and next airing episode.
+     * NOT_YET_RELEASED → exact [releaseDate] from AniList if the date is fully confirmed;
+     *   otherwise falls back to [vagueDate]/[vagueLabel] until AniList schedules it precisely.
+     *   When AniList gives an exact date for a previously-fuzzy item, the transition is a
+     *   meaningful change that moves `updated` and fires a push notification.
+     * RELEASING / HIATUS → "Yes." + countdownLabel/Sub for next episode if scheduled.
+     * FINISHED / CANCELLED → "Yes." with no countdown.
+     * No API key required — public data queries are unauthenticated. All fetches are batched
+     * into a single GraphQL request. Fails closed on any network or parse error.
+     */
+    data class AniList(
+        val mediaId: Int,
+        val vagueDate: LocalDate? = null,
+        val vagueLabel: String? = null,
+    ) : Check()
 }
 
 // ── Item catalogue ────────────────────────────────────────────────────────────
@@ -238,18 +256,47 @@ val ITEMS = listOf(
     Item("dsm-6",           "DSM-6",                    "Book", Check.Hardcoded, "No.", "<a href=\"https://en.wikipedia.org/wiki/Chatbot_psychosis\" target=\"_blank\" rel=\"noopener\">Chatbot psychosis</a> will likely be in there."),
     Item("doors-of-stone",  "The Doors of Stone",       "Book", Check.Hardcoded, "No."),
 
-    // Shows
-    Item("rezero-s4-cour2",     "Re:Zero S4 Cour 2",      "Show", Check.ScheduledDate(LocalDate.of(2026, 8, 12))),
-    Item("jjk-s4",              "Jujutsu Kaisen S4",      "Show", Check.VagueDate(LocalDate.of(2027, 1, 31), "January 2027?")),
-    Item("steel-ball-run-ep2",  "Steel Ball Run Ep. 2",   "Show", Check.VagueDate(LocalDate.of(2026, 12, 31), "Late 2026?"),
-        defaultDetail = "Fuck Netflix."),
-    Item("shangri-la-s3",       "Shangri-La Frontier S3", "Show", Check.VagueDate(LocalDate.of(2027, 1, 31), "January 2027")),
-    Item("frieren-s3",          "Frieren S3",             "Show", Check.VagueDate(LocalDate.of(2027, 10, 31), "October 2027?")),
-    Item("dbs-galactic-patrol", "Dragon Ball Super: The Galactic Patrol", "Show", Check.VagueDate(LocalDate.of(2027, 12, 31), "Late 2027?")),
-    Item("chainsaw-man-s2",     "Chainsaw Man Season 2",  "Show", Check.VagueDate(LocalDate.of(2027, 12, 31), "Late 2027?")),
-    Item("cyberpunk-edgerunners-2", "Cyberpunk: Edgerunners 2", "Show", Check.VagueDate(LocalDate.of(2026, 10, 15), "Fall 2026?"),
-        defaultDetail = "<a href=\"https://www.youtube.com/watch?v=mV7451mcw-E\" target=\"_blank\" rel=\"noopener\">Teaser out.</a>"),
-    Item("invincible-s5",       "Invincible Season 5",    "Show", Check.VagueDate(LocalDate.of(2027, 4, 15), "Spring 2027?")),
+    // Shows — AniList-backed (no API key; one batched GraphQL request per run)
+    // Premiere-confirmed shows get exact releaseDate; unscheduled ones use vagueDate/Label fallback
+    // until AniList locks in a date (that transition fires a push notification).
+    Item("rezero-s4-cour2", "Re:Zero Season 4", "Show", Check.AniList(189046),
+        aliases = listOf("Re:Zero S4", "Re:Zero S4 Cour 2", "ReZero Season 4", "Re:Zero kara Hajimeru Isekai Seikatsu")),
+    Item("youjo-senki-s2", "Saga of Tanya the Evil Season 2", "Show", Check.AniList(135865),
+        aliases = listOf("Youjo Senki", "Youjo Senki S2", "Youjo Senki Season 2", "Tanya the Evil", "Tanya the Evil Season 2")),
+    Item("mushoku-tensei-s3", "Mushoku Tensei: Jobless Reincarnation Season 3", "Show", Check.AniList(178789),
+        aliases = listOf("Mushoku Tensei", "Mushoku Tensei S3", "MT S3", "Jobless Reincarnation Season 3")),
+    Item("smoking-supermarket", "Smoking Behind the Supermarket with You", "Show", Check.AniList(196187),
+        aliases = listOf("Smoking Supermarket", "Super no Ura de Yani Suu Futari", "Yanisuu")),
+    Item("bleach-tybw-calamity", "BLEACH: Thousand-Year Blood War — The Calamity", "Show", Check.AniList(185874),
+        aliases = listOf("BLEACH", "Bleach", "Bleach TYBW", "Bleach Thousand-Year Blood War", "Bleach The Calamity")),
+    Item("slime-s4", "That Time I Got Reincarnated as a Slime Season 4", "Show", Check.AniList(182205),
+        since = LocalDate.of(2026, 4, 3),
+        aliases = listOf("TenSura", "Slime S4", "Slime Season 4", "Tensura Season 4", "Rimuru")),
+    Item("jjk-s4", "Jujutsu Kaisen: The Culling Game Part 2", "Show",
+        Check.AniList(209895, vagueDate = LocalDate.of(2027, 1, 31), vagueLabel = "January 2027?"),
+        defaultDetail = "<a href=\"https://www.youtube.com/watch?v=HGCsAcFzaFw\" target=\"_blank\" rel=\"noopener\">Teaser out.</a>",
+        aliases = listOf("JJK", "JJK S4", "JJK Season 4", "Jujutsu Kaisen", "Jujutsu Kaisen Season 4", "Culling Game")),
+    Item("steel-ball-run-ep2", "Steel Ball Run", "Show",
+        Check.AniList(210482, vagueDate = LocalDate.of(2026, 12, 31), vagueLabel = "Late 2026?"),
+        defaultDetail = "Fuck Netflix.",
+        aliases = listOf("SBR", "JoJo Part 7", "JoJo's Part 7", "JoJo's Bizarre Adventure Part 7", "JoJo's Bizarre Adventure: Steel Ball Run")),
+    Item("shangri-la-s3", "Shangri-La Frontier Season 3", "Show",
+        Check.AniList(189323, vagueDate = LocalDate.of(2027, 1, 31), vagueLabel = "January 2027"),
+        aliases = listOf("SLF S3", "SLF Season 3", "Shangri-La Frontier S3")),
+    Item("frieren-s3", "Frieren: Beyond Journey's End Season 3", "Show",
+        Check.AniList(209939, vagueDate = LocalDate.of(2027, 10, 31), vagueLabel = "October 2027?"),
+        aliases = listOf("Frieren S3", "Frieren Season 3", "Sousou no Frieren", "Sōsō no Furīren")),
+    Item("dbs-galactic-patrol", "Dragon Ball Super: The Galactic Patrol", "Show",
+        Check.AniList(206812, vagueDate = LocalDate.of(2027, 12, 31), vagueLabel = "Late 2027?"),
+        aliases = listOf("DBS", "Dragon Ball Super", "DBS Galactic Patrol")),
+    Item("chainsaw-man-s2", "Chainsaw Man: The Assassins Arc", "Show",
+        Check.AniList(204429, vagueDate = LocalDate.of(2027, 12, 31), vagueLabel = "Late 2027?"),
+        aliases = listOf("Chainsaw Man Season 2", "CSM", "CSM Season 2", "Chainsaw Man S2")),
+    Item("cyberpunk-edgerunners-2", "Cyberpunk: Edgerunners 2", "Show",
+        Check.AniList(195539, vagueDate = LocalDate.of(2026, 10, 15), vagueLabel = "Fall 2026?"),
+        defaultDetail = "<a href=\"https://www.youtube.com/watch?v=mV7451mcw-E\" target=\"_blank\" rel=\"noopener\">Teaser out.</a>",
+        aliases = listOf("Edgerunners 2", "Edgerunners Season 2")),
+    Item("invincible-s5", "Invincible Season 5", "Show", Check.VagueDate(LocalDate.of(2027, 4, 15), "Spring 2027?")),
 
     // Movies (date-ordered)
     Item("dune-3",              "Dune: Part Three",       "Movie", Check.ScheduledDate(LocalDate.of(2026, 12, 18))),
@@ -448,6 +495,52 @@ suspend fun fetchWikipediaHtml(client: HttpClient, article: String): String? = t
     null
 }
 
+internal data class AniListMedia(
+    val status: String,
+    val startDate: LocalDate?,
+    val nextAiringEpisode: Pair<Long, Int>?,  // airingAt unix timestamp to episode number
+)
+
+private val ANILIST_DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy")
+// AniList stores airingAt as UTC; startDate fields are already in JST (the broadcast timezone).
+// We convert airingAt to JST so the displayed date matches the Japanese broadcast calendar.
+private val JST = ZoneOffset.ofHours(9)
+
+/** Fetch status + next-episode info for all [mediaIds] in a single GraphQL request. */
+internal suspend fun fetchAniListBatch(client: HttpClient, mediaIds: List<Int>): Map<Int, AniListMedia> {
+    if (mediaIds.isEmpty()) return emptyMap()
+    val fields = mediaIds.joinToString(" ") { id ->
+        "m$id: Media(id: $id, type: ANIME) { status startDate { year month day } nextAiringEpisode { airingAt episode } }"
+    }
+    return try {
+        val body = client.post("https://graphql.anilist.co") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"query":"{ $fields }"}""")
+        }.bodyAsText().let { Json.parseToJsonElement(it).jsonObject }
+        val data = body["data"]?.jsonObject ?: return emptyMap()
+        mediaIds.mapNotNull { id ->
+            val media = data["m$id"]?.jsonObject ?: return@mapNotNull null
+            val status = media["status"]?.jsonPrimitive?.content ?: return@mapNotNull null
+            val sd = media["startDate"]?.jsonObject
+            val startDate = run {
+                val y = sd?.get("year")?.jsonPrimitive?.intOrNull
+                val m = sd?.get("month")?.jsonPrimitive?.intOrNull
+                val d = sd?.get("day")?.jsonPrimitive?.intOrNull
+                if (y != null && m != null && d != null) LocalDate.of(y, m, d) else null
+            }
+            val nextAiring = media["nextAiringEpisode"]?.jsonObject?.let {
+                val at = it["airingAt"]?.jsonPrimitive?.longOrNull ?: return@let null
+                val ep = it["episode"]?.jsonPrimitive?.intOrNull ?: return@let null
+                at to ep
+            }
+            id to AniListMedia(status, startDate, nextAiring)
+        }.toMap()
+    } catch (e: Exception) {
+        println("  AniList batch fetch failed: ${e.message}")
+        emptyMap()
+    }
+}
+
 private fun escapeHtmlText(s: String): String = s
     .replace("&", "&amp;")
     .replace("<", "&lt;")
@@ -573,6 +666,10 @@ internal fun diffRuns(
                 changes += RunChange("${cur.label}: $curAns (deceased)", meaningful = true)
             cur.tone != p.tone ->
                 changes += RunChange("${cur.label}: tone ${p.tone ?: "none"} → ${cur.tone ?: "none"}", meaningful = true)
+            // Fuzzy → exact date: vagueLabel disappears and an exact releaseDate arrives. The card
+            // still reads "No." but fans want to know a premiere date just got confirmed.
+            p.vagueLabel != null && cur.vagueLabel == null && cur.releaseDate != null ->
+                changes += RunChange("${cur.label}: premiere confirmed → ${cur.releaseDate}", meaningful = true)
             displayFingerprint(p) != displayFingerprint(cur) -> {
                 val desc = if (cur.countdownLabel != null && cur.countdownLabel != p.countdownLabel)
                     "${cur.label}: ${p.countdownLabel ?: "—"} → ${cur.countdownLabel}"
@@ -715,6 +812,14 @@ fun main(): Unit = runBlocking {
         println("XAI_API_KEY not set — skipping Grok checks.")
         emptyList()
     }
+
+    val aniListIds = ITEMS.mapNotNull { (it.check as? Check.AniList)?.mediaId }
+    val aniListData: Map<Int, AniListMedia> = if (aniListIds.isNotEmpty()) {
+        println("Fetching AniList data for ${aniListIds.size} show(s) (single request)…")
+        fetchAniListBatch(client, aniListIds).also {
+            println("  Got ${it.size}/${aniListIds.size} result(s)")
+        }
+    } else emptyMap()
 
     val baseResults = ITEMS.map { item ->
         val result = when (val check = item.check) {
@@ -869,6 +974,41 @@ fun main(): Unit = runBlocking {
                     )
                 }
             }
+
+            is Check.AniList -> {
+                val media = aniListData[check.mediaId]
+                if (media == null) {
+                    // Fail closed: network error or AniList ID not yet in batch result
+                    ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail,
+                        releaseDate = check.vagueDate?.toString(), vagueLabel = check.vagueLabel)
+                } else when (media.status) {
+                    "NOT_YET_RELEASED" -> {
+                        // Prefer the fully-specified startDate (already in JST, the broadcast calendar).
+                        // If startDate is partial/missing, try converting nextAiringEpisode to JST.
+                        val exactDate = media.startDate ?: media.nextAiringEpisode?.let { (airingAt, _) ->
+                            Instant.ofEpochSecond(airingAt).atZone(JST).toLocalDate()
+                        }
+                        if (exactDate != null) {
+                            ItemResult(item.id, item.label, item.category, detail = item.defaultDetail,
+                                releaseDate = exactDate.toString())
+                        } else {
+                            // No confirmed date yet — hold at the vague fallback
+                            ItemResult(item.id, item.label, item.category, detail = item.defaultDetail,
+                                releaseDate = check.vagueDate?.toString(), vagueLabel = check.vagueLabel)
+                        }
+                    }
+                    "RELEASING", "HIATUS" -> {
+                        val (countdownLabel, countdownSub) = media.nextAiringEpisode?.let { (airingAt, episode) ->
+                            val date = Instant.ofEpochSecond(airingAt).atZone(JST).toLocalDate()
+                            "Ep. $episode airs" to ANILIST_DATE_FMT.format(date)
+                        } ?: (null to null)
+                        ItemResult(item.id, item.label, item.category, answer = "Yes.",
+                            detail = item.defaultDetail, countdownLabel = countdownLabel, countdownSub = countdownSub)
+                    }
+                    else -> // FINISHED, CANCELLED
+                        ItemResult(item.id, item.label, item.category, answer = "Yes.", detail = item.defaultDetail)
+                }
+            }
         }
         result.copy(aliases = item.aliases)
     }
@@ -884,9 +1024,15 @@ fun main(): Unit = runBlocking {
             val becameYes = effectiveAnswer(base, today).startsWith("Yes") &&
                 !effectiveAnswer(prev, today).startsWith("Yes")
             val becameDeath = base.tone == "death" && prev.tone != "death"
-            if (becameYes || becameDeath) {
-                val message = base.detail?.let { stripHtml(it) }?.ifBlank { null }
-                    ?: if (becameDeath) "Looks like they're out." else "It's out!"
+            // Fuzzy → exact: vagueLabel disappeared and a real releaseDate arrived (still "No." for now,
+            // but fans want to know a premiere date just got officially confirmed by the broadcaster).
+            val gotExactDate = prev.vagueLabel != null && base.vagueLabel == null && base.releaseDate != null
+            if (becameYes || becameDeath || gotExactDate) {
+                val message = when {
+                    gotExactDate -> "Premiere confirmed: ${base.releaseDate}"
+                    becameDeath -> "Looks like they're out."
+                    else -> base.detail?.let { stripHtml(it) }?.ifBlank { null } ?: "It's out!"
+                }
                 transitions += ChangeEvent(base.id, base.label, base.category, message, becameDeath)
             }
         }
