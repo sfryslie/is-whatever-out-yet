@@ -39,7 +39,7 @@ If something changes, the runner will also send out notifications on the topics 
 
 If you thought my jokes were funny, here ya go, here's the Buy Me a Coffee link.
 
-<img width="700" height="700" alt="bmc_qr" src="https://github.com/user-attachments/assets/dc28f229-310a-47c6-b7c3-2e2ec83f5dd3" />
+<img width="400" height="400" alt="bmc_qr" src="https://github.com/user-attachments/assets/dc28f229-310a-47c6-b7c3-2e2ec83f5dd3" />
 
 buymeacoffee.com/sfryslie 
 
