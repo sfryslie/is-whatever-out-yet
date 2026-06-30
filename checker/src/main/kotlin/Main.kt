@@ -683,25 +683,23 @@ private val JST = ZoneOffset.ofHours(9)
  * as a parse failure: one bad ID shouldn't take the whole batch down with it.
  */
 internal fun parseAniListBatchResponse(body: JsonObject, mediaIds: List<Int>): Map<Int, AniListMedia> {
-    // "data" itself can be a JSON null (not just a missing key) when AniList returns a top-level
-    // GraphQL error, e.g. {"data": null, "errors": [...]} on a rate limit — same JsonNull pitfall
-    // as the per-media check below, just one level up.
-    val dataElement = body["data"]
-    if (dataElement == null || dataElement is JsonNull) return emptyMap()
-    val data = dataElement.jsonObject
+    // `as? JsonObject` (rather than the throwing `.jsonObject` extension) is the load-bearing bit
+    // here: AniList legitimately returns a JSON `null` for plenty of fields that are merely absent
+    // rather than the key being omitted — "data" itself on a GraphQL error, "startDate" for a show
+    // with no confirmed date yet, "nextAiringEpisode" for anything not currently airing. A safe
+    // cast treats all of those as "not present" instead of crashing the whole batch on one field.
+    val data = body["data"] as? JsonObject ?: return emptyMap()
     return mediaIds.mapNotNull { id ->
-        val mediaElement = data["m$id"]
-        if (mediaElement == null || mediaElement is JsonNull) return@mapNotNull null
-        val media = mediaElement.jsonObject
+        val media = data["m$id"] as? JsonObject ?: return@mapNotNull null
         val status = media["status"]?.jsonPrimitive?.content ?: return@mapNotNull null
-        val sd = media["startDate"]?.jsonObject
+        val sd = media["startDate"] as? JsonObject
         val startDate = run {
             val y = sd?.get("year")?.jsonPrimitive?.intOrNull
             val m = sd?.get("month")?.jsonPrimitive?.intOrNull
             val d = sd?.get("day")?.jsonPrimitive?.intOrNull
             if (y != null && m != null && d != null) LocalDate.of(y, m, d) else null
         }
-        val nextAiring = media["nextAiringEpisode"]?.jsonObject?.let {
+        val nextAiring = (media["nextAiringEpisode"] as? JsonObject)?.let {
             val at = it["airingAt"]?.jsonPrimitive?.longOrNull ?: return@let null
             val ep = it["episode"]?.jsonPrimitive?.intOrNull ?: return@let null
             at to ep
