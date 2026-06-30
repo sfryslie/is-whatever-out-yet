@@ -14,9 +14,9 @@ There are redirects to this site from other sites I bought, including but not li
 
 Because I think I am very funny and clever and you should laugh at my jokes and clap.
 
-Eh, basically I just want to play around with different AI models and stuff to see how good it is at building frontends and everything end-to-end, reading API docs for me, etc. The app is relatively simple and has a lot of boilerplate code just doing basic CRUD.
+I don't always follow the shows and games and such that I'm vaguely interested in, so maybe it's good to have a place that reminds me about them instead of subscribing to 100 email lists and subreddits and turning on notifications on social media sites.
 
-It's a fun learning exercise in my freetime while I'm goofing off. I don't usually code for free.
+Plus, meh, basically I just want to play around with different AI models and stuff to see how good it is at building frontends and everything end-to-end, reading API docs for me, etc. The app is relatively simple and has a lot of boilerplate code just doing basic CRUD. It's a fun learning exercise in my freetime while I'm goofing off. I don't usually code for free, but having a few public GitHub repositories might make me look cool to someone if shit goes south, y'know?
 
 ## How does it work?
 
