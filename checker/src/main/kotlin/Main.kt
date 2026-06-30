@@ -683,7 +683,12 @@ private val JST = ZoneOffset.ofHours(9)
  * as a parse failure: one bad ID shouldn't take the whole batch down with it.
  */
 internal fun parseAniListBatchResponse(body: JsonObject, mediaIds: List<Int>): Map<Int, AniListMedia> {
-    val data = body["data"]?.jsonObject ?: return emptyMap()
+    // "data" itself can be a JSON null (not just a missing key) when AniList returns a top-level
+    // GraphQL error, e.g. {"data": null, "errors": [...]} on a rate limit — same JsonNull pitfall
+    // as the per-media check below, just one level up.
+    val dataElement = body["data"]
+    if (dataElement == null || dataElement is JsonNull) return emptyMap()
+    val data = dataElement.jsonObject
     return mediaIds.mapNotNull { id ->
         val mediaElement = data["m$id"]
         if (mediaElement == null || mediaElement is JsonNull) return@mapNotNull null
