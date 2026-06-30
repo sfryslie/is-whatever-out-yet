@@ -43,7 +43,10 @@ If you thought my jokes were funny, here ya go, here's the Buy Me a Coffee link.
 
 [Buy Me a Coffee](https://buymeacoffee.com/sfryslie) 
 
-## License
+## MIT License
 
-[GNU General Public License v3.0](LICENSE) (GPL-3.0) — free to use, study, modify, and
-distribute, including commercially, as long as derivative works are also GPL-3.0.
+I don't *really* care about this beyond me just shitposting on a week I have off from work, so if you want to copy it and do the same thing, I mean I just was vibecoding so, strictly speaking, this was probably just stolen code from somewhere else anyway and you can vibecode a new version on a new model trained on this repo anyway. 
+
+It would be hypocritical to assume copyright privileges on a basic idea that was built as a joke with AI assistance. ¯\\\_(ツ)_/¯
+
+Though if you fork the repo, steal the idea, the code, and my jokes verbatim to make money off of it and close source it, you're an asshole.
