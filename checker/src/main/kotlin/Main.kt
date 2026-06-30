@@ -159,7 +159,10 @@ sealed class Check {
      * RELEASING / HIATUS → "Yes." + countdownLabel/Sub for next episode if scheduled.
      * FINISHED / CANCELLED → "Yes." with no countdown.
      * No API key required — public data queries are unauthenticated. All fetches are batched
-     * into a single GraphQL request. Fails closed on any network or parse error.
+     * into a single GraphQL request. Fails closed on any network/parse error, or on an individual
+     * mediaId AniList can't resolve: falls back to the *previous run's* result for that item (not
+     * [Item.defaultAnswer]/[vagueDate]) so a transient outage can't undo an already-confirmed
+     * "Yes." or exact date — the static defaults/vague fallback only apply on a true first run.
      */
     data class AniList(
         val mediaId: Int,
@@ -172,9 +175,10 @@ sealed class Check {
      * confirmed console/non-PC date drives the card flip; PC (platform 6) is tracked separately
      * and surfaces as detail text (pre-release) or a display-only countdown via
      * [ItemResult.countdownTo] once the primary platform has launched. Requires
-     * IGDB_CLIENT_ID + IGDB_CLIENT_SECRET env vars (Twitch app credentials); fails closed to
-     * [Item.defaultAnswer]/[Item.defaultDetail] if the API is unreachable, the slug returns
-     * no results, or credentials are absent.
+     * IGDB_CLIENT_ID + IGDB_CLIENT_SECRET env vars (Twitch app credentials); falls back to the
+     * *previous run's* result for this item if the API is unreachable, the slug returns no
+     * resolvable date, or credentials are absent — only a true first run (no previous data) falls
+     * back to [Item.defaultAnswer]/[Item.defaultDetail].
      */
     data class IGDB(val slug: String) : Check()
 }
@@ -271,8 +275,14 @@ internal fun parseIgdbReleaseDates(obj: JsonObject): List<IgdbReleaseDate> =
  *   can serve as the human-authored fallback.
  * - Post-primary-release: if PC has a future confirmed date, [ItemResult.countdownTo] is set so
  *   the frontend can compute "N days to go" against the user's clock.
+ *
+ * If IGDB has no resolvable date for this game (empty/TBD-only `release_dates`), falling back to
+ * the item's static defaults would silently erase a date a *previous* run already confirmed — so
+ * [prev] (the previous run's result for this item, if any) is preferred over the static defaults
+ * in that case. `null` (the default) keeps the old defaults-only behavior for callers that don't
+ * track run history.
  */
-internal fun buildIgdbResult(item: Item, game: JsonObject, today: LocalDate): ItemResult {
+internal fun buildIgdbResult(item: Item, game: JsonObject, today: LocalDate, prev: ItemResult? = null): ItemResult {
     val status   = game["status"]?.jsonPrimitive?.intOrNull  // 0 = Released
     val allDates = parseIgdbReleaseDates(game)
 
@@ -330,12 +340,14 @@ internal fun buildIgdbResult(item: Item, game: JsonObject, today: LocalDate): It
             detail      = pcNote ?: item.defaultDetail,
         )
 
-        // No date info — fall back to item defaults
-        else -> ItemResult(
-            item.id, item.label, item.category,
-            answer = item.defaultAnswer,
-            detail = item.defaultDetail,
-        )
+        // No date info — fall back to the previous run's result (a transient/partial IGDB
+        // response shouldn't undo a date already confirmed), or the item defaults on first run.
+        else -> prev?.copy(id = item.id, label = item.label, category = item.category)
+            ?: ItemResult(
+                item.id, item.label, item.category,
+                answer = item.defaultAnswer,
+                detail = item.defaultDetail,
+            )
     }
 }
 
@@ -664,6 +676,35 @@ private val ANILIST_DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy")
 // We convert airingAt to JST so the displayed date matches the Japanese broadcast calendar.
 private val JST = ZoneOffset.ofHours(9)
 
+/**
+ * Parse a raw AniList GraphQL response [body] into per-media results for [mediaIds]. A media entry
+ * that's missing or explicitly `null` (AniList returns `null` for an ID it can't resolve — e.g. a
+ * merged/deleted entry, or a transient hiccup on just that one ID) is skipped rather than treated
+ * as a parse failure: one bad ID shouldn't take the whole batch down with it.
+ */
+internal fun parseAniListBatchResponse(body: JsonObject, mediaIds: List<Int>): Map<Int, AniListMedia> {
+    val data = body["data"]?.jsonObject ?: return emptyMap()
+    return mediaIds.mapNotNull { id ->
+        val mediaElement = data["m$id"]
+        if (mediaElement == null || mediaElement is JsonNull) return@mapNotNull null
+        val media = mediaElement.jsonObject
+        val status = media["status"]?.jsonPrimitive?.content ?: return@mapNotNull null
+        val sd = media["startDate"]?.jsonObject
+        val startDate = run {
+            val y = sd?.get("year")?.jsonPrimitive?.intOrNull
+            val m = sd?.get("month")?.jsonPrimitive?.intOrNull
+            val d = sd?.get("day")?.jsonPrimitive?.intOrNull
+            if (y != null && m != null && d != null) LocalDate.of(y, m, d) else null
+        }
+        val nextAiring = media["nextAiringEpisode"]?.jsonObject?.let {
+            val at = it["airingAt"]?.jsonPrimitive?.longOrNull ?: return@let null
+            val ep = it["episode"]?.jsonPrimitive?.intOrNull ?: return@let null
+            at to ep
+        }
+        id to AniListMedia(status, startDate, nextAiring)
+    }.toMap()
+}
+
 /** Fetch status + next-episode info for all [mediaIds] in a single GraphQL request. */
 internal suspend fun fetchAniListBatch(client: HttpClient, mediaIds: List<Int>): Map<Int, AniListMedia> {
     if (mediaIds.isEmpty()) return emptyMap()
@@ -675,24 +716,7 @@ internal suspend fun fetchAniListBatch(client: HttpClient, mediaIds: List<Int>):
             contentType(ContentType.Application.Json)
             setBody("""{"query":"{ $fields }"}""")
         }.bodyAsText().let { Json.parseToJsonElement(it).jsonObject }
-        val data = body["data"]?.jsonObject ?: return emptyMap()
-        mediaIds.mapNotNull { id ->
-            val media = data["m$id"]?.jsonObject ?: return@mapNotNull null
-            val status = media["status"]?.jsonPrimitive?.content ?: return@mapNotNull null
-            val sd = media["startDate"]?.jsonObject
-            val startDate = run {
-                val y = sd?.get("year")?.jsonPrimitive?.intOrNull
-                val m = sd?.get("month")?.jsonPrimitive?.intOrNull
-                val d = sd?.get("day")?.jsonPrimitive?.intOrNull
-                if (y != null && m != null && d != null) LocalDate.of(y, m, d) else null
-            }
-            val nextAiring = media["nextAiringEpisode"]?.jsonObject?.let {
-                val at = it["airingAt"]?.jsonPrimitive?.longOrNull ?: return@let null
-                val ep = it["episode"]?.jsonPrimitive?.intOrNull ?: return@let null
-                at to ep
-            }
-            id to AniListMedia(status, startDate, nextAiring)
-        }.toMap()
+        parseAniListBatchResponse(body, mediaIds)
     } catch (e: Exception) {
         println("  AniList batch fetch failed: ${e.message}")
         emptyMap()
@@ -944,9 +968,12 @@ fun main(): Unit = runBlocking {
     val xaiKey       = System.getenv("XAI_API_KEY")       // optional
     val outputPath   = System.getenv("DATA_JSON_PATH")    ?: "../data.json"
     // Web Push Worker endpoint + shared send token. Both must be set to enable notifications;
-    // missing either skips them (e.g. local runs).
-    val pushApi      = System.getenv("PUSH_API_URL")
-    val pushToken    = System.getenv("PUSH_SEND_TOKEN")
+    // missing either skips them (e.g. local runs). GitHub Actions sets a `${{ secrets.X }}` env
+    // var to an empty string (not an absent var) when the secret isn't configured, so blank counts
+    // as unset too — otherwise we'd try to POST to an empty/relative URL and fail noisily instead
+    // of skipping cleanly.
+    val pushApi      = System.getenv("PUSH_API_URL")?.takeUnless { it.isBlank() }
+    val pushToken    = System.getenv("PUSH_SEND_TOKEN")?.takeUnless { it.isBlank() }
     val igdbClientId = System.getenv("IGDB_CLIENT_ID")
     val igdbSecret   = System.getenv("IGDB_CLIENT_SECRET")
 
@@ -1140,16 +1167,23 @@ fun main(): Unit = runBlocking {
             }
 
             is Check.IGDB -> {
+                // Fail closed: missing credentials or an unreachable/empty IGDB response shouldn't
+                // overwrite a date a previous run already confirmed — prefer that over the item's
+                // static defaults, and only fall back to the defaults on a true first run.
+                val staleOrDefault = {
+                    prevById[item.id]?.copy(id = item.id, label = item.label, category = item.category)
+                        ?: ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+                }
                 if (igdbClientId == null || igdbToken == null) {
-                    ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+                    staleOrDefault()
                 } else {
                     println("Checking IGDB for ${item.label} (slug: ${check.slug})…")
                     val game = fetchIgdbGame(client, igdbClientId, igdbToken, check.slug)
                     if (game == null) {
-                        println("  IGDB: no result for '${check.slug}' — using defaults")
-                        ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+                        println("  IGDB: no result for '${check.slug}' — using previous run's data")
+                        staleOrDefault()
                     } else {
-                        buildIgdbResult(item, game, today)
+                        buildIgdbResult(item, game, today, prevById[item.id])
                     }
                 }
             }
@@ -1195,9 +1229,13 @@ fun main(): Unit = runBlocking {
             is Check.AniList -> {
                 val media = aniListData[check.mediaId]
                 if (media == null) {
-                    // Fail closed: network error or AniList ID not yet in batch result
-                    ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail,
-                        releaseDate = check.vagueDate?.toString(), vagueLabel = check.vagueLabel)
+                    // Fail closed: network error, or this mediaId missing/null in the batch result.
+                    // Falling back to the item's static default would silently undo a previously
+                    // confirmed "Yes." or exact date — prefer the previous run's result instead,
+                    // and only use the vague placeholder on a true first run.
+                    prevById[item.id]?.copy(id = item.id, label = item.label, category = item.category)
+                        ?: ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail,
+                            releaseDate = check.vagueDate?.toString(), vagueLabel = check.vagueLabel)
                 } else when (media.status) {
                     "NOT_YET_RELEASED" -> {
                         // Prefer the fully-specified startDate (already in JST, the broadcast calendar).
