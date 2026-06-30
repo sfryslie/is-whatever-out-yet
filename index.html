@@ -442,21 +442,6 @@
       padding-right: 1.3rem;
     }
 
-    /* status dot before each label, tinted to the card's state */
-    .card-name::before {
-      content: "";
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--no-answer);
-      margin-right: 0.5rem;
-      vertical-align: middle;
-    }
-    .card.yes   .card-name::before { background: var(--yes); }
-    .card.soon  .card-name::before { background: var(--soon); }
-    .card.other .card-name::before { background: var(--other); }
-    .card.gone  .card-name::before { background: var(--gone); }
 
     .card-answer {
       font-size: 2.25rem;
