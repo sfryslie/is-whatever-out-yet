@@ -1,5 +1,5 @@
 {
-    "updated": "2026-06-30T18:12:21.937830748Z",
+    "updated": "2026-06-30T18:49:38.597655577Z",
     "items": [
         {
             "id": "claude-fable-5",
@@ -11,7 +11,9 @@
             "id": "claude-sonnet-5",
             "label": "Claude Sonnet 5",
             "category": "AI",
-            "answer": "No."
+            "answer": "Yes.",
+            "detail": "claude-sonnet-5",
+            "since": "2026-06-30"
         },
         {
             "id": "claude-opus-5",
@@ -322,9 +324,9 @@
             "label": "Re:Zero Season 4",
             "category": "Show",
             "answer": "Yes.",
-            "since": "2026-06-29",
             "countdownLabel": "Ep. 12 airs",
             "countdownSub": "Aug 12, 2026",
+            "since": "2026-06-29",
             "aliases": [
                 "Re:Zero S4",
                 "Re:Zero S4 Cour 2",
@@ -386,9 +388,9 @@
             "label": "That Time I Got Reincarnated as a Slime Season 4",
             "category": "Show",
             "answer": "Yes.",
-            "since": "2026-04-03",
             "countdownLabel": "Ep. 13 airs",
             "countdownSub": "Jul 3, 2026",
+            "since": "2026-04-03",
             "aliases": [
                 "TenSura",
                 "Slime S4",
