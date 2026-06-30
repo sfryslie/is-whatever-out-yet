@@ -244,6 +244,39 @@ class AniListBatchParseTest {
         val body = buildJsonObject { put("data", JsonNull) }
         assertEquals(emptyMap(), parseAniListBatchResponse(body, listOf(1, 2)))
     }
+
+    @Test
+    fun `a null startDate (no confirmed date yet) doesn't crash the batch`() {
+        // The real-world shape that broke production: AniList returns startDate: null (not an
+        // omitted key) for a NOT_YET_RELEASED show with no confirmed date.
+        val body = buildJsonObject {
+            putJsonObject("data") {
+                putJsonObject("m1") {
+                    put("status", "NOT_YET_RELEASED")
+                    put("startDate", JsonNull)
+                }
+            }
+        }
+        val result = parseAniListBatchResponse(body, listOf(1))
+        assertEquals("NOT_YET_RELEASED", result.getValue(1).status)
+        assertNull(result.getValue(1).startDate)
+    }
+
+    @Test
+    fun `a null nextAiringEpisode (finished show) doesn't crash the batch`() {
+        // Also a real-world shape: FINISHED/CANCELLED shows have no next airing episode.
+        val body = buildJsonObject {
+            putJsonObject("data") {
+                putJsonObject("m1") {
+                    put("status", "FINISHED")
+                    put("nextAiringEpisode", JsonNull)
+                }
+            }
+        }
+        val result = parseAniListBatchResponse(body, listOf(1))
+        assertEquals("FINISHED", result.getValue(1).status)
+        assertNull(result.getValue(1).nextAiringEpisode)
+    }
 }
 
 // ── IGDB helpers ─────────────────────────────────────────────────────────────
