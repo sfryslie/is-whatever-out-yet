@@ -552,7 +552,7 @@ val ITEMS = listOf(
         defaultDetail = "Such a nasty woman, but Trump wishes her well. Pardon incoming?"),
     Item("the-epstein-list", "The Epstein Client List", "People",
         Check.Hardcoded,
-        "No."
+        "No.",
         aliases = listOf("The Epstein files")),
     Item("menendez-brothers", "The Menendez Brothers", "People",
         Check.WikipediaHtml("Lyle_and_Erik_Menendez", INCARCERATION_MARKERS, flippedDetail = "They're out.",
