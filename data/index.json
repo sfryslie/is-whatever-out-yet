@@ -1,0 +1,45 @@
+{
+    "updated": "2026-07-01T22:26:09.992542400Z",
+    "categories": [
+        {
+            "name": "AI",
+            "file": "ai.json"
+        },
+        {
+            "name": "Video Games",
+            "file": "video-games.json"
+        },
+        {
+            "name": "Books",
+            "file": "books.json"
+        },
+        {
+            "name": "Anime",
+            "file": "anime.json"
+        },
+        {
+            "name": "Shows",
+            "file": "shows.json"
+        },
+        {
+            "name": "Movies",
+            "file": "movies.json"
+        },
+        {
+            "name": "People",
+            "file": "people.json"
+        },
+        {
+            "name": "Resources",
+            "file": "resources.json"
+        },
+        {
+            "name": "Tech",
+            "file": "tech.json"
+        },
+        {
+            "name": "Miscellaneous",
+            "file": "miscellaneous.json"
+        }
+    ]
+}

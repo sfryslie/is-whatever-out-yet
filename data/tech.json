@@ -1,0 +1,77 @@
+{
+    "category": "Tech",
+    "items": [
+        {
+            "id": "tesla-roadster-2",
+            "label": "Tesla Roadster 2",
+            "category": "Tech",
+            "answer": "No.",
+            "detail": "Announced November 2017. Still upcoming."
+        },
+        {
+            "id": "python-4",
+            "label": "Python 4",
+            "category": "Tech",
+            "answer": "No.",
+            "detail": "Stop building AI backend services in Python, it sucks. Go use Java/Kotlin and <a href=\"https://spring.io/projects/spring-ai\" target=\"_blank\" rel=\"noopener\">Spring AI</a>."
+        },
+        {
+            "id": "steam-machine",
+            "label": "Steam Machine",
+            "category": "Tech",
+            "answer": "Yes.",
+            "detail": "<a href=\"https://store.steampowered.com/hardware/steammachine\" target=\"_blank\" rel=\"noopener\">Too expensive though.</a>"
+        },
+        {
+            "id": "steam-frame",
+            "label": "Steam Frame",
+            "category": "Tech",
+            "answer": "No.",
+            "detail": "Expected Summer 2026.",
+            "countdownTo": "2026-09-22"
+        },
+        {
+            "id": "java-valhalla",
+            "label": "Java Value Types (Valhalla)",
+            "category": "Tech",
+            "detail": "JDK 28 preview.",
+            "releaseDate": "2027-03-31",
+            "vagueLabel": "March 2027?"
+        },
+        {
+            "id": "fsd-level-5",
+            "label": "Level 5 Full Self-Driving",
+            "category": "Tech",
+            "answer": "No."
+        },
+        {
+            "id": "cold-fusion",
+            "label": "Cold Fusion",
+            "category": "Tech",
+            "answer": "No."
+        },
+        {
+            "id": "amd-zen-6",
+            "label": "AMD Zen 6",
+            "category": "Tech",
+            "answer": "No.",
+            "detail": "Might be revealed at CES 2027.",
+            "countdownTo": "2027-01-06"
+        },
+        {
+            "id": "rtx-50-super",
+            "label": "RTX 50 Super Series",
+            "category": "Tech",
+            "answer": "No.",
+            "detail": "Might be revealed at CES 2027.",
+            "countdownTo": "2027-01-06"
+        },
+        {
+            "id": "rtx-60",
+            "label": "RTX 60 Series",
+            "category": "Tech",
+            "answer": "No.",
+            "detail": "Blame AI / Jensen."
+        }
+    ]
+}

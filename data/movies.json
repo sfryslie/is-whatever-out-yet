@@ -1,0 +1,124 @@
+{
+    "category": "Movies",
+    "items": [
+        {
+            "id": "moana-2026",
+            "label": "Moana",
+            "category": "Movies",
+            "detail": "(the live action one)",
+            "releaseDate": "2026-07-11"
+        },
+        {
+            "id": "the-odyssey",
+            "label": "The Odyssey",
+            "category": "Movies",
+            "releaseDate": "2026-07-17"
+        },
+        {
+            "id": "dune-3",
+            "label": "Dune: Part Three",
+            "category": "Movies",
+            "releaseDate": "2026-12-18"
+        },
+        {
+            "id": "avengers-doomsday",
+            "label": "Avengers: Doomsday",
+            "category": "Movies",
+            "releaseDate": "2026-12-18"
+        },
+        {
+            "id": "air-bud-returns",
+            "label": "Air Bud Returns",
+            "category": "Movies",
+            "releaseDate": "2027-01-22"
+        },
+        {
+            "id": "sonic-4",
+            "label": "Sonic the Hedgehog 4",
+            "category": "Movies",
+            "releaseDate": "2027-03-19"
+        },
+        {
+            "id": "spaceballs-new-one",
+            "label": "Spaceballs: The New One",
+            "category": "Movies",
+            "detail": "Sadly not Spaceballs III: The Search for Spaceballs II or Spaceballs 2: The Search for More Money",
+            "releaseDate": "2027-04-23"
+        },
+        {
+            "id": "zelda-movie",
+            "label": "The Legend of Zelda",
+            "category": "Movies",
+            "detail": "corpos can't triforce\n ▲\n▲ ▲",
+            "releaseDate": "2027-04-30"
+        },
+        {
+            "id": "starwars-starfighter",
+            "label": "Star Wars: Starfighter",
+            "category": "Movies",
+            "detail": "It has Ryan Gosling, I guess? Did anyone actually go to the Mandalorian movie?",
+            "releaseDate": "2027-05-28"
+        },
+        {
+            "id": "spiderverse-3",
+            "label": "Spider-Man: Beyond the Spider-Verse",
+            "category": "Movies",
+            "releaseDate": "2027-06-18"
+        },
+        {
+            "id": "shrek-5",
+            "label": "Shrek 5",
+            "category": "Movies",
+            "releaseDate": "2027-06-30"
+        },
+        {
+            "id": "quiet-place-3",
+            "label": "A Quiet Place Part III",
+            "category": "Movies",
+            "releaseDate": "2027-07-30"
+        },
+        {
+            "id": "demon-slayer-ic-2",
+            "label": "Demon Slayer: Infinity Castle Part 2",
+            "category": "Movies",
+            "releaseDate": "2027-09-22",
+            "vagueLabel": "Summer 2027?"
+        },
+        {
+            "id": "the-batman-2",
+            "label": "The Batman Part II",
+            "category": "Movies",
+            "releaseDate": "2027-10-01"
+        },
+        {
+            "id": "helldivers",
+            "label": "Helldivers",
+            "category": "Movies",
+            "releaseDate": "2027-11-10"
+        },
+        {
+            "id": "frozen-3",
+            "label": "Frozen III",
+            "category": "Movies",
+            "releaseDate": "2027-11-24"
+        },
+        {
+            "id": "lotr-gollum",
+            "label": "The Lord of the Rings: The Hunt for Gollum",
+            "category": "Movies",
+            "releaseDate": "2027-12-17"
+        },
+        {
+            "id": "avengers-secret-wars",
+            "label": "Avengers: Secret Wars",
+            "category": "Movies",
+            "releaseDate": "2027-12-17"
+        },
+        {
+            "id": "avatar-4",
+            "label": "Avatar 4: The Tulkun Rider",
+            "category": "Movies",
+            "releaseDate": "2029-12-21"
+        }
+    ]
+}

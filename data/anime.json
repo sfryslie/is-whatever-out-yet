@@ -1,0 +1,178 @@
+{
+    "category": "Anime",
+    "items": [
+        {
+            "id": "rezero-s4-cour2",
+            "label": "Re:Zero Season 4",
+            "category": "Anime",
+            "answer": "Yes.",
+            "countdownLabel": "Ep. 12 airs",
+            "countdownSub": "Aug 12, 2026",
+            "since": "2026-06-29",
+            "aliases": [
+                "Re:Zero S4",
+                "Re:Zero S4 Cour 2",
+                "ReZero Season 4",
+                "Re:Zero kara Hajimeru Isekai Seikatsu"
+            ]
+        },
+        {
+            "id": "youjo-senki-s2",
+            "label": "Saga of Tanya the Evil Season 2",
+            "category": "Anime",
+            "releaseDate": "2026-07-08",
+            "aliases": [
+                "Youjo Senki",
+                "Youjo Senki S2",
+                "Youjo Senki Season 2",
+                "Tanya the Evil",
+                "Tanya the Evil Season 2"
+            ]
+        },
+        {
+            "id": "mushoku-tensei-s3",
+            "label": "Mushoku Tensei: Jobless Reincarnation Season 3",
+            "category": "Anime",
+            "releaseDate": "2026-07-06",
+            "aliases": [
+                "Mushoku Tensei",
+                "Mushoku Tensei S3",
+                "MT S3",
+                "Jobless Reincarnation Season 3"
+            ]
+        },
+        {
+            "id": "smoking-supermarket",
+            "label": "Smoking Behind the Supermarket with You",
+            "category": "Anime",
+            "releaseDate": "2026-07-09",
+            "aliases": [
+                "Smoking Supermarket",
+                "Super no Ura de Yani Suu Futari",
+                "Yanisuu"
+            ]
+        },
+        {
+            "id": "bleach-tybw-calamity",
+            "label": "BLEACH: Thousand-Year Blood War — The Calamity",
+            "category": "Anime",
+            "releaseDate": "2026-07-25",
+            "aliases": [
+                "BLEACH",
+                "Bleach",
+                "Bleach TYBW",
+                "Bleach Thousand-Year Blood War",
+                "Bleach The Calamity"
+            ]
+        },
+        {
+            "id": "slime-s4",
+            "label": "That Time I Got Reincarnated as a Slime Season 4",
+            "category": "Anime",
+            "answer": "Yes.",
+            "countdownLabel": "Ep. 13 airs",
+            "countdownSub": "Jul 3, 2026",
+            "since": "2026-04-03",
+            "aliases": [
+                "TenSura",
+                "Slime S4",
+                "Slime Season 4",
+                "Tensura Season 4",
+                "Rimuru"
+            ]
+        },
+        {
+            "id": "jjk-s4",
+            "label": "Jujutsu Kaisen: The Culling Game Part 2",
+            "category": "Anime",
+            "detail": "<a href=\"https://www.youtube.com/watch?v=HGCsAcFzaFw\" target=\"_blank\" rel=\"noopener\">Teaser out.</a>",
+            "releaseDate": "2027-01-31",
+            "vagueLabel": "January 2027?",
+            "aliases": [
+                "JJK",
+                "JJK S4",
+                "JJK Season 4",
+                "Jujutsu Kaisen",
+                "Jujutsu Kaisen Season 4",
+                "Culling Game"
+            ]
+        },
+        {
+            "id": "steel-ball-run-ep2",
+            "label": "Steel Ball Run",
+            "category": "Anime",
+            "detail": "Fuck Netflix.",
+            "releaseDate": "2026-12-31",
+            "vagueLabel": "Late 2026?",
+            "aliases": [
+                "SBR",
+                "JoJo Part 7",
+                "JoJo's Part 7",
+                "JoJo's Bizarre Adventure Part 7",
+                "JoJo's Bizarre Adventure: Steel Ball Run"
+            ]
+        },
+        {
+            "id": "shangri-la-s3",
+            "label": "Shangri-La Frontier Season 3",
+            "category": "Anime",
+            "releaseDate": "2027-01-31",
+            "vagueLabel": "January 2027",
+            "aliases": [
+                "SLF S3",
+                "SLF Season 3",
+                "Shangri-La Frontier S3"
+            ]
+        },
+        {
+            "id": "frieren-s3",
+            "label": "Frieren: Beyond Journey's End Season 3",
+            "category": "Anime",
+            "releaseDate": "2027-10-31",
+            "vagueLabel": "October 2027?",
+            "aliases": [
+                "Frieren S3",
+                "Frieren Season 3",
+                "Sousou no Frieren",
+                "Sōsō no Furīren"
+            ]
+        },
+        {
+            "id": "dbs-galactic-patrol",
+            "label": "Dragon Ball Super: The Galactic Patrol",
+            "category": "Anime",
+            "releaseDate": "2027-12-31",
+            "vagueLabel": "Late 2027?",
+            "aliases": [
+                "DBS",
+                "Dragon Ball Super",
+                "DBS Galactic Patrol"
+            ]
+        },
+        {
+            "id": "chainsaw-man-s2",
+            "label": "Chainsaw Man: The Assassins Arc",
+            "category": "Anime",
+            "releaseDate": "2027-12-31",
+            "vagueLabel": "Late 2027?",
+            "aliases": [
+                "Chainsaw Man Season 2",
+                "CSM",
+                "CSM Season 2",
+                "Chainsaw Man S2"
+            ]
+        },
+        {
+            "id": "cyberpunk-edgerunners-2",
+            "label": "Cyberpunk: Edgerunners 2",
+            "category": "Anime",
+            "detail": "<a href=\"https://www.youtube.com/watch?v=mV7451mcw-E\" target=\"_blank\" rel=\"noopener\">Teaser out.</a>",
+            "releaseDate": "2026-10-15",
+            "vagueLabel": "Fall 2026?",
+            "aliases": [
+                "Edgerunners 2",
+                "Edgerunners Season 2"
+            ]
+        }
+    ]
+}

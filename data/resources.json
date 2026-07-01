@@ -1,0 +1,63 @@
+{
+    "category": "Resources",
+    "items": [
+        {
+            "id": "helium",
+            "label": "Helium",
+            "category": "Resources",
+            "answer": "No.",
+            "detail": "~200 years of supply remaining. Don't panic."
+        },
+        {
+            "id": "ram",
+            "label": "RAM",
+            "category": "Resources",
+            "answer": "Probably.",
+            "detail": "Blame AI."
+        },
+        {
+            "id": "sand",
+            "label": "Sand",
+            "category": "Resources",
+            "answer": "Maybe?",
+            "detail": "It's actually a major problem, look it up."
+        },
+        {
+            "id": "sulfur",
+            "label": "Sulfur",
+            "category": "Resources",
+            "answer": "Maybe?",
+            "detail": "A lot of it comes from the Persian Gulf."
+        },
+        {
+            "id": "bananas",
+            "label": "Bananas",
+            "category": "Resources",
+            "answer": "Maybe?",
+            "detail": "Panama disease for Cavendish bananas in stores."
+        },
+        {
+            "id": "toilet-paper",
+            "label": "Toilet Paper",
+            "category": "Resources",
+            "answer": "No.",
+            "detail": "Honestly, just get a <a href=\"https://www.costco.com/p/-/toto-drake-2-piece-elongated-toilet-with-c5-washlet-bidet-seat/4000380465\" target=\"_blank\" rel=\"noopener\">Toto bidet from Costco.</a> Y'know, with like a heated seat and warm water."
+        },
+        {
+            "id": "water",
+            "label": "Water",
+            "category": "Resources",
+            "answer": "Maybe?",
+            "detail": "Take shorter showers, that water could go to a data center."
+        },
+        {
+            "id": "gas",
+            "label": "Gas",
+            "category": "Resources",
+            "answer": "No?",
+            "detail": "I think we still have reserves.",
+            "countdownLabel": "$3.85/gal",
+            "countdownSub": "U.S. average · AAA"
+        }
+    ]
+}

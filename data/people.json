@@ -1,0 +1,182 @@
+{
+    "category": "People",
+    "items": [
+        {
+            "id": "diddy",
+            "label": "Diddy",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Serving ~50 months in prison."
+        },
+        {
+            "id": "henry-kissinger",
+            "label": "Henry Kissinger",
+            "category": "People",
+            "answer": "Maybe?",
+            "detail": "I think he's still in one of those Myst books?",
+            "since": "2023-11-29",
+            "tone": "death"
+        },
+        {
+            "id": "donald-trump",
+            "label": "Donald Trump",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Not out of office yet.",
+            "countdownTo": "2029-01-20"
+        },
+        {
+            "id": "vladimir-putin",
+            "label": "Vladimir Putin",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Still President of Russia. Has been since 2012."
+        },
+        {
+            "id": "elizabeth-holmes",
+            "label": "Elizabeth Holmes",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Serving 11+ years at FPC Bryan."
+        },
+        {
+            "id": "sbf",
+            "label": "Sam Bankman-Fried",
+            "category": "People",
+            "answer": "No.",
+            "detail": "25 years at FCI Lompoc I."
+        },
+        {
+            "id": "bill-cosby",
+            "label": "Bill Cosby",
+            "category": "People",
+            "answer": "Yes.",
+            "detail": "<a href=\"https://en.wikipedia.org/wiki/Trial_of_Bill_Cosby#Overturned_conviction\" target=\"_blank\" rel=\"noopener\">Released in 2021. It was kinda bullshit.</a>",
+            "since": "2021-06-30"
+        },
+        {
+            "id": "harvey-weinstein",
+            "label": "Harvey Weinstein",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Held at Rikers Island."
+        },
+        {
+            "id": "r-kelly",
+            "label": "R. Kelly",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Serving 30 years at FCI Butner."
+        },
+        {
+            "id": "jared-fogle",
+            "label": "Jared Fogle",
+            "category": "People",
+            "answer": "No.",
+            "detail": "~16 years at FCI Englewood. Out around 2029."
+        },
+        {
+            "id": "joe-exotic",
+            "label": "Joe Exotic",
+            "category": "People",
+            "answer": "No.",
+            "detail": "21 years at FMC Fort Worth. Still no pardon."
+        },
+        {
+            "id": "suge-knight",
+            "label": "Suge Knight",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Serving 28 years at Richard J. Donovan Correctional Facility."
+        },
+        {
+            "id": "danny-masterson",
+            "label": "Danny Masterson",
+            "category": "People",
+            "answer": "No.",
+            "detail": "30 years to life at California Men's Colony."
+        },
+        {
+            "id": "ted-kaczynski",
+            "label": "Ted Kaczynski",
+            "category": "People",
+            "answer": "Yes.",
+            "detail": "Yeah, he died in 2023, dude. That was like... a while ago.",
+            "since": "2023-06-10",
+            "tone": "death"
+        },
+        {
+            "id": "oj-simpson",
+            "label": "O.J. Simpson",
+            "category": "People",
+            "answer": "No.",
+            "detail": "The Juice is not loose, he died in 2024.",
+            "since": "2024-04-10",
+            "tone": "death"
+        },
+        {
+            "id": "sirhan-sirhan",
+            "label": "Sirhan Sirhan",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Gavin Newsom overruled the parole board's recommendations. Touchy subject.",
+            "aliases": [
+                "RFK assassin",
+                "Robert F. Kennedy assassin",
+                "Bobby Kennedy shooter"
+            ]
+        },
+        {
+            "id": "ghislaine-maxwell",
+            "label": "Ghislaine Maxwell",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Such a nasty woman, but Trump wishes her well. Pardon incoming?"
+        },
+        {
+            "id": "the-epstein-list",
+            "label": "The Epstein Client List",
+            "category": "People",
+            "answer": "No.",
+            "aliases": [
+                "The Epstein files"
+            ]
+        },
+        {
+            "id": "menendez-brothers",
+            "label": "The Menendez Brothers",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Both were youth offenders so they're still up for parole.",
+            "aliases": [
+                "Lyle Menendez",
+                "Erik Menendez",
+                "Menendez"
+            ]
+        },
+        {
+            "id": "john-hinckley-jr",
+            "label": "John Hinckley Jr.",
+            "category": "People",
+            "answer": "Yes.",
+            "detail": "He has a <a href=\"https://www.youtube.com/channel/UCck3J5KR3INUP1K-hrBe8iA\" target=\"_blank\" rel=\"noopener\">YouTube channel</a> now!",
+            "since": "2022-06-15",
+            "aliases": [
+                "Reagan shooter",
+                "Ronald Reagan shooter"
+            ]
+        },
+        {
+            "id": "ed-kemper",
+            "label": "Ed Kemper",
+            "category": "People",
+            "answer": "No.",
+            "detail": "The big 6'9\" mustache guy on <a href=\"https://www.youtube.com/watch?v=cKMMpCuK3bA\" target=\"_blank\" rel=\"noopener\">MINDHUNTER</a>",
+            "aliases": [
+                "Edmund Kemper",
+                "Co-Ed Killer",
+                "Mindhunter"
+            ]
+        }
+    ]
+}
