@@ -1,0 +1,24 @@
+{
+    "category": "Books",
+    "items": [
+        {
+            "id": "winds-of-winter",
+            "label": "The Winds of Winter",
+            "category": "Books",
+            "answer": "No."
+        },
+        {
+            "id": "dsm-6",
+            "label": "DSM-6",
+            "category": "Books",
+            "answer": "No.",
+            "detail": "<a href=\"https://en.wikipedia.org/wiki/Chatbot_psychosis\" target=\"_blank\" rel=\"noopener\">Chatbot psychosis</a> will likely be in there."
+        },
+        {
+            "id": "doors-of-stone",
+            "label": "The Doors of Stone",
+            "category": "Books",
+            "answer": "No."
+        }
+    ]
+}

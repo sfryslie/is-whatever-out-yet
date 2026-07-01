@@ -1,0 +1,33 @@
+{
+    "category": "Miscellaneous",
+    "items": [
+        {
+            "id": "sbemail-211",
+            "label": "Sbemail 211",
+            "category": "Miscellaneous",
+            "answer": "No.",
+            "detail": "<a href=\"https://homestarrunner.com/sbemails/210-robots\" target=\"_blank\" rel=\"noopener\">Still on 210.</a>"
+        },
+        {
+            "id": "scp-682",
+            "label": "SCP-682",
+            "category": "Miscellaneous",
+            "answer": "Probably not.",
+            "detail": "No need to panic."
+        },
+        {
+            "id": "scp-096",
+            "label": "SCP-096",
+            "category": "Miscellaneous",
+            "answer": "No.",
+            "detail": "<a href=\"https://scp-wiki.wikidot.com/incident-096-1-a\" target=\"_blank\" rel=\"noopener\">Four pixels. Four fucking pixels.</a>"
+        },
+        {
+            "id": "year-of-linux",
+            "label": "Year of the Linux Desktop",
+            "category": "Miscellaneous",
+            "answer": "No.",
+            "countdownTo": "2027-01-01"
+        }
+    ]
+}

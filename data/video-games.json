@@ -1,0 +1,245 @@
+{
+    "category": "Video Games",
+    "items": [
+        {
+            "id": "half-life-3",
+            "label": "Half-Life 3",
+            "category": "Video Games",
+            "answer": "No."
+        },
+        {
+            "id": "ricochet-2",
+            "label": "Ricochet 2",
+            "category": "Video Games",
+            "answer": "No."
+        },
+        {
+            "id": "team-fortress-3",
+            "label": "Team Fortress 3",
+            "category": "Video Games",
+            "answer": "No.",
+            "detail": "<a href=\"https://store.steampowered.com/app/3545060/Team_Fortress_2_Classified/\" target=\"_blank\" rel=\"noopener\">TF2 Classified is kinda fun, though.</a>"
+        },
+        {
+            "id": "left-4-dead-3",
+            "label": "Left 4 Dead 3",
+            "category": "Video Games",
+            "answer": "No."
+        },
+        {
+            "id": "portal-3",
+            "label": "Portal 3",
+            "category": "Video Games",
+            "answer": "No."
+        },
+        {
+            "id": "palworld-1",
+            "label": "Palworld 1.0",
+            "category": "Video Games",
+            "releaseDate": "2026-07-10"
+        },
+        {
+            "id": "valheim-1",
+            "label": "Valheim Deep North",
+            "category": "Video Games",
+            "releaseDate": "2026-09-09"
+        },
+        {
+            "id": "deltarune-ch5",
+            "label": "Deltarune Ch. 5",
+            "category": "Video Games",
+            "answer": "Yes.",
+            "detail": "Released June 24, 2026.",
+            "since": "2026-06-24"
+        },
+        {
+            "id": "deltarune-ch6",
+            "label": "Deltarune Ch. 6",
+            "category": "Video Games",
+            "answer": "No.",
+            "detail": "Chapter 5 just came out. Relax."
+        },
+        {
+            "id": "persona-6",
+            "label": "Persona 6",
+            "category": "Video Games",
+            "answer": "No."
+        },
+        {
+            "id": "persona-4-revival",
+            "label": "Persona 4 Revival",
+            "category": "Video Games",
+            "releaseDate": "2027-02-18"
+        },
+        {
+            "id": "gta-vi",
+            "label": "Grand Theft Auto VI",
+            "category": "Video Games",
+            "detail": "Not for PC though, rip.",
+            "releaseDate": "2026-11-19",
+            "aliases": [
+                "GTA 6",
+                "GTA VI",
+                "GTAVI",
+                "GTA6"
+            ]
+        },
+        {
+            "id": "how-many-dudes",
+            "label": "How Many Dudes?",
+            "category": "Video Games",
+            "detail": "<a href=\"https://store.steampowered.com/app/3934270/How_Many_Dudes/\" target=\"_blank\" rel=\"noopener\">Demo's out on Steam.</a>",
+            "releaseDate": "2026-07-30"
+        },
+        {
+            "id": "fable-game",
+            "label": "Fable",
+            "category": "Video Games",
+            "releaseDate": "2027-02-18"
+        },
+        {
+            "id": "elder-scrolls-6",
+            "label": "The Elder Scrolls VI",
+            "category": "Video Games",
+            "answer": "No.",
+            "detail": "I'm excited for the Skyrim Remake for the PS6"
+        },
+        {
+            "id": "huniepop-3",
+            "label": "HuniePop 3",
+            "category": "Video Games",
+            "answer": "No.",
+            "detail": "I hope it's a roguelite deckbuilder."
+        },
+        {
+            "id": "bge-2",
+            "label": "Beyond Good and Evil 2",
+            "category": "Video Games",
+            "answer": "No.",
+            "detail": "Announced 2008. Still waiting."
+        },
+        {
+            "id": "kotor-remake",
+            "label": "Star Wars: KOTOR Remake",
+            "category": "Video Games",
+            "answer": "No.",
+            "detail": "Aspyr's teaser baited me into buying a PS5."
+        },
+        {
+            "id": "onimusha-sword",
+            "label": "Onimusha: Way of the Sword",
+            "category": "Video Games",
+            "releaseDate": "2026-09-25"
+        },
+        {
+            "id": "halo-campaign-evolved",
+            "label": "Halo: Campaign Evolved",
+            "category": "Video Games",
+            "detail": "PC: Jul 28, 2026",
+            "releaseDate": "2026-07-23"
+        },
+        {
+            "id": "cod-mw4",
+            "label": "Call of Duty: Modern Warfare 4",
+            "category": "Video Games",
+            "releaseDate": "2026-10-23",
+            "aliases": [
+                "COD MW4",
+                "MW4",
+                "Modern Warfare 4"
+            ]
+        },
+        {
+            "id": "ff7-revelation",
+            "label": "Final Fantasy VII Revelation",
+            "category": "Video Games",
+            "releaseDate": "2027-06-30"
+        },
+        {
+            "id": "bloodborne-2",
+            "label": "Bloodborne 2",
+            "category": "Video Games",
+            "answer": "No."
+        },
+        {
+            "id": "bloodborne-pc",
+            "label": "Bloodborne: Remastered (PC)",
+            "category": "Video Games",
+            "answer": "No."
+        },
+        {
+            "id": "elden-ring-2",
+            "label": "Elden Ring 2",
+            "category": "Video Games",
+            "answer": "No."
+        },
+        {
+            "id": "star-citizen",
+            "label": "Star Citizen 1.0",
+            "category": "Video Games",
+            "answer": "No."
+        },
+        {
+            "id": "marvels-wolverine",
+            "label": "Marvel's Wolverine",
+            "category": "Video Games",
+            "releaseDate": "2026-09-15"
+        },
+        {
+            "id": "witcher-4",
+            "label": "The Witcher IV",
+            "category": "Video Games",
+            "releaseDate": "2028-12-31",
+            "vagueLabel": "2028?"
+        },
+        {
+            "id": "truck-kun",
+            "label": "Truck-kun is Supporting Me From Another World?!",
+            "category": "Video Games",
+            "detail": "<a href=\"https://store.steampowered.com/app/3642010/Truckkun_is_Supporting_Me_from_Another_World/\" target=\"_blank\" rel=\"noopener\">It's weeaboo isekai crazy goat taxi simulator I guess?</a>",
+            "releaseDate": "2026-07-29"
+        },
+        {
+            "id": "runescape-dragonwilds",
+            "label": "RuneScape: Dragonwilds",
+            "category": "Video Games",
+            "releaseDate": "2026-09-15"
+        },
+        {
+            "id": "gears-of-war-eday",
+            "label": "Gears of War: E-Day",
+            "category": "Video Games",
+            "detail": "PC: Oct 06, 2026",
+            "releaseDate": "2026-10-01"
+        },
+        {
+            "id": "enshrouded",
+            "label": "Enshrouded",
+            "category": "Video Games",
+            "releaseDate": "2026-10-15"
+        },
+        {
+            "id": "silksong",
+            "label": "Hollow Knight: Silksong",
+            "category": "Video Games",
+            "answer": "Yes.",
+            "detail": "Silkposting is a art",
+            "since": "2025-09-04"
+        },
+        {
+            "id": "deadlock",
+            "label": "Deadlock",
+            "category": "Video Games",
+            "answer": "No.",
+            "detail": "<a href=\"https://store.steampowered.com/app/1422450/Deadlock/\" target=\"_blank\" rel=\"noopener\">Still in Early Access.</a>"
+        },
+        {
+            "id": "bloodlines-2",
+            "label": "Vampire: The Masquerade - Bloodlines 2",
+            "category": "Video Games",
+            "answer": "Yes.",
+            "detail": "It's okay. I just like that the devs are The Chinese Room, that's a fun name.",
+            "since": "2025-10-21"
+        }
+    ]
+}

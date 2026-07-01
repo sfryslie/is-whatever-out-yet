@@ -229,6 +229,8 @@
       top: 3rem;
       right: 0;
       width: 250px;
+      max-height: calc(100vh - 5rem);
+      overflow-y: auto;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -277,6 +279,26 @@
     }
     .switch input:checked + .track { background: var(--other); }
     .switch input:checked + .track::before { transform: translateX(16px); }
+
+    /* category visibility checkboxes */
+    .cat-checks { display: flex; flex-direction: column; gap: 0.05rem; }
+    .cat-check {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 0.82rem;
+      padding: 0.28rem 0.1rem;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .cat-check:hover { color: var(--other); }
+    .cat-check input {
+      accent-color: var(--other);
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
 
     /* range slider (hide long-released) */
     .settings-row-col { flex-direction: column; align-items: stretch; gap: 0.6rem; }
@@ -627,6 +649,13 @@
         <input type="range" id="hide-old-slider" class="slider" min="0" max="5" step="1" value="0"
                aria-label="Hide items released longer than">
       </div>
+      <div class="settings-row settings-row-col" id="cat-filter-row" hidden>
+        <span class="settings-row-label">
+          Categories
+          <span class="settings-row-sub">Show or hide whole sections</span>
+        </span>
+        <div class="cat-checks" id="cat-checks"></div>
+      </div>
       <button class="settings-row settings-link" id="notify-all" type="button"
               data-topic="iswhateveroutyet-all" role="menuitemcheckbox" aria-pressed="false" hidden>
         <span class="settings-row-label">
@@ -877,6 +906,32 @@
       if (allItems.length > 0) renderGrid();
     });
 
+    // Category visibility — unchecked categories are hidden from the grid (and from search
+    // results, same as the hide-old slider). Persisted as the list of *hidden* names so a
+    // newly added category defaults to visible.
+    let hiddenCats = new Set();
+    try { hiddenCats = new Set(JSON.parse(localStorage.getItem('hiddenCats') || '[]')); } catch (e) {}
+
+    function buildCatFilters(categories) {
+      const box = document.getElementById('cat-checks');
+      box.innerHTML = '';
+      categories.forEach(cat => {
+        const label = document.createElement('label');
+        label.className = 'cat-check';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = !hiddenCats.has(cat);
+        cb.addEventListener('change', () => {
+          cb.checked ? hiddenCats.delete(cat) : hiddenCats.add(cat);
+          localStorage.setItem('hiddenCats', JSON.stringify([...hiddenCats]));
+          if (allItems.length > 0) renderGrid();
+        });
+        label.append(cb, document.createTextNode(cat));
+        box.appendChild(label);
+      });
+      document.getElementById('cat-filter-row').hidden = false;
+    }
+
     // The date an item became available, or null if it isn't out / we don't know when.
     // `since` is the explicit signal (hardcoded/API "Yes." items); a past `releaseDate`
     // is the implicit one (date-driven items the frontend has already flipped).
@@ -1012,6 +1067,7 @@
         : allItems;
 
       if (hideLevel > 0) visibleItems = visibleItems.filter(item => !isHiddenByLevel(item));
+      if (hiddenCats.size > 0) visibleItems = visibleItems.filter(item => !hiddenCats.has(item.category));
 
       if (visibleItems.length === 1) {
         renderHero(visibleItems[0]);
@@ -1098,11 +1154,18 @@
 
     renderSkeletons();
 
-    fetch('data.json?v=' + Date.now())
-      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-      .then(renderData)
+    // Data is split per category: data/index.json carries the `updated` stamp and the ordered
+    // category list; each data/<category>.json carries that category's items.
+    const bust = '?v=' + Date.now();
+    const fetchJson = url => fetch(url + bust).then(r => { if (!r.ok) throw new Error(); return r.json(); });
+    fetchJson('data/index.json')
+      .then(index => Promise.all(index.categories.map(c => fetchJson('data/' + c.file)))
+        .then(files => {
+          buildCatFilters(index.categories.map(c => c.name));
+          renderData({ updated: index.updated, items: files.flatMap(f => f.items) });
+        }))
       .catch(() => {
-        content.innerHTML = '<p id="error">Could not load data.json — the GitHub Action may not have run yet.</p>';
+        content.innerHTML = '<p id="error">Could not load data — the GitHub Action may not have run yet.</p>';
       });
 
     // "Last checked" — when the checker workflow last ran, independent of whether data changed.

@@ -31,7 +31,7 @@ Some are jokes, some are not. Some are live-updated, some aren't. I think I am v
 * Homestar Runner checks their sitemap.xml
 * etc.
 
-Checks run every 30 minutes via GitHub Actions and write results to `data.json`, which the frontend reads. If I start hitting rate-limits, then maybe I'll split out the checks and data.json or something and make this better, or I might not. Maybe I'll make an actual app with like KMP or something.
+Checks run every 30 minutes via GitHub Actions and write results to per-category JSON files under `data/` (plus a tiny `data/index.json`), which the frontend reads. If I start hitting rate-limits, then maybe I'll split out the checks or something and make this better, or I might not. Maybe I'll make an actual app with like KMP or something.
 
 If something changes, the runner will also send out notifications on the topics to people who are subscribed to them, so they should receive it if the page is open on their desktop or if they installed the PWA. Or maybe if I make an actual app. IDK. I just am goofing around.
 

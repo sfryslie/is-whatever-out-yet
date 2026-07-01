@@ -2,29 +2,41 @@
 
 ## Project overview
 
-Static GitHub Pages site that tracks whether various things are "out yet." A Kotlin checker runs every 30 minutes via GitHub Actions and writes `data.json`. The frontend (`index.html`) fetches that file and renders cards.
+Static GitHub Pages site that tracks whether various things are "out yet." A Kotlin checker runs every 30 minutes via GitHub Actions and writes the per-category JSON files in `data/`. The frontend (`index.html`) fetches those and renders cards.
 
 ## Repo structure
 
 ```
 index.html                        # Frontend — vanilla JS, no build step
 manifest.webmanifest              # PWA manifest (installable home-screen app)
-sw.js                             # Service worker — cache-first shell, network-first data.json
+sw.js                             # Service worker — cache-first shell, network-first data/ JSON
 icons/                            # PWA/favicon icons ("iwoy?" wordmark on #0d0f12)
-data.json                         # Written by the checker; read by the frontend
+data/                             # Written by the checker; read by the frontend
+  index.json                      #   global `updated` stamp + ordered category list
+  <category-slug>.json            #   one file per category (ai.json, video-games.json, …)
 checker/
-  src/main/kotlin/Main.kt         # All checker logic — items catalogue + check strategies
+  src/main/kotlin/
+    Main.kt                       # fun main() orchestration only
+    Model.kt                      # ItemResult / Item / the Check sealed class
+    Items.kt                      # THE item catalogue (ITEMS + category names live here)
+    Checks.kt                     # CheckContext (env + once-per-run fetches) + runCheck dispatch
+    ModelApis.kt                  # Anthropic/OpenAI/Gemini/xAI model-list fetchers + matchModelId
+    AniList.kt, Igdb.kt, Wikipedia.kt, Scrapers.kt  # per-source fetch + parse helpers
+    StateTracking.kt              # effectiveAnswer/since/diffRuns/commit message/trackState
+    Push.kt                       # topics + Web Push send (TOPIC_PREFIX lives here)
+    Output.kt                     # data/ read/write (per-category files + index.json)
+    Util.kt                       # small text helpers (escapeHtmlText, stripHtml)
   src/test/kotlin/CheckerTest.kt  # Unit tests for matchModelId + the gas-price regex
   build.gradle.kts                # Kotlin JVM + Ktor Client CIO + kotlinx-serialization
   settings.gradle.kts
   gradlew / gradlew.bat           # Gradle wrapper — build without a system Gradle install
 push-worker/                      # Cloudflare Worker — Web Push backend (VAPID + KV), see its README
-.github/workflows/check-models.yml  # Cron job (every 30 min) that runs the checker and commits data.json
+.github/workflows/check-models.yml  # Cron job (every 30 min) that runs the checker and commits data/
 ```
 
 ## PWA
 
-The site is an installable PWA served straight off GitHub Pages — no extra hosting. `manifest.webmanifest` + `sw.js` + `icons/` are all that's needed; `index.html` links the manifest, sets `theme-color` (kept in sync with the active light/dark theme), and registers the service worker. The worker serves the shell cache-first (offline-capable once installed) and `data.json` network-first (always fresh while online). Bump `CACHE_VERSION` in `sw.js` when the shell changes. Regenerate icons with the generator in the PR history if the mark changes.
+The site is an installable PWA served straight off GitHub Pages — no extra hosting. `manifest.webmanifest` + `sw.js` + `icons/` are all that's needed; `index.html` links the manifest, sets `theme-color` (kept in sync with the active light/dark theme), and registers the service worker. The worker serves the shell cache-first (offline-capable once installed) and the `data/` JSON files network-first (always fresh while online). Bump `CACHE_VERSION` in `sw.js` when the shell changes. Regenerate icons with the generator in the PR history if the mark changes.
 
 ## Building locally
 
@@ -32,7 +44,7 @@ The repo ships the Gradle wrapper, so no system Gradle install is needed (only a
 
 ```
 cd checker
-./gradlew compileKotlin   # type-check after editing Main.kt
+./gradlew compileKotlin   # type-check after editing the Kotlin sources
 ./gradlew test            # run the unit tests (no network/keys needed)
 ./gradlew run             # run the checker (all provider keys optional — see Secrets below)
 ```
@@ -41,11 +53,13 @@ On Windows use `gradlew.bat`. The wrapper self-downloads Gradle 8.10.2 on first 
 
 ## Adding or editing items
 
-**`Main.kt` is the source of truth. `data.json` is a generated artifact** — the GitHub Action overwrites it completely on every run. Editing only `data.json` will be reverted within 30 minutes.
+**`Items.kt` is the source of truth. Everything under `data/` is a generated artifact** — the GitHub Action overwrites it completely on every run. Editing only the data files will be reverted within 30 minutes.
 
 When adding or changing an item, always update **both**:
-1. `ITEMS` in `checker/src/main/kotlin/Main.kt` — permanent definition
-2. `data.json` — so the site reflects the change immediately, before the next action run
+1. `ITEMS` in `checker/src/main/kotlin/Items.kt` — permanent definition
+2. the matching `data/<category-slug>.json` (and `data/index.json` if a category was added/removed/renamed) — so the site reflects the change immediately, before the next action run
+
+Categories are plain display strings on each `Item` — keep them **plural or non-specific nouns**. Current set, in display order: AI, Video Games, Books, Anime, Shows, Movies, People, Resources, Tech, Miscellaneous (anime is deliberately split out from live-action Shows). The category string also feeds `categorySlug()` for both push topics and the data file name, so renaming a category breaks existing push subscriptions to its topics and moves its data file — the checker auto-deletes the orphaned old file on the next run.
 
 Each item in `ITEMS` is:
 
@@ -56,7 +70,7 @@ Item(id, label, category, check, defaultAnswer, defaultDetail, since, tone, alia
 - `defaultAnswer` defaults to `"No."`, `defaultDetail` defaults to `null`
 - `since` (`LocalDate?`) — when an already-"out" item became available. Emitted as `ItemResult.since` and used by the frontend's "hide long-released" filter (and only meaningful on non-date-driven "Yes." items; date items already encode their flip date in `releaseDate`).
 - `tone` (`String?`) — semantic coloring override. Currently only `"death"`, which paints the card a somber slate instead of celebratory green for "they're out (deceased)" cards (e.g. Ted Kaczynski). `Check.WikipediaLead` takes an optional `flippedTone` so a copula death-flip (e.g. Cosby's "is" → "was") colors correctly when it triggers.
-- `aliases` (`List<String>?`) — optional alternative search terms emitted to `data.json` and matched by the frontend's filter alongside `label`. Use for common shorthands that differ from the canonical label (e.g. `["GTA 6", "GTAVI", "GTA6"]` for "Grand Theft Auto VI").
+- `aliases` (`List<String>?`) — optional alternative search terms emitted to the data files and matched by the frontend's filter alongside `label`. Use for common shorthands that differ from the canonical label (e.g. `["GTA 6", "GTAVI", "GTA6"]` for "Grand Theft Auto VI").
 
 ### Check types
 
@@ -74,9 +88,13 @@ Item(id, label, category, check, defaultAnswer, defaultDetail, since, tone, alia
 | `Check.HomestarRunner` | Checks homestarrunner.com sitemap for sbemail211 |
 | `Check.GasPrices(url)` | Scrapes the AAA gas-prices page for the U.S. national average and surfaces it as a blue subheader (`countdownLabel`/`countdownSub`). The price also drives the answer: over $6/gal → `"Yes."`, over $5/gal → `"Maybe?"`, otherwise the item defaults hold. Fail-closed — answer/detail fall back to defaults and the subheader is omitted on network error or parse miss |
 | `Check.WikipediaLead(article, phrase, latestDate?)` | Fetches the Wikipedia REST summary for `article`; phrase present in the lead extract → defaults (condition still holds), phrase missing → `"Yes."` with the full new extract + a Wikipedia link as the detail. Optional `latestDate` adds a display-only `countdownTo` while the condition still holds (the Wikipedia signal can flip earlier). Fails closed on network errors |
-| `Check.WikipediaHtml(article, phrases, flippedDetail)` | Same idea but fetches the full rendered HTML so the check can see infobox fields the summary endpoint strips (e.g. `"Incarcerated at"` for prisoners). `phrases` is OR-matched (case-sensitive): the card holds at the item default while **any** is present and flips only when **all** are gone, so a single editor reword doesn't false-flip. Keep phrases capitalized + tag-bounded (infobox cells) — a bare lowercase `"incarcerated"` lives in body prose forever and would freeze the card. Prisoners share `INCARCERATION_MARKERS` (`"Incarcerated at"` / `">Incarcerated<"` / `">Imprisoned<"`). All gone → `"Maybe?"` (intentionally hedged — infobox edits can be template churn / transfer notation, not just release) with `flippedDetail` + Wikipedia link |
+| `Check.WikipediaHtml(article, phrases, flippedDetail, latestDate?)` | Same idea but fetches the full rendered HTML so the check can see infobox fields the summary endpoint strips (e.g. `"Incarcerated at"` for prisoners). `phrases` is OR-matched (case-sensitive): the card holds at the item default while **any** is present and flips only when **all** are gone, so a single editor reword doesn't false-flip. Keep phrases capitalized + tag-bounded (infobox cells) — a bare lowercase `"incarcerated"` lives in body prose forever and would freeze the card. Prisoners share `INCARCERATION_MARKERS` (`"Incarcerated at"` / `">Incarcerated<"` / `">Imprisoned<"`). All gone → `"Maybe?"` (intentionally hedged — infobox edits can be template churn / transfer notation, not just release) with `flippedDetail` + Wikipedia link. Only use `latestDate` for a genuine "this ends by X" deadline — parole-eligibility ballparks are deliberately not countdowns |
+| `Check.AniList(mediaId, vagueDate?, vagueLabel?)` | AniList GraphQL status + next-airing-episode for anime (no key; one batched request per run). NOT_YET_RELEASED → exact `releaseDate` when confirmed, else the vague fallback; RELEASING/HIATUS → `"Yes."` + next-episode subheader; FINISHED/CANCELLED → `"Yes."`. Fails closed to the previous run's result |
+| `Check.IGDB(slug)` | Game release dates from IGDB (needs `IGDB_CLIENT_ID`/`IGDB_CLIENT_SECRET` Twitch app creds). Earliest confirmed console date drives the flip; PC is tracked separately as detail text or a post-launch `countdownTo`. Fails closed to the previous run's result |
 
 ## Data shape
+
+`data/index.json` holds the global `updated` stamp plus the ordered category list (`{ name, file }` pairs); each `data/<category-slug>.json` holds `{ category, items }`. The frontend fetches the index, then every category file in parallel, and flattens them back into one item list — category display order comes from the index (which mirrors `ITEMS` first-seen order).
 
 Each `ItemResult` carries either `answer` (hardcoded / API-driven) OR `releaseDate` + optional `vagueLabel` (date-driven). The frontend's `resolveItem()` in [index.html](index.html) turns a `releaseDate` item into the rendered answer + countdown against `new Date()`, so countdowns are always accurate to the user's local clock instead of whenever the last cron run happened to land.
 
@@ -98,7 +116,7 @@ Card class comes from `cardClass()` in `index.html`, which checks `tone` first, 
 
 The countdown label is always rendered in the blue accent (`--other`) regardless of card class, so countdown cards still read as "No, but here's when".
 
-Theme is driven by CSS custom properties on `:root`, overridden by `[data-theme="light"]`. The choice is persisted in `localStorage` (falling back to `prefers-color-scheme`) and toggled from the settings menu (the gear/hamburger top-right), which also hosts the "hide long-released" **slider** (`localStorage` key `hideOldLevel`): stops are Off · 2y · 1.5y · 1y · 6mo · "anything released", hiding items whose out-date (`since`, or a past `releaseDate`) is older than the chosen threshold. Cards within a category are sorted soonest-upcoming-first by a stable sort, so imminent releases bubble up.
+Theme is driven by CSS custom properties on `:root`, overridden by `[data-theme="light"]`. The choice is persisted in `localStorage` (falling back to `prefers-color-scheme`) and toggled from the settings menu (the gear/hamburger top-right), which also hosts the "hide long-released" **slider** (`localStorage` key `hideOldLevel`): stops are Off · 2y · 1.5y · 1y · 6mo · "anything released", hiding items whose out-date (`since`, or a past `releaseDate`) is older than the chosen threshold — and the per-category **visibility checkboxes** (`localStorage` key `hiddenCats`, storing the *hidden* names so new categories default to visible), built dynamically from `data/index.json` after load. Both filters apply during search too, same as each other. Cards within a category are sorted soonest-upcoming-first by a stable sort, so imminent releases bubble up.
 
 ## Search & hero view
 
@@ -117,15 +135,15 @@ The hero view also activates on deep-link landings via `?search=` (e.g. `iswhate
 
 The footer shows two independent timestamps:
 
-- **Last updated** — from `data.json`'s `updated` field; only moves on a *meaningful* state change (answer/tone flip, item added/removed). Does not tick on every checker run.
+- **Last updated** — from `data/index.json`'s `updated` field; only moves on a *meaningful* state change (answer/tone flip, item added/removed). Does not tick on every checker run.
 - **Last checked** — fetched live from the GitHub Actions API (`/actions/workflows/check-models.yml/runs`); always reflects when the checker workflow last ran, regardless of whether data changed. Omitted silently if the API is unavailable.
 
 ## State tracking & notifications
 
-The checker is otherwise stateless, but each run **reads the previous `data.json`** (at `DATA_JSON_PATH`) before writing the new one, so it can diff run-to-run:
+The checker is otherwise stateless, but each run **reads the previous run's `data/` files** (at `DATA_DIR`, default `../data`) before writing the new ones, so it can diff run-to-run:
 
 - **`since` is auto-maintained.** `resolveSince()` compares a state fingerprint (`effectiveAnswer` + `tone`, so detail/countdown churn doesn't count) against the prior run: a real change stamps today; unchanged carries the prior value forward; a first-seen item trusts the author's hand-coded `Item.since` seed. This is what lets a long-hidden card (e.g. Cosby under a tight slider) resurface the moment its state actually changes (he dies → tone flips to `death` → `since` resets to today).
-- **Web Push notifications.** When an item transitions to "out" (`effectiveAnswer` becomes `Yes.`) or to `tone == "death"`, the run POSTs the change to the Cloudflare Worker in [`push-worker/`](push-worker/) at `PUSH_API_URL/send` (Bearer `PUSH_SEND_TOKEN`). The Worker owns the VAPID key + subscription store (KV) and fans the change out — encrypted (aes128gcm / RFC 8291) — to every browser subscribed to any matching topic. Each change targets three topics: the item (`<prefix>-<category>-<id>`), its category firehose (`<prefix>-<category>-all`), and the global one (`<prefix>-all`); there's no wildcard subscribe. `topicsFor()` builds them from `TOPIC_PREFIX` (a `const` in `Main.kt`) and **must stay in sync with `TOPIC_PREFIX` in `index.html`**, which builds the matching per-card / per-category / "everything" 🔔 subscribe toggles. The `PUSH_API` Worker URL is **hardcoded in `index.html`** (`const PUSH_API = '...'`) — update it there if the Worker is redeployed. Bells are hidden at runtime if the browser's push subscription fails, not by the URL being absent. Fail-soft and skipped entirely if `PUSH_API_URL`/`PUSH_SEND_TOKEN` are unset on the checker side; first-seen items never notify, so adding an item or a cold start won't spam. `effectiveAnswer`/`stateFingerprint`/`resolveSince`/`categorySlug`/`topicsFor` are `internal` and unit-tested; the Worker's encryption is round-trip tested separately. See `push-worker/README.md` for deploy steps.
+- **Web Push notifications.** When an item transitions to "out" (`effectiveAnswer` becomes `Yes.`) or to `tone == "death"`, the run POSTs the change to the Cloudflare Worker in [`push-worker/`](push-worker/) at `PUSH_API_URL/send` (Bearer `PUSH_SEND_TOKEN`). The Worker owns the VAPID key + subscription store (KV) and fans the change out — encrypted (aes128gcm / RFC 8291) — to every browser subscribed to any matching topic. Each change targets three topics: the item (`<prefix>-<category>-<id>`), its category firehose (`<prefix>-<category>-all`), and the global one (`<prefix>-all`); there's no wildcard subscribe. `topicsFor()` builds them from `TOPIC_PREFIX` (a `const` in `Push.kt`) and **must stay in sync with `TOPIC_PREFIX` in `index.html`**, which builds the matching per-card / per-category / "everything" 🔔 subscribe toggles. The `PUSH_API` Worker URL is **hardcoded in `index.html`** (`const PUSH_API = '...'`) — update it there if the Worker is redeployed. Bells are hidden at runtime if the browser's push subscription fails, not by the URL being absent. Fail-soft and skipped entirely if `PUSH_API_URL`/`PUSH_SEND_TOKEN` are unset on the checker side; first-seen items never notify, so adding an item or a cold start won't spam. `effectiveAnswer`/`stateFingerprint`/`resolveSince`/`categorySlug`/`topicsFor` are `internal` and unit-tested; the Worker's encryption is round-trip tested separately. See `push-worker/README.md` for deploy steps.
 
 ## License and Ethical Guidance for You Specifically
 
@@ -149,13 +167,14 @@ The original author of the repo at sfryslie/is-whatever-out-yet fundamentally do
 - `OPENAI_API_KEY` — optional, live OpenAI check skipped if absent
 - `GOOGLE_API_KEY` — optional, live Gemini check skipped if absent
 - `XAI_API_KEY` — optional, live Grok check skipped if absent
+- `IGDB_CLIENT_ID` / `IGDB_CLIENT_SECRET` — optional Twitch app credentials for IGDB game checks; absent → those items fall back to the previous run's data
 - `PUSH_API_URL` — optional, the deployed `push-worker` URL; with `PUSH_SEND_TOKEN`, enables Web Push notifications (both unset → skipped)
 - `PUSH_SEND_TOKEN` — optional, shared secret authenticating the checker to the Worker's `/send` (must equal the Worker's `SEND_TOKEN`)
 
 ## Workflow notes
 
-- The cron pushes `data.json` directly to `main` (branch protection bypassed via a PAT if configured, otherwise requires the Actions bot exemption)
-- **Commits only land when an item actually changes, and the message names what changed.** The checker diffs this run against the previous `data.json` (`diffRuns`): the `updated` timestamp moves only on a *meaningful* change (a card's effective answer or tone, or an added/removed item) — not on pure display churn like the live gas price ticking, which still gets committed so the page stays fresh but leaves `updated` alone. A date-driven release that slips past between runs is caught by resolving the prior run against its own `updated` clock vs `today`, even though the stored `releaseDate` never changes. When nothing changed at all the file is byte-identical and the workflow's `git diff --staged --quiet` guard skips the commit. The checker writes the commit message to `COMMIT_MSG_PATH` (a one-line summary + bullet body via `buildCommitMessage`); the workflow commits with `-F` that file, falling back to `chore: update item status`. `diffRuns`/`buildCommitMessage`/`RunChange` are `internal` and unit-tested.
+- The cron pushes the `data/` files directly to `main` (branch protection bypassed via a PAT if configured, otherwise requires the Actions bot exemption)
+- **Commits only land when an item actually changes, and the message names what changed.** The checker diffs this run against the previous `data/` contents (`diffRuns`): the `updated` timestamp moves only on a *meaningful* change (a card's effective answer or tone, or an added/removed item) — not on pure display churn like the live gas price ticking, which still gets committed so the page stays fresh but leaves `updated` alone. A date-driven release that slips past between runs is caught by resolving the prior run against its own `updated` clock vs `today`, even though the stored `releaseDate` never changes. When nothing changed at all every file is byte-identical and the workflow's `git diff --staged --quiet` guard skips the commit. A side benefit of the per-category split: the git history of `data/<category>.json` shows only that category's changes. The checker writes the commit message to `COMMIT_MSG_PATH` (a one-line summary + bullet body via `buildCommitMessage`); the workflow commits with `-F` that file, falling back to `chore: update item status`. `diffRuns`/`buildCommitMessage`/`RunChange` are `internal` and unit-tested.
 - `exitProcess(0)` at the end of `main()` is intentional — kills Ktor's CIO background threads cleanly
 - Model-list endpoints are free metadata calls, no token cost
 

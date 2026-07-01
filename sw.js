@@ -3,11 +3,11 @@
 // Two caching strategies:
 //   - the app shell (HTML/manifest/icons) is cache-first so the site opens instantly and works
 //     offline once installed;
-//   - data.json is network-first so an online user always sees the freshest status, falling back
-//     to the last cached copy when offline.
+//   - the data/ JSON files (index + per-category) are network-first so an online user always sees
+//     the freshest status, falling back to the last cached copy when offline.
 //
 // Bump CACHE_VERSION whenever the shell changes to evict the old cache.
-const CACHE_VERSION = 'iwoy-v4';
+const CACHE_VERSION = 'iwoy-v5';
 const SHELL = [
   './',
   './index.html',
@@ -38,7 +38,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   // Network-first for the live data so it never goes stale while online.
-  if (url.pathname.endsWith('/data.json') || url.pathname === '/data.json') {
+  if (/\/data\/[^/]+\.json$/.test(url.pathname)) {
     event.respondWith(
       fetch(request)
         .then((resp) => {

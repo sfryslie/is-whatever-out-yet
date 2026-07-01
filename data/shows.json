@@ -1,0 +1,12 @@
+{
+    "category": "Shows",
+    "items": [
+        {
+            "id": "invincible-s5",
+            "label": "Invincible Season 5",
+            "category": "Shows",
+            "releaseDate": "2027-04-15",
+            "vagueLabel": "Spring 2027?"
+        }
+    ]
+}
