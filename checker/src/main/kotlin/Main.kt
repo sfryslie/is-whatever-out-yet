@@ -991,7 +991,7 @@ internal suspend fun sendPush(client: HttpClient, apiUrl: String, token: String,
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 fun main(): Unit = runBlocking {
-    val anthropicKey = System.getenv("ANTHROPIC_API_KEY") ?: error("ANTHROPIC_API_KEY not set")
+    val anthropicKey = System.getenv("ANTHROPIC_API_KEY")  // optional — see fallback below
     val openAiKey    = System.getenv("OPENAI_API_KEY")    // optional
     val googleKey    = System.getenv("GOOGLE_API_KEY")    // optional
     val xaiKey       = System.getenv("XAI_API_KEY")       // optional
@@ -1024,9 +1024,15 @@ fun main(): Unit = runBlocking {
         install(ContentNegotiation) { json() }
     }
 
-    println("Fetching Anthropic models…")
-    val anthropicIds = fetchAnthropicModelIds(client, anthropicKey)
-    println("  Found ${anthropicIds.size} model(s): ${anthropicIds.joinToString()}")
+    val anthropicIds: List<String> = if (anthropicKey != null) {
+        println("Fetching Anthropic models…")
+        fetchAnthropicModelIds(client, anthropicKey).also {
+            println("  Found ${it.size} model(s): ${it.joinToString()}")
+        }
+    } else {
+        println("ANTHROPIC_API_KEY not set — skipping Anthropic checks.")
+        emptyList()
+    }
 
     val openAiIds: List<String> = if (openAiKey != null) {
         println("Fetching OpenAI models…")
@@ -1118,7 +1124,7 @@ fun main(): Unit = runBlocking {
                 // probe with a 1-token messages call — Anthropic lists models in the catalog
                 // before they're actually callable, so we have to verify accessibility.
                 val candidate = matchModelId(anthropicIds, check.pattern)
-                val callable = candidate != null && probeAnthropicModel(client, anthropicKey, candidate)
+                val callable = candidate != null && anthropicKey != null && probeAnthropicModel(client, anthropicKey, candidate)
                 if (candidate != null && !callable) {
                     println("  ${item.label}: listed as '$candidate' but probe failed")
                 }

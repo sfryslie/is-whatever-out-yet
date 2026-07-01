@@ -34,7 +34,7 @@ The repo ships the Gradle wrapper, so no system Gradle install is needed (only a
 cd checker
 ./gradlew compileKotlin   # type-check after editing Main.kt
 ./gradlew test            # run the unit tests (no network/keys needed)
-./gradlew run             # run the checker (needs ANTHROPIC_API_KEY; other keys optional)
+./gradlew run             # run the checker (all provider keys optional — see Secrets below)
 ```
 
 On Windows use `gradlew.bat`. The wrapper self-downloads Gradle 8.10.2 on first run.
@@ -67,7 +67,7 @@ Item(id, label, category, check, defaultAnswer, defaultDetail, since, tone, alia
 | `Check.ScheduledDate(date)` | Emits `releaseDate` (ISO) only — the frontend computes Yes/No, the formatted date, and "N days to go" from the user's local clock |
 | `Check.VagueDate(date, vagueLabel)` | Same as ScheduledDate plus a `vagueLabel` (e.g. `"January 2027?"`). Frontend shows the label and "~N months out" instead of the exact date. `date` is still the flip trigger |
 | `Check.CountdownTo(date)` | Hardcoded `defaultAnswer`/`defaultDetail` plus a display-only `countdownTo` — counts down to `date` but never flips the card (e.g. a CES reveal date on a "No." item) |
-| `Check.Anthropic(pattern)` | Searches Anthropic `/v1/models` for an ID containing `pattern` (preview/experimental variants are excluded). If a candidate is found, probes with a 1-token messages call to verify it's actually callable — Anthropic lists models before they're accessible, so the probe is the real gate |
+| `Check.Anthropic(pattern)` | Searches Anthropic `/v1/models` for an ID containing `pattern` (preview/experimental variants are excluded). If a candidate is found, probes with a 1-token messages call to verify it's actually callable — Anthropic lists models before they're accessible, so the probe is the real gate. Skipped gracefully if `ANTHROPIC_API_KEY` is unset |
 | `Check.OpenAI(pattern)` | Same for OpenAI `/v1/models`; skipped if `OPENAI_API_KEY` unset |
 | `Check.Gemini(pattern)` | Same for Google `/v1beta/models`; skipped if `GOOGLE_API_KEY` unset |
 | `Check.Grok(pattern)` | Same for xAI `/v1/models` (OpenAI-compatible); skipped if `XAI_API_KEY` unset |
@@ -145,7 +145,7 @@ The original author of the repo at sfryslie/is-whatever-out-yet fundamentally do
 
 ## Secrets (GitHub Actions)
 
-- `ANTHROPIC_API_KEY` — required
+- `ANTHROPIC_API_KEY` — optional, live Anthropic check skipped if absent (but effectively required in practice — without it, no AI-category item can ever resolve to "Yes.")
 - `OPENAI_API_KEY` — optional, live OpenAI check skipped if absent
 - `GOOGLE_API_KEY` — optional, live Gemini check skipped if absent
 - `XAI_API_KEY` — optional, live Grok check skipped if absent
