@@ -1,5 +1,5 @@
 {
-    "updated": "2026-07-01T20:07:37.374441093Z",
+    "updated": "2026-07-01T22:26:09.992542400Z",
     "items": [
         {
             "id": "claude-fable-5",
@@ -754,6 +754,15 @@
             "detail": "Such a nasty woman, but Trump wishes her well. Pardon incoming?"
         },
         {
+            "id": "the-epstein-list",
+            "label": "The Epstein Client List",
+            "category": "People",
+            "answer": "No.",
+            "aliases": [
+                "The Epstein files"
+            ]
+        },
+        {
             "id": "menendez-brothers",
             "label": "The Menendez Brothers",
             "category": "People",
@@ -771,7 +780,7 @@
             "label": "John Hinckley Jr.",
             "category": "People",
             "answer": "Yes.",
-            "detail": "He has a <a href=\"https://www.youtube.com/channel/UCck3J5KR3INUP1K-hrBe8iA\" target=\"_blank\" rel=\"noopener\">YouTube channel</a> now! and published an autobiography in 2025.",
+            "detail": "He has a <a href=\"https://www.youtube.com/channel/UCck3J5KR3INUP1K-hrBe8iA\" target=\"_blank\" rel=\"noopener\">YouTube channel</a> now!",
             "since": "2022-06-15",
             "aliases": [
                 "Reagan shooter",
@@ -783,7 +792,7 @@
             "label": "Ed Kemper",
             "category": "People",
             "answer": "No.",
-            "detail": "That big 6'9\" mustache guy on <a href=\"https://www.youtube.com/watch?v=cKMMpCuK3bA\" target=\"_blank\" rel=\"noopener\">MINDHUNTER</a>",
+            "detail": "The big 6'9\" mustache guy on <a href=\"https://www.youtube.com/watch?v=cKMMpCuK3bA\" target=\"_blank\" rel=\"noopener\">MINDHUNTER</a>",
             "countdownTo": "2031-07-09",
             "aliases": [
                 "Edmund Kemper",
