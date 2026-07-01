@@ -143,11 +143,15 @@ sealed class Check {
      * not, so a bare "incarcerated" would freeze the card on "No." Flip → "Maybe?" with
      * [flippedDetail] + Wikipedia link (intentionally not a confident "Yes." — infobox changes
      * can be template churn or transfer notation, not just release).
+     *
+     * [latestDate], if set, adds a display-only countdown to that date while the condition still
+     * holds — e.g. a scheduled parole hearing that isn't itself a release.
      */
     data class WikipediaHtml(
         val article: String,
         val phrases: List<String>,
         val flippedDetail: String,
+        val latestDate: LocalDate? = null,
     ) : Check()
 
     /**
@@ -538,6 +542,28 @@ val ITEMS = listOf(
         since = LocalDate.of(2023, 6, 10), tone = "death"),
     Item("oj-simpson",      "O.J. Simpson",    "People", Check.Hardcoded, "No.",
         "The Juice is not loose, he died in 2024.", since = LocalDate.of(2024, 4, 10), tone = "death"),
+    Item("sirhan-sirhan",    "Sirhan Sirhan",    "People",
+        Check.WikipediaHtml("Sirhan_Sirhan", INCARCERATION_MARKERS, flippedDetail = "He's out.",
+            latestDate = LocalDate.of(2027, 8, 16)),
+        defaultDetail = "Newsom reversed the parole board's 2021 recommendation; denied again in 2024 (three-year denial). His lawyers are now challenging the governor's power to overrule parole boards.",
+        aliases = listOf("RFK assassin", "Robert F. Kennedy assassin", "Bobby Kennedy shooter")),
+    Item("ghislaine-maxwell", "Ghislaine Maxwell", "People",
+        Check.WikipediaHtml("Ghislaine_Maxwell", INCARCERATION_MARKERS, flippedDetail = "She's out."),
+        defaultDetail = "20 years for sex trafficking. Quietly moved to a minimum-security camp in Bryan, TX in 2025 — officially barred from the puppy-training program for her offense, though a whistleblower says she got to play with one anyway. No pardon yet."),
+    Item("menendez-brothers", "The Menendez Brothers", "People",
+        Check.WikipediaHtml("Lyle_and_Erik_Menendez", INCARCERATION_MARKERS, flippedDetail = "They're out.",
+            latestDate = LocalDate.of(2028, 8, 21)),
+        defaultDetail = "Resentenced in 2025 to 50-to-life, making them parole-eligible as youth offenders. Both denied again in Aug. 2025 (three-year denial) — could get an administrative review as soon as Aug. 2026, but the hearing they're guaranteed isn't until 2028.",
+        aliases = listOf("Lyle Menendez", "Erik Menendez", "Menendez")),
+    Item("john-hinckley-jr", "John Hinckley Jr.", "People", Check.Hardcoded, "Yes.",
+        "Unconditionally released in 2022 after decades in psychiatric care. Now writes music (<a href=\"https://www.youtube.com/channel/UCck3J5KR3INUP1K-hrBe8iA\" target=\"_blank\" rel=\"noopener\">YouTube channel</a>) and published an autobiography in 2025.",
+        since = LocalDate.of(2022, 6, 15),
+        aliases = listOf("Reagan shooter", "Ronald Reagan shooter")),
+    Item("ed-kemper",        "Ed Kemper",        "People",
+        Check.WikipediaHtml("Edmund_Kemper", INCARCERATION_MARKERS, flippedDetail = "He's out.",
+            latestDate = LocalDate.of(2031, 7, 9)),
+        defaultDetail = "Serial killer serving life at California Medical Facility. Denied parole again in 2024 — not eligible again until 2031.",
+        aliases = listOf("Edmund Kemper", "Co-Ed Killer", "Mindhunter")),
 
     // Resources
     Item("helium",          "Helium",          "Resource", Check.Hardcoded, "No.",  "~200 years of supply remaining. Don't panic."),
@@ -1218,8 +1244,14 @@ fun main(): Unit = runBlocking {
                 println("Checking Wikipedia HTML for ${check.article}…")
                 val html = fetchWikipediaHtml(client, check.article)
                 if (html == null || check.phrases.any { html.contains(it) }) {
-                    ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
+                    ItemResult(
+                        item.id, item.label, item.category,
+                        answer = item.defaultAnswer,
+                        detail = item.defaultDetail,
+                        countdownTo = check.latestDate?.toString(),
+                    )
                 } else {
+                    // Early flip — Wikipedia signal beat the deadline. Drop the countdown.
                     val articleUrl = "https://en.wikipedia.org/wiki/${check.article}"
                     ItemResult(
                         item.id, item.label, item.category,

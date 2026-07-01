@@ -1,5 +1,5 @@
 {
-    "updated": "2026-06-30T18:49:38.597655577Z",
+    "updated": "2026-07-01T16:59:44.000000000Z",
     "items": [
         {
             "id": "claude-fable-5",
@@ -730,6 +730,64 @@
             "detail": "The Juice is not loose, he died in 2024.",
             "since": "2024-04-10",
             "tone": "death"
+        },
+        {
+            "id": "sirhan-sirhan",
+            "label": "Sirhan Sirhan",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Newsom reversed the parole board's 2021 recommendation; denied again in 2024 (three-year denial). His lawyers are now challenging the governor's power to overrule parole boards.",
+            "countdownTo": "2027-08-16",
+            "aliases": [
+                "RFK assassin",
+                "Robert F. Kennedy assassin",
+                "Bobby Kennedy shooter"
+            ]
+        },
+        {
+            "id": "ghislaine-maxwell",
+            "label": "Ghislaine Maxwell",
+            "category": "People",
+            "answer": "No.",
+            "detail": "20 years for sex trafficking. Quietly moved to a minimum-security camp in Bryan, TX in 2025 — officially barred from the puppy-training program for her offense, though a whistleblower says she got to play with one anyway. No pardon yet."
+        },
+        {
+            "id": "menendez-brothers",
+            "label": "The Menendez Brothers",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Resentenced in 2025 to 50-to-life, making them parole-eligible as youth offenders. Both denied again in Aug. 2025 (three-year denial) — could get an administrative review as soon as Aug. 2026, but the hearing they're guaranteed isn't until 2028.",
+            "countdownTo": "2028-08-21",
+            "aliases": [
+                "Lyle Menendez",
+                "Erik Menendez",
+                "Menendez"
+            ]
+        },
+        {
+            "id": "john-hinckley-jr",
+            "label": "John Hinckley Jr.",
+            "category": "People",
+            "answer": "Yes.",
+            "detail": "Unconditionally released in 2022 after decades in psychiatric care. Now writes music (<a href=\"https://www.youtube.com/channel/UCck3J5KR3INUP1K-hrBe8iA\" target=\"_blank\" rel=\"noopener\">YouTube channel</a>) and published an autobiography in 2025.",
+            "since": "2022-06-15",
+            "aliases": [
+                "Reagan shooter",
+                "Ronald Reagan shooter"
+            ]
+        },
+        {
+            "id": "ed-kemper",
+            "label": "Ed Kemper",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Serial killer serving life at California Medical Facility. Denied parole again in 2024 — not eligible again until 2031.",
+            "countdownTo": "2031-07-09",
+            "aliases": [
+                "Edmund Kemper",
+                "Co-Ed Killer",
+                "Mindhunter"
+            ]
         },
         {
             "id": "helium",
