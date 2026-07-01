@@ -1,5 +1,5 @@
 {
-    "updated": "2026-07-01T20:07:37.374441093Z",
+    "updated": "2026-07-01T22:26:09.992542400Z",
     "items": [
         {
             "id": "claude-fable-5",
@@ -542,7 +542,7 @@
             "id": "spaceballs-new-one",
             "label": "Spaceballs: The New One",
             "category": "Movie",
-            "detail": "I'm worried because it's not called Spaceballs III: The Search for Spaceballs II or Spaceballs 2: The Search for More Money",
+            "detail": "Sadly not Spaceballs III: The Search for Spaceballs II or Spaceballs 2: The Search for More Money",
             "releaseDate": "2027-04-23"
         },
         {
@@ -663,14 +663,14 @@
             "label": "Sam Bankman-Fried",
             "category": "People",
             "answer": "No.",
-            "detail": "25 years at FCI Lompoc I. Don't hold your breath."
+            "detail": "25 years at FCI Lompoc I."
         },
         {
             "id": "bill-cosby",
             "label": "Bill Cosby",
             "category": "People",
             "answer": "Yes.",
-            "detail": "Released in 2021. <a href=\"https://en.wikipedia.org/wiki/Trial_of_Bill_Cosby#Overturned_conviction\" target=\"_blank\" rel=\"noopener\">It was kinda bullshit.</a>",
+            "detail": "<a href=\"https://en.wikipedia.org/wiki/Trial_of_Bill_Cosby#Overturned_conviction\" target=\"_blank\" rel=\"noopener\">Released in 2021. It was kinda bullshit.</a>",
             "since": "2021-06-30"
         },
         {
@@ -738,7 +738,7 @@
             "label": "Sirhan Sirhan",
             "category": "People",
             "answer": "No.",
-            "detail": "Newsom reversed the parole board's 2021 recommendation; denied again in 2024 (three-year denial). His lawyers are now challenging the governor's power to overrule parole boards.",
+            "detail": "Gavin Newsom overruled the parole board's recommendations. Touchy subject.",
             "countdownTo": "2027-08-16",
             "aliases": [
                 "RFK assassin",
@@ -751,14 +751,23 @@
             "label": "Ghislaine Maxwell",
             "category": "People",
             "answer": "No.",
-            "detail": "20 years for sex trafficking. Quietly moved to a minimum-security camp in Bryan, TX in 2025 — officially barred from the puppy-training program for her offense, though a whistleblower says she got to play with one anyway. No pardon yet."
+            "detail": "Such a nasty woman, but Trump wishes her well. Pardon incoming?"
+        },
+        {
+            "id": "the-epstein-list",
+            "label": "The Epstein Client List",
+            "category": "People",
+            "answer": "No.",
+            "aliases": [
+                "The Epstein files"
+            ]
         },
         {
             "id": "menendez-brothers",
             "label": "The Menendez Brothers",
             "category": "People",
             "answer": "No.",
-            "detail": "Resentenced in 2025 to 50-to-life, making them parole-eligible as youth offenders. Both denied again in Aug. 2025 (three-year denial) — could get an administrative review as soon as Aug. 2026, but the hearing they're guaranteed isn't until 2028.",
+            "detail": "Both were youth offenders so they're still up for parole.",
             "countdownTo": "2028-08-21",
             "aliases": [
                 "Lyle Menendez",
@@ -771,7 +780,7 @@
             "label": "John Hinckley Jr.",
             "category": "People",
             "answer": "Yes.",
-            "detail": "Unconditionally released in 2022 after decades in psychiatric care. Now writes music (<a href=\"https://www.youtube.com/channel/UCck3J5KR3INUP1K-hrBe8iA\" target=\"_blank\" rel=\"noopener\">YouTube channel</a>) and published an autobiography in 2025.",
+            "detail": "He has a <a href=\"https://www.youtube.com/channel/UCck3J5KR3INUP1K-hrBe8iA\" target=\"_blank\" rel=\"noopener\">YouTube channel</a> now!",
             "since": "2022-06-15",
             "aliases": [
                 "Reagan shooter",
@@ -783,7 +792,7 @@
             "label": "Ed Kemper",
             "category": "People",
             "answer": "No.",
-            "detail": "Serial killer serving life at California Medical Facility. Denied parole again in 2024 — not eligible again until 2031.",
+            "detail": "The big 6'9\" mustache guy on <a href=\"https://www.youtube.com/watch?v=cKMMpCuK3bA\" target=\"_blank\" rel=\"noopener\">MINDHUNTER</a>",
             "countdownTo": "2031-07-09",
             "aliases": [
                 "Edmund Kemper",
