@@ -9,6 +9,8 @@ There are redirects to this site from other sites I bought, including but not li
 * [isclaudefable5outyet.com](https://isclaudefable5outyet.com/) -> https://iswhateveroutyet.com?search=Claude+Fable+5
 * [isgrandtheftauto6outyet.com](https://isgrandtheftauto6outyet.com/) -> https://iswhateveroutyet.com?search=GTA6
 * [ispersona6outyet.com](https://ispersona6outyet.com/) -> https://iswhateveroutyet.com?search=Persona+6
+* [isghislainemaxwelloutyet.com](https://isghislainemaxwelloutyet.com) -> https://iswhateveroutyet.com?search=Ghislaine+Maxwell
+* [isdiddyoutyet.com](https://isdiddyoutyet.com) -> https://iswhateveroutyet.com?search=Diddy
 
 ## Why did you make this?
 
@@ -16,9 +18,9 @@ Because I think I am very funny and clever and you should laugh at my jokes and 
 
 I don't always follow the shows and games and such that I'm vaguely interested in, so maybe it's good to have a place that reminds me about them instead of subscribing to 100 email lists and subreddits and turning on notifications on social media sites.
 
-Plus, meh, basically I just want to play around with different AI models and stuff to see how good it is at building frontends and everything end-to-end, reading API docs for me, etc. The app is relatively simple and has a lot of boilerplate code just doing basic CRUD. It's a fun learning exercise in my freetime while I'm goofing off. I don't usually code for free, but having a few public GitHub repositories might make me look cool to someone if shit goes south, y'know?
+Plus, eh, basically I just want to play around with the new AI models to see how good they are at building frontends and everything end-to-end, reading API docs for me, etc. The app is relatively simple and has a lot of boilerplate code just doing basic CRUD. It's a fun learning exercise in my freetime while I'm goofing off. Having a few public GitHub repositories might make me look cool to someone if shit goes south, y'know?
 
-Also, since Claude Fable came back I had it just crap out a [KMP](https://kotlinlang.org/multiplatform/) [Compose Multiplatform](https://kotlinlang.org/compose-multiplatform/) version of the site, just to see what'd happen.
+Also, since Claude Fable came back, I had it just crap out a [KMP](https://kotlinlang.org/multiplatform/) [Compose Multiplatform](https://kotlinlang.org/compose-multiplatform/) version of the site, just to see what'd happen so now there's an actual Android, iOS, and Desktop app probably, if I decide to do that instead of just the website + PWA.
 
 ## How does it work?
 
@@ -39,11 +41,9 @@ If something changes, the runner will also send out notifications on the topics 
 
 ## Buy Me a Coffee
 
-If you thought my jokes were funny, here ya go, here's the Buy Me a Coffee link.
+If you thought my jokes were funny, here's my [Buy Me a Coffee](https://buymeacoffee.com/sfryslie) link. Thanks!
 
 <img width="200" height="200" alt="bmc_qr" src="https://github.com/user-attachments/assets/dc28f229-310a-47c6-b7c3-2e2ec83f5dd3" />
-
-[Buy Me a Coffee](https://buymeacoffee.com/sfryslie) 
 
 ## MIT License
 
