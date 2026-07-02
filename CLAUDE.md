@@ -53,7 +53,7 @@ app builds fine and hides the notification bells.
 
 ## PWA
 
-The site is an installable PWA served straight off GitHub Pages — no extra hosting. `manifest.webmanifest` + `sw.js` + `icons/` are all that's needed; `index.html` links the manifest, sets `theme-color` (kept in sync with the active light/dark theme), and registers the service worker. The worker serves the shell cache-first (offline-capable once installed) and the `data/` JSON files network-first (always fresh while online). Bump `CACHE_VERSION` in `sw.js` when the shell changes. Regenerate icons with the generator in the PR history if the mark changes.
+The site is an installable PWA served straight off GitHub Pages — no extra hosting. `manifest.webmanifest` + `sw.js` + `icons/` are all that's needed; `index.html` links the manifest, sets `theme-color` (kept in sync with the active light/dark theme), and registers the service worker. The worker serves the shell cache-first (offline-capable once installed) and the `data/` JSON files network-first (always fresh while online). Bump `CACHE_VERSION` in `sw.js` when the shell changes. Regenerate icons with `icons/IconGen.java` if the mark changes (`java icons/IconGen.java app/composeApp/src/commonMain/composeResources/font/ibm_plex_mono_semibold.ttf .` from the repo root — regenerates the site, Android, iOS, and desktop marks in one go).
 
 ## Building locally
 

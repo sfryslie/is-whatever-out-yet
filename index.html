@@ -98,6 +98,9 @@
       margin-bottom: 0.6rem;
     }
 
+    /* The logo "?" carries the accent color — it's a question, not a "yes". */
+    .title-q { color: var(--other); }
+
     .subtitle { color: var(--muted); font-size: 0.9rem; }
 
     /* ── hero view: single-result filter ── */
@@ -675,7 +678,7 @@
   </div>
 
   <header>
-    <h1>is <span id="title-word">whatever</span> out yet?</h1>
+    <h1>is <span id="title-word">whatever</span> out yet<span class="title-q">?</span></h1>
   </header>
 
   <div class="search-wrap">
