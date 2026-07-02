@@ -17,6 +17,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Comic Neue: the ?search= deep-link title gag needs a Comic Sans stand-in on Android,
+       which ships neither Comic Sans MS nor anything comparably stupid. -->
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="iwoy?">
 
@@ -104,7 +107,9 @@
       left: 50%;
       bottom: calc(100% + 0.08em);
       transform: translateX(-50%);
-      font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+      /* Stupid-font ladder: real Comic Sans (Windows/macOS) → Chalkboard SE (iOS's native
+         Comic Sans-alike) → Comic Neue webfont (Android) → whatever cursive means locally. */
+      font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Comic Neue', cursive;
       font-size: 0.6em;
       font-weight: normal;
       color: var(--text);

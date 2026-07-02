@@ -33,8 +33,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -51,18 +56,64 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+/**
+ * The H1. With [heroLabel] set (single search result), "whatever" gets the X-crossthrough and
+ * the item name floats above it in Comic Neue — same gag as the site's ?search= deep links.
+ */
 @Composable
-fun SiteHeader(font: FontFamily) {
+fun SiteHeader(font: FontFamily, comicFont: FontFamily, heroLabel: String? = null) {
     val palette = LocalPalette.current
-    Text(
-        "is whatever out yet?",
+    val titleStyle = TextStyle(
         color = palette.text,
         fontFamily = font,
         fontWeight = FontWeight.SemiBold,
         fontSize = 32.sp,
         letterSpacing = (-0.03).em,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().padding(top = 36.dp, bottom = 20.dp),
+    )
+    Box(
+        Modifier.fillMaxWidth().padding(top = 36.dp, bottom = 20.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (heroLabel == null) {
+            Text("is whatever out yet?", style = titleStyle, textAlign = TextAlign.Center)
+        } else {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text("is ", style = titleStyle)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        heroLabel,
+                        color = palette.text,
+                        fontFamily = comicFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    CrossedOutWord("whatever", titleStyle.copy(color = palette.muted), palette.text)
+                }
+                Text(" out yet?", style = titleStyle)
+            }
+        }
+    }
+}
+
+/** The site's .title-del: two slightly rotated bars over the word — an X-ish scribble, not a <del>. */
+@Composable
+private fun CrossedOutWord(word: String, style: TextStyle, barColor: Color) {
+    Text(
+        word,
+        style = style,
+        modifier = Modifier.drawWithContent {
+            drawContent()
+            val bar = Size(size.width * 1.12f, 3.dp.toPx())
+            val topLeft = Offset(-size.width * 0.06f, size.height * 0.48f)
+            val radius = CornerRadius(2.dp.toPx())
+            listOf(-11f, 11f).forEach { degrees ->
+                rotate(degrees) {
+                    drawRoundRect(color = barColor, topLeft = topLeft, size = bar, cornerRadius = radius)
+                }
+            }
+        },
     )
 }
 
@@ -257,14 +308,7 @@ fun Hero(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            resolved.item.label,
-            color = palette.muted,
-            fontFamily = font,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center,
-        )
+        // No item-name line here — the crossed-out title (SiteHeader) carries the name.
         Text(
             resolved.answer,
             color = palette.text,

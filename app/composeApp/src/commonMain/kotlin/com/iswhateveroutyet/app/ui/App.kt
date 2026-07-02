@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.iswhateveroutyet.app.data.WhateverRepository
+import com.iswhateveroutyet.app.isTouchPlatform
 import com.iswhateveroutyet.app.logic.HIDE_LEVELS
 import com.iswhateveroutyet.app.logic.isHiddenByLevel
 import com.iswhateveroutyet.app.logic.matchesSearch
@@ -140,9 +141,10 @@ fun App(pushPlatform: PushPlatform = DisabledPushPlatform) {
     CompositionLocalProvider(LocalPalette provides palette) {
         MaterialTheme(colorScheme = if (isLight) lightColorScheme() else darkColorScheme()) {
             val font = plexMono()
+            val comicFont = comicNeue()
             Surface(color = palette.bg, contentColor = palette.text, modifier = Modifier.fillMaxSize()) {
                 Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-                    PullToRefreshBox(isRefreshing = refreshing, onRefresh = ::refresh) {
+                    RefreshContainer(refreshing = refreshing, onRefresh = ::refresh) {
                         ContentGrid(
                             state = state,
                             lastChecked = lastChecked,
@@ -154,6 +156,7 @@ fun App(pushPlatform: PushPlatform = DisabledPushPlatform) {
                             pushTopics = pushTopics,
                             onBell = ::toggleBell,
                             font = font,
+                            comicFont = comicFont,
                         )
                     }
 
@@ -212,6 +215,21 @@ fun App(pushPlatform: PushPlatform = DisabledPushPlatform) {
     }
 }
 
+/** Pull-to-refresh on touch platforms; a plain container on desktop (mouse has no pull gesture). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RefreshContainer(
+    refreshing: Boolean,
+    onRefresh: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    if (isTouchPlatform) {
+        PullToRefreshBox(isRefreshing = refreshing, onRefresh = onRefresh) { content() }
+    } else {
+        Box { content() }
+    }
+}
+
 @Composable
 private fun ContentGrid(
     state: LoadState,
@@ -224,8 +242,18 @@ private fun ContentGrid(
     pushTopics: Set<String>,
     onBell: (String) -> Unit,
     font: FontFamily,
+    comicFont: FontFamily,
 ) {
     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+
+    // Computed ahead of the grid so the header knows whether the hero title gag is on.
+    val filter = search.trim().lowercase()
+    val visible = (state as? LoadState.Ready)?.data?.items?.filter { item ->
+        matchesSearch(item, filter) &&
+            !isHiddenByLevel(item, hideLevel, today) &&
+            item.category !in hiddenCats
+    }
+    val heroItem = visible?.singleOrNull()
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 170.dp),
@@ -234,7 +262,9 @@ private fun ContentGrid(
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
         verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }, key = "header") { SiteHeader(font) }
+        item(span = { GridItemSpan(maxLineSpan) }, key = "header") {
+            SiteHeader(font, comicFont, heroLabel = heroItem?.label)
+        }
         item(span = { GridItemSpan(maxLineSpan) }, key = "search") {
             SearchField(search, onSearch, font)
         }
@@ -247,27 +277,21 @@ private fun ContentGrid(
             }
 
             is LoadState.Ready -> {
-                val filter = search.trim().lowercase()
-                val visible = state.data.items.filter { item ->
-                    matchesSearch(item, filter) &&
-                        !isHiddenByLevel(item, hideLevel, today) &&
-                        item.category !in hiddenCats
-                }
+                visible!! // non-null whenever state is Ready
 
                 when {
                     visible.isEmpty() -> item(
                         span = { GridItemSpan(maxLineSpan) }, key = "empty"
                     ) { NoResults(font) }
 
-                    visible.size == 1 -> item(
+                    heroItem != null -> item(
                         span = { GridItemSpan(maxLineSpan) }, key = "hero"
                     ) {
-                        val item = visible[0]
                         Hero(
-                            resolved = resolveItem(item, today),
+                            resolved = resolveItem(heroItem, today),
                             pushEnabled = pushEnabled,
-                            bellOn = topicItem(item) in pushTopics,
-                            onBell = { onBell(topicItem(item)) },
+                            bellOn = topicItem(heroItem) in pushTopics,
+                            onBell = { onBell(topicItem(heroItem)) },
                             font = font,
                         )
                     }
