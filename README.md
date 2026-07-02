@@ -18,6 +18,8 @@ I don't always follow the shows and games and such that I'm vaguely interested i
 
 Plus, meh, basically I just want to play around with different AI models and stuff to see how good it is at building frontends and everything end-to-end, reading API docs for me, etc. The app is relatively simple and has a lot of boilerplate code just doing basic CRUD. It's a fun learning exercise in my freetime while I'm goofing off. I don't usually code for free, but having a few public GitHub repositories might make me look cool to someone if shit goes south, y'know?
 
+Also, since Claude Fable came back I had it just crap out a [KMP](https://kotlinlang.org/multiplatform/) [Compose Multiplatform](https://kotlinlang.org/compose-multiplatform/) version of the site, just to see what'd happen.
+
 ## How does it work?
 
 Basically, I just have the checks hit some of the various read-only / public APIs or hit a website directly and scrape for content to see if something is out yet. 
@@ -34,15 +36,6 @@ Some are jokes, some are not. Some are live-updated, some aren't. I think I am v
 Checks run every 30 minutes via GitHub Actions and write results to per-category JSON files under `data/` (plus a tiny `data/index.json`), which the frontend reads. If I start hitting rate-limits, then maybe I'll split out the checks or something and make this better, or I might not. Maybe I'll make an actual app with like KMP or something.
 
 If something changes, the runner will also send out notifications on the topics to people who are subscribed to them, so they should receive it if the page is open on their desktop or if they installed the PWA. Or maybe if I make an actual app. IDK. I just am goofing around.
-
-## Wait, there IS an actual app now?
-
-Yeah. [`app/`](app/) is a Kotlin Multiplatform + Compose Multiplatform version of the site — same
-cards, same countdowns, same jokes — that builds for Android, iOS, and desktop from one shared UI.
-It reads the exact same `data/` JSON off GitHub Pages (the static site remains the backend), and
-the same Cloudflare Worker fans push notifications out to browsers *and* phones. See
-[`app/README.md`](app/README.md) for building it and what accounts you'd need to actually ship it
-to a store.
 
 ## Buy Me a Coffee
 
