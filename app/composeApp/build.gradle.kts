@@ -62,6 +62,7 @@ kotlin {
             // lint's InvalidFragmentVersionForActivityResult (fatal) doesn't trip on the
             // permission launcher in AndroidPushPlatform.
             implementation("androidx.fragment:fragment:1.8.5")
+            implementation("androidx.work:work-runtime-ktx:2.10.0")
             implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
             implementation("com.google.firebase:firebase-messaging:24.1.1")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:$coroutinesVersion")
