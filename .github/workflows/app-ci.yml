@@ -24,6 +24,8 @@ jobs:
   android-and-desktop:
     name: Android APK + desktop tests
     runs-on: ubuntu-latest
+    env:
+      GOOGLE_SERVICES_B64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -31,6 +33,11 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
+      # Opt-in Firebase config, same secret as app-release.yml — lets a debug CI build exercise
+      # the real FCM path too. Skipped entirely (build proceeds Firebase-less) if unset.
+      - name: Decode Firebase config (only if the secret is set)
+        if: env.GOOGLE_SERVICES_B64 != ''
+        run: echo "$GOOGLE_SERVICES_B64" | base64 -d > app/composeApp/google-services.json
       - name: Build debug APK + run tests
         working-directory: app
         run: ./gradlew :composeApp:assembleDebug :composeApp:desktopTest

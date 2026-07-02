@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      GOOGLE_SERVICES_B64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -40,6 +41,13 @@ jobs:
         run: |
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+      # Firebase config is opt-in (see app/README.md): without this secret the build proceeds
+      # exactly as before and the app falls back to its local WorkManager watcher for
+      # notifications. google-services.json is gitignored on purpose, so this is the only way
+      # a CI-built release APK gets real FCM push.
+      - name: Decode Firebase config (only if the secret is set)
+        if: env.GOOGLE_SERVICES_B64 != ''
+        run: echo "$GOOGLE_SERVICES_B64" | base64 -d > app/composeApp/google-services.json
       - name: Build release APK
         working-directory: app
         env:

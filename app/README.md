@@ -79,6 +79,11 @@ Two workflows (free on public repos, including the macOS runners):
   the `ANDROID_KEYSTORE_BASE64`/`_PASSWORD`/`_ALIAS`/`_KEY_PASSWORD` secrets are set; desktop
   installers are unsigned (expect SmartScreen/Gatekeeper warnings).
 
+Both workflows also decode a `GOOGLE_SERVICES_JSON_BASE64` secret into
+`app/composeApp/google-services.json` before building, if it's set — see
+[Push notifications](#push-notifications) below for how to generate it. Neither workflow
+requires it; builds proceed Firebase-less when it's absent.
+
 Binaries never land in git — Actions artifacts and Releases are the distribution channel.
 
 ## Do I need developer accounts?
@@ -106,14 +111,24 @@ per-item, per-category, and `iswhateveroutyet-all`. Nothing about the checker ch
 One-time setup:
 
 1. Create a Firebase project (free Spark plan) and add:
-   - an **Android app** with package `com.iswhateveroutyet.app` → download `google-services.json`
-     into `app/composeApp/` (the Gradle plugin activates automatically when the file exists);
+   - an **Android app** with package `com.iswhateveroutyet.app` → download `google-services.json`;
    - an **iOS app** with bundle id `com.iswhateveroutyet.app` → download
-     `GoogleService-Info.plist` into `app/iosApp/iosApp/`.
+     `GoogleService-Info.plist` into `app/iosApp/iosApp/` (both files are gitignored — never
+     commit them).
 2. Give the Worker send access: Firebase console → Project settings → Service accounts →
    Generate new private key, then set `FCM_PROJECT_ID` / `FCM_CLIENT_EMAIL` / `FCM_PRIVATE_KEY`
    as Worker secrets (see [push-worker/README.md](../push-worker/README.md)).
-3. iOS only: add the firebase-ios-sdk package + Push Notifications capability in Xcode, upload
+3. Get `google-services.json` into an actual build of the app — **existing installs can't gain
+   FCM retroactively**; Firebase config is compiled in, so anyone already running the app stays
+   on the WorkManager fallback until they install a build made after this step:
+   - **Local build:** drop the file at `app/composeApp/google-services.json` — the Gradle
+     plugin activates automatically when it's present.
+   - **CI-built releases:** `base64 -w0 google-services.json` and set the result as the repo
+     secret `GOOGLE_SERVICES_JSON_BASE64`. Both `app-ci.yml` and `app-release.yml` decode it
+     into place automatically when set, and proceed exactly as before (Firebase-less) when it
+     isn't — so this is safe to add at any time. Every subsequent CI/release build then has
+     real push; nothing else needs to change.
+4. iOS only: add the firebase-ios-sdk package + Push Notifications capability in Xcode, upload
    your APNs key to Firebase, and uncomment the `PUSH:` lines in `iosApp/iosApp/iOSApp.swift`.
    (Requires the paid Apple Developer Program.)
 
