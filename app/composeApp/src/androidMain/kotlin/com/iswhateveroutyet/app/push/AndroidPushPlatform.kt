@@ -12,14 +12,18 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.tasks.await
 
 /**
- * FCM-backed push. `supported` is false when the app was built without a google-services.json
- * (Firebase never initializes), which hides every bell — mirroring the website's behavior
- * when its push Worker isn't configured.
+ * Android push with two modes: built with a google-services.json, Firebase initializes and the
+ * bells register FCM tokens with the push Worker (real push, arrives with the app closed).
+ * Built without it, the bells still work — topics persist locally and WatchWorker polls in the
+ * background instead. Either way the POST_NOTIFICATIONS prompt happens on the first bell tap.
  */
 class AndroidPushPlatform(private val activity: ComponentActivity) : PushPlatform {
 
-    override val supported: Boolean = FirebaseApp.getApps(activity).isNotEmpty()
+    private val firebaseAvailable = FirebaseApp.getApps(activity).isNotEmpty()
+
+    override val supported = true
     override val platformName = "android"
+    override val usesServerRegistration: Boolean get() = firebaseAvailable
 
     private var pendingPermission: CompletableDeferred<Boolean>? = null
     private val permissionLauncher =
@@ -27,19 +31,20 @@ class AndroidPushPlatform(private val activity: ComponentActivity) : PushPlatfor
             pendingPermission?.complete(granted)
         }
 
+    override suspend fun ensurePermission(): Boolean {
+        if (Build.VERSION.SDK_INT < 33) return true // POST_NOTIFICATIONS doesn't exist yet
+        val has = ContextCompat.checkSelfPermission(
+            activity, Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+        if (has) return true
+        val deferred = CompletableDeferred<Boolean>()
+        pendingPermission = deferred
+        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        return deferred.await()
+    }
+
     override suspend fun requestToken(): String? {
-        if (!supported) return null
-        if (Build.VERSION.SDK_INT >= 33) {
-            val has = ContextCompat.checkSelfPermission(
-                activity, Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-            if (!has) {
-                val deferred = CompletableDeferred<Boolean>()
-                pendingPermission = deferred
-                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                if (!deferred.await()) return null
-            }
-        }
+        if (!firebaseAvailable) return null
         return try {
             FirebaseMessaging.getInstance().token.await()
         } catch (e: Exception) {

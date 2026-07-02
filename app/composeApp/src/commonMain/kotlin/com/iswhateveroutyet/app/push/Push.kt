@@ -30,10 +30,10 @@ fun subscribesTo(item: ItemResult, topics: Set<String>): Boolean =
     topicItem(item) in topics || topicCat(item.category) in topics || TOPIC_ALL in topics
 
 /**
- * Per-platform push transport. Android backs this with Firebase Messaging; iOS with an
- * FCM token bridged in from Swift; desktop has no push *service* (FCM/Web Push don't cover
- * JVM apps), so it flags [usesServerRegistration] = false and a local poller
- * (watch/ReleaseWatcher.kt) delivers tray notifications instead.
+ * Per-platform push transport. Android backs this with Firebase Messaging when configured and a
+ * WorkManager poller otherwise; iOS with an FCM token bridged in from Swift; desktop has no push
+ * *service* (FCM/Web Push don't cover JVM apps), so it flags [usesServerRegistration] = false and
+ * a local poller (watch/ReleaseWatcher.kt) delivers tray notifications instead.
  */
 interface PushPlatform {
     val supported: Boolean
@@ -41,10 +41,13 @@ interface PushPlatform {
     val platformName: String
     /**
      * True when toggling a bell must register the device with the push Worker (FCM platforms).
-     * False when topics are only consumed locally (the desktop watcher) — no token, no network.
+     * False when topics are only consumed locally (the desktop/Android watchers) — no token,
+     * no network.
      */
     val usesServerRegistration: Boolean get() = true
-    /** Ask for notification permission if needed and return the device's FCM token, or null. */
+    /** Prompt for notification permission if the platform gates on one; true when granted. */
+    suspend fun ensurePermission(): Boolean = true
+    /** Return the device's FCM token, or null. Only called when [usesServerRegistration]. */
     suspend fun requestToken(): String?
 }
 
@@ -86,6 +89,7 @@ class PushManager(
     /** Toggle a topic on/off; returns false if permission was denied or the network call failed. */
     suspend fun toggle(topic: String): Boolean {
         if (!platform.supported) return false
+        if (!platform.ensurePermission()) return false
         val next = _topics.value.toMutableSet().apply { if (!add(topic)) remove(topic) }
         if (platform.usesServerRegistration) {
             val token = platform.requestToken() ?: return false

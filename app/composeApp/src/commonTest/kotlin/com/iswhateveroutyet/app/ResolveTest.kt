@@ -10,6 +10,8 @@ import com.iswhateveroutyet.app.push.catSlug
 import com.iswhateveroutyet.app.push.subscribesTo
 import com.iswhateveroutyet.app.push.topicCat
 import com.iswhateveroutyet.app.push.topicItem
+import com.iswhateveroutyet.app.watch.computeStates
+import com.iswhateveroutyet.app.watch.diffChanges
 import com.iswhateveroutyet.app.watch.outState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -119,6 +121,34 @@ class ResolveTest {
         assertTrue(subscribesTo(gta, setOf("iswhateveroutyet-all")))
         assertFalse(subscribesTo(gta, setOf("iswhateveroutyet-ai-all")))
         assertFalse(subscribesTo(gta, emptySet()))
+    }
+
+    @Test
+    fun diffNotifiesOnlySubscribedFlips() {
+        val before = listOf(
+            item(id = "gta6", category = "Video Games", answer = "No."),
+            item(id = "p6", category = "Video Games", answer = "No."),
+        )
+        val after = listOf(
+            item(id = "gta6", category = "Video Games", answer = "Yes."),
+            item(id = "p6", category = "Video Games", answer = "Yes."),
+            item(id = "brand-new", category = "Video Games", answer = "Yes."), // first-seen
+        )
+        val baseline = computeStates(before, today)
+        val states = computeStates(after, today)
+
+        // Only the subscribed item's flip notifies.
+        val onlyGta = diffChanges(baseline, after, states, setOf("iswhateveroutyet-video-games-gta6"), today)
+        assertEquals(listOf("gta6"), onlyGta.map { it.item.id })
+        assertEquals("gta6: Yes.", onlyGta.single().message)
+
+        // The global topic covers both flips — but never the first-seen item.
+        val all = diffChanges(baseline, after, states, setOf("iswhateveroutyet-all"), today)
+        assertEquals(listOf("gta6", "p6"), all.map { it.item.id })
+
+        // No topics → nothing; unchanged state → nothing.
+        assertTrue(diffChanges(baseline, after, states, emptySet(), today).isEmpty())
+        assertTrue(diffChanges(states, after, states, setOf("iswhateveroutyet-all"), today).isEmpty())
     }
 
     @Test

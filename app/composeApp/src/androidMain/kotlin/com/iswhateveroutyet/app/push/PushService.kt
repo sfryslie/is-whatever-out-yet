@@ -1,15 +1,7 @@
 package com.iswhateveroutyet.app.push
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Intent
-import android.content.pm.PackageManager
-import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.iswhateveroutyet.app.MainActivity
-import com.iswhateveroutyet.app.R
 import com.russhwolf.settings.Settings
 import java.net.HttpURLConnection
 import java.net.URL
@@ -60,33 +52,11 @@ class PushService : FirebaseMessagingService() {
      */
     override fun onMessageReceived(message: RemoteMessage) {
         val notification = message.notification ?: return
-        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Release updates", NotificationManager.IMPORTANCE_DEFAULT)
+        notifyRelease(
+            this,
+            notification.title ?: "Is whatever out yet?",
+            notification.body ?: "",
+            message.data["tag"] ?: notification.tag ?: "iwoy",
         )
-        if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        val intent = PendingIntent.getActivity(
-            this, 0,
-            Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        manager.notify(
-            (message.data["tag"] ?: notification.tag ?: "iwoy").hashCode(),
-            NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle(notification.title ?: "Is whatever out yet?")
-                .setContentText(notification.body ?: "")
-                .setAutoCancel(true)
-                .setContentIntent(intent)
-                .build(),
-        )
-    }
-
-    companion object {
-        private const val CHANNEL_ID = "release-updates"
     }
 }
