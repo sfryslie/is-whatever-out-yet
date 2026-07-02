@@ -305,7 +305,7 @@
       cursor: pointer;
     }
 
-    /* range slider (hide long-released) */
+    /* range slider (hide old stuff) */
     .settings-row-col { flex-direction: column; align-items: stretch; gap: 0.6rem; }
     .slider {
       -webkit-appearance: none;
@@ -648,7 +648,7 @@
       </label>
       <div class="settings-row settings-row-col">
         <span class="settings-row-label">
-          Hide long-released
+          Hide old stuff
           <span class="settings-row-sub" id="hide-old-value">Off</span>
         </span>
         <input type="range" id="hide-old-slider" class="slider" min="0" max="5" step="1" value="0"
@@ -827,7 +827,7 @@
       toggleTopic(el.dataset.topic);
     });
 
-    // "Hide long-released" slider stops. Each level hides items that have been out longer than
+    // "Hide old stuff" slider stops. Each level hides items that have been out longer than
     // `days`; level 0 is off, and the last (-1) hides anything released at all.
     const HIDE_LEVELS = [
       { label: 'Off',                days: Infinity },

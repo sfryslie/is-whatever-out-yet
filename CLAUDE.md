@@ -85,7 +85,7 @@ Item(id, label, category, check, defaultAnswer, defaultDetail, since, tone, alia
 ```
 
 - `defaultAnswer` defaults to `"No."`, `defaultDetail` defaults to `null`
-- `since` (`LocalDate?`) — when an already-"out" item became available. Emitted as `ItemResult.since` and used by the frontend's "hide long-released" filter (and only meaningful on non-date-driven "Yes." items; date items already encode their flip date in `releaseDate`).
+- `since` (`LocalDate?`) — when an already-"out" item became available. Emitted as `ItemResult.since` and used by the frontend's "hide old stuff" filter (and only meaningful on non-date-driven "Yes." items; date items already encode their flip date in `releaseDate`).
 - `tone` (`String?`) — semantic coloring override. Currently only `"death"`, which paints the card a somber slate instead of celebratory green for "they're out (deceased)" cards (e.g. Ted Kaczynski). `Check.WikipediaLead` takes an optional `flippedTone` so a copula death-flip (e.g. Cosby's "is" → "was") colors correctly when it triggers.
 - `aliases` (`List<String>?`) — optional alternative search terms emitted to the data files and matched by the frontend's filter alongside `label`. Use for common shorthands that differ from the canonical label (e.g. `["GTA 6", "GTAVI", "GTA6"]` for "Grand Theft Auto VI").
 
@@ -133,7 +133,7 @@ Card class comes from `cardClass()` in `index.html`, which checks `tone` first, 
 
 The countdown label is always rendered in the blue accent (`--other`) regardless of card class, so countdown cards still read as "No, but here's when".
 
-Theme is driven by CSS custom properties on `:root`, overridden by `[data-theme="light"]`. The choice is persisted in `localStorage` (falling back to `prefers-color-scheme`) and toggled from the settings menu (the gear/hamburger top-right), which also hosts the "hide long-released" **slider** (`localStorage` key `hideOldLevel`): stops are Off · 2y · 1.5y · 1y · 6mo · "anything released", hiding items whose out-date (`since`, or a past `releaseDate`) is older than the chosen threshold — and the per-category **visibility checkboxes** (`localStorage` key `hiddenCats`, storing the *hidden* names so new categories default to visible), built dynamically from `data/index.json` after load. Both filters apply during search too, same as each other. Cards within a category are sorted soonest-upcoming-first by a stable sort, so imminent releases bubble up.
+Theme is driven by CSS custom properties on `:root`, overridden by `[data-theme="light"]`. The choice is persisted in `localStorage` (falling back to `prefers-color-scheme`) and toggled from the settings menu (the gear/hamburger top-right), which also hosts the "hide old stuff" **slider** (`localStorage` key `hideOldLevel`): stops are Off · 2y · 1.5y · 1y · 6mo · "anything released", hiding items whose out-date (`since`, or a past `releaseDate`) is older than the chosen threshold — and the per-category **visibility checkboxes** (`localStorage` key `hiddenCats`, storing the *hidden* names so new categories default to visible), built dynamically from `data/index.json` after load. Both filters apply during search too, same as each other. Cards within a category are sorted soonest-upcoming-first by a stable sort, so imminent releases bubble up.
 
 ## Search & hero view
 

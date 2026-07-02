@@ -21,7 +21,7 @@ fun cardTone(item: ItemResult, answer: String): CardTone {
     }
 }
 
-/** "Hide long-released" slider stops; `days == null` is Off, `-1` hides anything released. */
+/** "Hide old stuff" slider stops; `days == null` is Off, `-1` hides anything released. */
 data class HideLevel(val label: String, val days: Int?)
 
 val HIDE_LEVELS = listOf(
