@@ -1157,7 +1157,9 @@
       if (allItems.length > 0) renderGrid();
     });
 
-    renderSkeletons();
+    // Deep-link landings (?search=) resolve straight to the hero view, so flashing the grid
+    // skeletons first reads as a broken layout swap — show nothing until the hero can render.
+    if (!paramMode) renderSkeletons();
 
     // Data is split per category: data/index.json carries the `updated` stamp and the ordered
     // category list; each data/<category>.json carries that category's items.
