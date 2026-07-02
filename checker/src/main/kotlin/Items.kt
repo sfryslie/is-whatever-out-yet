@@ -67,7 +67,7 @@ val ITEMS = listOf(
     Item("runescape-dragonwilds", "RuneScape: Dragonwilds", "Video Games", Check.ScheduledDate(LocalDate.of(2026, 9, 15))),
     Item("gears-of-war-eday", "Gears of War: E-Day", "Video Games", Check.IGDB("gears-of-war-e-day")),
     Item("enshrouded",      "Enshrouded",      "Video Games", Check.IGDB("enshrouded")),
-    // Already-out games — exercise the "hide long-released" slider at different age buckets.
+    // Already-out games — exercise the "hide old stuff" slider at different age buckets.
     Item("silksong",        "Hollow Knight: Silksong", "Video Games", Check.Hardcoded, "Yes.",
         "Silkposting is a art", since = LocalDate.of(2025, 9, 4)),
     Item("deadlock",        "Deadlock",        "Video Games", Check.Hardcoded, "No.",

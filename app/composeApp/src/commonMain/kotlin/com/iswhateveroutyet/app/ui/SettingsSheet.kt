@@ -169,9 +169,9 @@ private fun SettingsContent(
                 )
             }
 
-            // Hide long-released
+            // Hide old stuff
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                RowLabel("Hide long-released", HIDE_LEVELS[hideLevel].label, font)
+                RowLabel("Hide old stuff", HIDE_LEVELS[hideLevel].label, font)
                 Slider(
                     value = hideLevel.toFloat(),
                     onValueChange = { onHideLevel(it.roundToInt().coerceIn(HIDE_LEVELS.indices)) },
