@@ -7,7 +7,7 @@
 //     the freshest status, falling back to the last cached copy when offline.
 //
 // Bump CACHE_VERSION whenever the shell changes to evict the old cache.
-const CACHE_VERSION = 'iwoy-v7';
+const CACHE_VERSION = 'iwoy-v8';
 const SHELL = [
   './',
   './index.html',

@@ -41,9 +41,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -74,8 +77,20 @@ fun SiteHeader(font: FontFamily, comicFont: FontFamily, heroLabel: String? = nul
         Modifier.fillMaxWidth().padding(top = 36.dp, bottom = 20.dp),
         contentAlignment = Alignment.Center,
     ) {
+        // The logo "?" carries the accent color — it's a question, not a "yes".
+        val outYet = buildAnnotatedString {
+            append(" out yet")
+            withStyle(SpanStyle(color = palette.other)) { append("?") }
+        }
         if (heroLabel == null) {
-            Text("is whatever out yet?", style = titleStyle, textAlign = TextAlign.Center)
+            Text(
+                buildAnnotatedString {
+                    append("is whatever")
+                    append(outYet)
+                },
+                style = titleStyle,
+                textAlign = TextAlign.Center,
+            )
         } else {
             Row(verticalAlignment = Alignment.Bottom) {
                 Text("is ", style = titleStyle)
@@ -91,7 +106,7 @@ fun SiteHeader(font: FontFamily, comicFont: FontFamily, heroLabel: String? = nul
                     )
                     CrossedOutWord("whatever", titleStyle.copy(color = palette.muted), palette.text)
                 }
-                Text(" out yet?", style = titleStyle)
+                Text(outYet, style = titleStyle)
             }
         }
     }
