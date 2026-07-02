@@ -1,0 +1,152 @@
+package com.iswhateveroutyet.app.ui
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.iswhateveroutyet.app.logic.HIDE_LEVELS
+import kotlin.math.roundToInt
+
+@Composable
+private fun RowLabel(title: String, sub: String, font: FontFamily) {
+    val palette = LocalPalette.current
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(title, color = palette.text, fontFamily = font, fontSize = 14.sp)
+        Text(sub, color = palette.muted, fontFamily = font, fontSize = 11.sp)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsSheet(
+    onDismiss: () -> Unit,
+    isLight: Boolean,
+    onTheme: (Boolean) -> Unit,
+    hideLevel: Int,
+    onHideLevel: (Int) -> Unit,
+    categories: List<String>,
+    hiddenCats: Set<String>,
+    onToggleCat: (String) -> Unit,
+    pushEnabled: Boolean,
+    notifyAllOn: Boolean,
+    onNotifyAll: () -> Unit,
+    onRefresh: () -> Unit,
+    font: FontFamily,
+) {
+    val palette = LocalPalette.current
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = palette.surface,
+        contentColor = palette.text,
+    ) {
+        Column(
+            Modifier.padding(horizontal = 20.dp).padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            // Light mode
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RowLabel("Light mode", "Switch the color theme", font)
+                Spacer(Modifier.weight(1f))
+                Switch(
+                    checked = isLight,
+                    onCheckedChange = onTheme,
+                    colors = SwitchDefaults.colors(
+                        checkedTrackColor = palette.other,
+                        uncheckedTrackColor = palette.noAnswer,
+                    ),
+                )
+            }
+
+            // Hide long-released
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                RowLabel("Hide long-released", HIDE_LEVELS[hideLevel].label, font)
+                Slider(
+                    value = hideLevel.toFloat(),
+                    onValueChange = { onHideLevel(it.roundToInt().coerceIn(HIDE_LEVELS.indices)) },
+                    valueRange = 0f..(HIDE_LEVELS.lastIndex).toFloat(),
+                    steps = HIDE_LEVELS.size - 2,
+                    colors = SliderDefaults.colors(
+                        thumbColor = palette.other,
+                        activeTrackColor = palette.other,
+                        inactiveTrackColor = palette.noAnswer,
+                    ),
+                )
+            }
+
+            // Category visibility
+            if (categories.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                    RowLabel("Categories", "Show or hide whole sections", font)
+                    categories.forEach { cat ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onToggleCat(cat) },
+                        ) {
+                            Checkbox(
+                                checked = cat !in hiddenCats,
+                                onCheckedChange = { onToggleCat(cat) },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = palette.other,
+                                    uncheckedColor = palette.muted,
+                                ),
+                            )
+                            Text(cat, color = palette.text, fontFamily = font, fontSize = 13.sp)
+                        }
+                    }
+                }
+            }
+
+            // Notify me about everything
+            if (pushEnabled) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().clickable(onClick = onNotifyAll),
+                ) {
+                    RowLabel("Notify me about everything", "Push when anything flips", font)
+                    Spacer(Modifier.weight(1f))
+                    Bell(notifyAllOn, "Notify me about everything", onNotifyAll)
+                }
+            }
+
+            // Refresh (handy on desktop where there's no pull gesture)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clickable {
+                    onRefresh()
+                    onDismiss()
+                },
+            ) {
+                RowLabel("Refresh", "Re-fetch the latest data", font)
+            }
+
+            Text(
+                "MIT licensed · data straight off iswhateveroutyet.com",
+                color = palette.muted,
+                fontFamily = font,
+                fontWeight = FontWeight.Normal,
+                fontSize = 10.sp,
+            )
+        }
+    }
+}

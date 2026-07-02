@@ -35,6 +35,15 @@ Checks run every 30 minutes via GitHub Actions and write results to per-category
 
 If something changes, the runner will also send out notifications on the topics to people who are subscribed to them, so they should receive it if the page is open on their desktop or if they installed the PWA. Or maybe if I make an actual app. IDK. I just am goofing around.
 
+## Wait, there IS an actual app now?
+
+Yeah. [`app/`](app/) is a Kotlin Multiplatform + Compose Multiplatform version of the site — same
+cards, same countdowns, same jokes — that builds for Android, iOS, and desktop from one shared UI.
+It reads the exact same `data/` JSON off GitHub Pages (the static site remains the backend), and
+the same Cloudflare Worker fans push notifications out to browsers *and* phones. See
+[`app/README.md`](app/README.md) for building it and what accounts you'd need to actually ship it
+to a store.
+
 ## Buy Me a Coffee
 
 If you thought my jokes were funny, here ya go, here's the Buy Me a Coffee link.

@@ -1,18 +1,22 @@
 # Push Worker
 
-A tiny, dependency-free Cloudflare Worker that delivers the site's Web Push notifications. It stores
-browser push subscriptions in KV and, when the checker POSTs a change to `/send`, encrypts and fans
-the notification out to the matching subscribers. VAPID + aes128gcm are implemented directly on the
-Workers Web Crypto API — no npm dependencies, nothing to keep patched.
+A tiny, dependency-free Cloudflare Worker that delivers the site's push notifications — Web Push
+for browsers and (optionally) native FCM for the KMP app in [`app/`](../app). It stores browser
+push subscriptions and native device tokens in KV and, when the checker POSTs a change to `/send`,
+fans the notification out to every matching subscriber in one pass. VAPID + aes128gcm and the FCM
+service-account OAuth flow are implemented directly on the Workers Web Crypto API — no npm
+dependencies, nothing to keep patched.
 
 ## Endpoints
 
-| Method | Path          | Who calls it      | Body                                   |
-|--------|---------------|-------------------|----------------------------------------|
-| GET    | `/key`        | the website       | —                                      |
-| POST   | `/subscribe`  | the website       | `{ subscription, topics }`             |
-| POST   | `/unsubscribe`| the website       | `{ endpoint }`                         |
-| POST   | `/send`       | the GitHub Action | `{ topics, title, message, url, tag }` (Bearer `SEND_TOKEN`) |
+| Method | Path                 | Who calls it      | Body                                   |
+|--------|----------------------|-------------------|----------------------------------------|
+| GET    | `/key`               | the website       | —                                      |
+| POST   | `/subscribe`         | the website       | `{ subscription, topics }`             |
+| POST   | `/unsubscribe`       | the website       | `{ endpoint }`                         |
+| POST   | `/register-native`   | the KMP app       | `{ token, platform, topics }`          |
+| POST   | `/unregister-native` | the KMP app       | `{ token }`                            |
+| POST   | `/send`              | the GitHub Action | `{ topics, title, message, url, tag }` (Bearer `SEND_TOKEN`) |
 
 ## One-time setup
 
@@ -60,3 +64,20 @@ curl -X POST https://iswhateveroutyet-push.<you>.workers.dev/send \
 ```
 
 Dead subscriptions (uninstalled browsers) are pruned automatically when `/send` gets a 404/410 back.
+
+## Native push (the KMP app) — optional
+
+The Android/iOS app registers FCM device tokens here (`/register-native`) instead of Web Push
+subscriptions, and `/send` delivers to them through FCM's HTTP v1 API — Android directly, iOS
+relayed through APNs by Firebase. Nothing on the checker side changes; the same `/send` reaches
+browsers and phones. Without these secrets the native path is skipped silently:
+
+```bash
+# From your Firebase project (Project settings → Service accounts → Generate new private key):
+wrangler secret put FCM_PROJECT_ID     # the Firebase project id
+wrangler secret put FCM_CLIENT_EMAIL   # "client_email" from the service-account JSON
+wrangler secret put FCM_PRIVATE_KEY    # "private_key" from the JSON (paste as-is, \n and all)
+```
+
+Dead FCM tokens (app uninstalled) are pruned on 404 the same way dead browser subscriptions are.
+See [`app/README.md`](../app/README.md) for the app-side Firebase setup.
