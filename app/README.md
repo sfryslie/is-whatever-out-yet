@@ -66,6 +66,21 @@ open app/iosApp/iosApp.xcodeproj
 Set your Team ID in `iosApp/Configuration/Config.xcconfig` (or let Xcode manage signing), pick a
 simulator, and Run. The Xcode project invokes Gradle to build the Kotlin framework automatically.
 
+## CI & releases
+
+Two workflows (free on public repos, including the macOS runners):
+
+- **`.github/workflows/app-ci.yml`** — on any PR touching `app/`: builds the debug APK + runs
+  the tests on Ubuntu, and does a full unsigned iOS simulator build on macOS (this is what
+  verifies the Xcode project without owning a Mac). The APK is downloadable from each run's
+  Artifacts section for ~90 days.
+- **`.github/workflows/app-release.yml`** — push a tag like `app-v1.0` and it attaches the
+  APK plus `.msi`/`.dmg`/`.deb` installers to a GitHub Release. The APK is debug-signed unless
+  the `ANDROID_KEYSTORE_BASE64`/`_PASSWORD`/`_ALIAS`/`_KEY_PASSWORD` secrets are set; desktop
+  installers are unsigned (expect SmartScreen/Gatekeeper warnings).
+
+Binaries never land in git — Actions artifacts and Releases are the distribution channel.
+
 ## Do I need developer accounts?
 
 | What you want to do | Account needed | Cost |

@@ -1,0 +1,101 @@
+# Push a tag like `app-v1.0` and this builds the Android APK plus a native desktop installer
+# per OS (each Compose desktop format must be packaged on its own OS) and attaches them all to
+# a GitHub Release — app distribution with no app store involved.
+#
+# Signing is best-effort by design:
+#   - APK: signed with the release keystore if the ANDROID_KEYSTORE_* secrets are set, else
+#     debug-signed (still installable on any phone, just not Play-Store-uploadable).
+#   - Desktop installers: unsigned. Windows SmartScreen / macOS Gatekeeper will grumble;
+#     code-signing certs + notarization are paid extras this joke does not require.
+#   - iOS is absent: an installable .ipa can't exist without Apple Developer certificates.
+name: App Release
+
+on:
+  push:
+    tags: ['app-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Decode release keystore (only if secrets are configured)
+        if: env.KEYSTORE_B64 != ''
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+      - name: Build release APK
+        working-directory: app
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew :composeApp:assembleRelease
+      - name: Rename APK after the tag
+        run: cp app/composeApp/build/outputs/apk/release/composeApp-release.apk "iwoy-${{ github.ref_name }}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: iwoy-*.apk
+
+  desktop:
+    name: Desktop installer (${{ matrix.format }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            task: packageReleaseMsi
+            format: msi
+          - os: macos-latest
+            task: packageReleaseDmg
+            format: dmg
+          - os: ubuntu-latest
+            task: packageReleaseDeb
+            format: deb
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Package ${{ matrix.format }}
+        working-directory: app
+        run: ./gradlew :composeApp:${{ matrix.task }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.format }}
+          path: app/composeApp/build/compose/binaries/main-release/${{ matrix.format }}/*
+
+  release:
+    name: Attach to GitHub Release
+    needs: [android, desktop]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**
+          generate_release_notes: true

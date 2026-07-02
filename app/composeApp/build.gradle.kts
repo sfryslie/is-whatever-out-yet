@@ -58,6 +58,10 @@ kotlin {
         }
         androidMain.dependencies {
             implementation("androidx.activity:activity-compose:1.10.1")
+            // Not used directly — pins the transitive fragment version above 1.3.0 so release
+            // lint's InvalidFragmentVersionForActivityResult (fatal) doesn't trip on the
+            // permission launcher in AndroidPushPlatform.
+            implementation("androidx.fragment:fragment:1.8.5")
             implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
             implementation("com.google.firebase:firebase-messaging:24.1.1")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:$coroutinesVersion")
@@ -96,9 +100,25 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    signingConfigs {
+        // Optional release signing driven by env vars (set by the app-release workflow from repo
+        // secrets). Without them the release build falls back to the debug key below, so a
+        // CI-built "release" APK is still installable — just not Play-Store-uploadable.
+        System.getenv("ANDROID_KEYSTORE_PATH")?.let { path ->
+            create("release") {
+                storeFile = file(path)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug")
         }
     }
 
@@ -114,6 +134,11 @@ compose.desktop {
             targetFormats(TargetFormat.Msi, TargetFormat.Dmg, TargetFormat.Deb)
             packageName = "iwoy"
             packageVersion = "1.0.0"
+        }
+        buildTypes.release.proguard {
+            // packageRelease* installers without proguard — not worth maintaining keep-rules
+            // for ktor/serialization reflection just to shave a few MB off a joke app.
+            isEnabled.set(false)
         }
     }
 }
