@@ -7,8 +7,10 @@ import com.iswhateveroutyet.app.logic.resolveItem
 import com.iswhateveroutyet.app.logic.upcomingSortKey
 import com.iswhateveroutyet.app.model.ItemResult
 import com.iswhateveroutyet.app.push.catSlug
+import com.iswhateveroutyet.app.push.subscribesTo
 import com.iswhateveroutyet.app.push.topicCat
 import com.iswhateveroutyet.app.push.topicItem
+import com.iswhateveroutyet.app.watch.outState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -107,5 +109,26 @@ class ResolveTest {
             topicItem(item(id = "gta6")),
         )
         assertEquals("iswhateveroutyet-ai-all", topicCat("AI"))
+    }
+
+    @Test
+    fun subscriptionCoversItemCategoryAndAll() {
+        val gta = item(id = "gta6", category = "Video Games")
+        assertTrue(subscribesTo(gta, setOf("iswhateveroutyet-video-games-gta6")))
+        assertTrue(subscribesTo(gta, setOf("iswhateveroutyet-video-games-all")))
+        assertTrue(subscribesTo(gta, setOf("iswhateveroutyet-all")))
+        assertFalse(subscribesTo(gta, setOf("iswhateveroutyet-ai-all")))
+        assertFalse(subscribesTo(gta, emptySet()))
+    }
+
+    @Test
+    fun watcherStateFlipsOnReleaseAndDeath() {
+        // A date-driven item flips to "out" purely by the clock crossing releaseDate.
+        val dated = item(releaseDate = "2026-07-02")
+        assertFalse(outState(dated, LocalDate(2026, 7, 1)).out)
+        assertTrue(outState(dated, LocalDate(2026, 7, 2)).out)
+        // Death tone is tracked independently of the answer.
+        assertTrue(outState(item(answer = "Yes.", tone = "death"), today).dead)
+        assertFalse(outState(item(answer = "Yes."), today).dead)
     }
 }

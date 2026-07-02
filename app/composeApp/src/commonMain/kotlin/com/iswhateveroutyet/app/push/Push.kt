@@ -25,15 +25,25 @@ fun topicItem(item: ItemResult) = "$TOPIC_PREFIX-${catSlug(item.category)}-${ite
 fun topicCat(category: String) = "$TOPIC_PREFIX-${catSlug(category)}-all"
 val TOPIC_ALL = "$TOPIC_PREFIX-all"
 
+/** Whether the subscribed [topics] cover this item — itself, its category firehose, or everything. */
+fun subscribesTo(item: ItemResult, topics: Set<String>): Boolean =
+    topicItem(item) in topics || topicCat(item.category) in topics || TOPIC_ALL in topics
+
 /**
  * Per-platform push transport. Android backs this with Firebase Messaging; iOS with an
- * FCM token bridged in from Swift; desktop has no push, so the bells stay hidden —
- * mirroring how the website hides its bells when push isn't available.
+ * FCM token bridged in from Swift; desktop has no push *service* (FCM/Web Push don't cover
+ * JVM apps), so it flags [usesServerRegistration] = false and a local poller
+ * (watch/ReleaseWatcher.kt) delivers tray notifications instead.
  */
 interface PushPlatform {
     val supported: Boolean
     /** "android" or "ios" — stored by the Worker alongside the token. */
     val platformName: String
+    /**
+     * True when toggling a bell must register the device with the push Worker (FCM platforms).
+     * False when topics are only consumed locally (the desktop watcher) — no token, no network.
+     */
+    val usesServerRegistration: Boolean get() = true
     /** Ask for notification permission if needed and return the device's FCM token, or null. */
     suspend fun requestToken(): String?
 }
@@ -76,26 +86,28 @@ class PushManager(
     /** Toggle a topic on/off; returns false if permission was denied or the network call failed. */
     suspend fun toggle(topic: String): Boolean {
         if (!platform.supported) return false
-        val token = platform.requestToken() ?: return false
         val next = _topics.value.toMutableSet().apply { if (!add(topic)) remove(topic) }
-        try {
-            if (next.isEmpty()) {
-                client.post("$PUSH_API/unregister-native") {
-                    contentType(ContentType.Application.Json)
-                    setBody(Json.encodeToString(UnregisterNativeBody(token)))
-                }
-            } else {
-                client.post("$PUSH_API/register-native") {
-                    contentType(ContentType.Application.Json)
-                    setBody(
-                        Json.encodeToString(
-                            RegisterNativeBody(token, platform.platformName, next.toList())
+        if (platform.usesServerRegistration) {
+            val token = platform.requestToken() ?: return false
+            try {
+                if (next.isEmpty()) {
+                    client.post("$PUSH_API/unregister-native") {
+                        contentType(ContentType.Application.Json)
+                        setBody(Json.encodeToString(UnregisterNativeBody(token)))
+                    }
+                } else {
+                    client.post("$PUSH_API/register-native") {
+                        contentType(ContentType.Application.Json)
+                        setBody(
+                            Json.encodeToString(
+                                RegisterNativeBody(token, platform.platformName, next.toList())
+                            )
                         )
-                    )
+                    }
                 }
+            } catch (e: Exception) {
+                return false
             }
-        } catch (e: Exception) {
-            return false
         }
         _topics.value = next
         settings.putString(KEY, Json.encodeToString(next.toList()))
