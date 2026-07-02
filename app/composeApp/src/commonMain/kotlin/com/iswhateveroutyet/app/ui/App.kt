@@ -4,17 +4,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Menu
@@ -283,78 +288,95 @@ private fun ContentGrid(
     }
     val heroItem = visible?.singleOrNull()
 
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 170.dp),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
-    ) {
-        item(span = { GridItemSpan(maxLineSpan) }, key = "header") {
-            SiteHeader(font, comicFont, heroLabel = heroItem?.label)
-        }
-        item(span = { GridItemSpan(maxLineSpan) }, key = "search") {
-            SearchField(search, onSearch, font)
-        }
+    // LazyVerticalGrid can't equalize card heights within a row (CSS grid can, which is what the
+    // site does), so lay the cards out as explicit rows: every card in a row shares the tallest
+    // card's height via IntrinsicSize.Max, and column count mirrors the site's
+    // repeat(auto-fill, minmax(210px, 1fr)).
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val columns = ((maxWidth - 40.dp) / 220.dp).toInt().coerceAtLeast(1)
 
-        when (state) {
-            LoadState.Loading -> items(8) { SkeletonCard() }
-
-            LoadState.Error -> item(span = { GridItemSpan(maxLineSpan) }, key = "error") {
-                ErrorText(font)
-            }
-
-            is LoadState.Ready -> {
-                visible!! // non-null whenever state is Ready
-
-                when {
-                    visible.isEmpty() -> item(
-                        span = { GridItemSpan(maxLineSpan) }, key = "empty"
-                    ) { NoResults(font) }
-
-                    heroItem != null -> item(
-                        span = { GridItemSpan(maxLineSpan) }, key = "hero"
+        fun LazyListScope.cardRows(rowKeyPrefix: String, cards: List<ItemResult>) {
+            cards.chunked(columns).forEachIndexed { rowIndex, rowItems ->
+                item(key = "$rowKeyPrefix-$rowIndex") {
+                    Row(
+                        Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
                     ) {
-                        Hero(
-                            resolved = resolveItem(heroItem, today),
-                            pushEnabled = pushEnabled,
-                            bellOn = topicItem(heroItem) in pushTopics,
-                            onBell = { onBell(topicItem(heroItem)) },
-                            font = font,
-                        )
-                    }
-
-                    else -> {
-                        // Group by category, preserving first-seen order (mirrors index.json order).
-                        val groups = LinkedHashMap<String, MutableList<ItemResult>>()
-                        visible.forEach { groups.getOrPut(it.category) { mutableListOf() }.add(it) }
-                        groups.forEach { (cat, list) ->
-                            item(span = { GridItemSpan(maxLineSpan) }, key = "cat-$cat") {
-                                CategoryHeader(
-                                    name = cat,
-                                    pushEnabled = pushEnabled,
-                                    bellOn = topicCat(cat) in pushTopics,
-                                    onBell = { onBell(topicCat(cat)) },
-                                    font = font,
-                                )
-                            }
-                            // Stable sort floats imminent releases to the top of each category.
-                            val sorted = list.sortedBy { upcomingSortKey(it, today) }
-                            items(sorted, key = { "${it.category}/${it.id}" }) { raw ->
-                                ItemCard(
-                                    resolved = resolveItem(raw, today),
-                                    pushEnabled = pushEnabled,
-                                    bellOn = topicItem(raw) in pushTopics,
-                                    onBell = { onBell(topicItem(raw)) },
-                                    font = font,
-                                )
-                            }
+                        rowItems.forEach { raw ->
+                            ItemCard(
+                                resolved = resolveItem(raw, today),
+                                pushEnabled = pushEnabled,
+                                bellOn = topicItem(raw) in pushTopics,
+                                onBell = { onBell(topicItem(raw)) },
+                                font = font,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                            )
                         }
+                        repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
+        ) {
+            item(key = "header") { SiteHeader(font, comicFont, heroLabel = heroItem?.label) }
+            item(key = "search") { SearchField(search, onSearch, font) }
+
+            when (state) {
+                LoadState.Loading -> items(2, key = { "skeleton-row-$it" }) {
+                    Row(
+                        Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
+                    ) {
+                        repeat(columns) { SkeletonCard(Modifier.weight(1f).fillMaxHeight()) }
                     }
                 }
 
-                item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
-                    Footer(updated = state.data.updated, lastChecked = lastChecked, font = font)
+                LoadState.Error -> item(key = "error") { ErrorText(font) }
+
+                is LoadState.Ready -> {
+                    visible!! // non-null whenever state is Ready
+
+                    when {
+                        visible.isEmpty() -> item(key = "empty") { NoResults(font) }
+
+                        heroItem != null -> item(key = "hero") {
+                            Hero(
+                                resolved = resolveItem(heroItem, today),
+                                pushEnabled = pushEnabled,
+                                bellOn = topicItem(heroItem) in pushTopics,
+                                onBell = { onBell(topicItem(heroItem)) },
+                                font = font,
+                            )
+                        }
+
+                        else -> {
+                            // Group by category, preserving first-seen order (mirrors index.json order).
+                            val groups = LinkedHashMap<String, MutableList<ItemResult>>()
+                            visible.forEach { groups.getOrPut(it.category) { mutableListOf() }.add(it) }
+                            groups.forEach { (cat, list) ->
+                                item(key = "cat-$cat") {
+                                    CategoryHeader(
+                                        name = cat,
+                                        pushEnabled = pushEnabled,
+                                        bellOn = topicCat(cat) in pushTopics,
+                                        onBell = { onBell(topicCat(cat)) },
+                                        font = font,
+                                    )
+                                }
+                                // Stable sort floats imminent releases to the top of each category.
+                                cardRows("row-$cat", list.sortedBy { upcomingSortKey(it, today) })
+                            }
+                        }
+                    }
+
+                    item(key = "footer") {
+                        Footer(updated = state.data.updated, lastChecked = lastChecked, font = font)
+                    }
                 }
             }
         }

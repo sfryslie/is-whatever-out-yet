@@ -227,11 +227,12 @@ fun ItemCard(
     bellOn: Boolean,
     onBell: () -> Unit,
     font: FontFamily,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalPalette.current
     val colors = cardColors(resolved.tone)
     Box(
-        Modifier
+        modifier
             .background(colors.bg, RoundedCornerShape(12.dp))
             .border(1.dp, colors.border, RoundedCornerShape(12.dp))
             .padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 15.dp)
@@ -408,7 +409,7 @@ fun ErrorText(font: FontFamily) {
 }
 
 @Composable
-fun SkeletonCard() {
+fun SkeletonCard(modifier: Modifier = Modifier) {
     val palette = LocalPalette.current
     val transition = rememberInfiniteTransition()
     val pulse by transition.animateFloat(
@@ -420,7 +421,7 @@ fun SkeletonCard() {
         ),
     )
     Column(
-        Modifier
+        modifier
             .alpha(pulse)
             .background(palette.surface, RoundedCornerShape(12.dp))
             .border(1.dp, palette.border, RoundedCornerShape(12.dp))
