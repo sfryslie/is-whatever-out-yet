@@ -105,6 +105,13 @@ One-time setup:
 Built without Firebase config, the app still works — the bells are hidden at runtime, exactly like
 the website hides its bells when its push Worker isn't configured.
 
+**Desktop** is different: no push service (FCM, APNs, Web Push) covers plain JVM apps, so the
+desktop bells work without any registration — topics are stored locally and a poller
+(`watch/ReleaseWatcher.kt`) checks the site data every 15 minutes, raising a system-tray
+notification when a subscribed item flips to "out" (or to the death tone). Closing the window
+minimizes to the tray so the watcher keeps running; quit via the tray menu's Exit. The obvious
+limitation vs real push: nothing arrives while the app isn't running.
+
 ## Ideas that would differentiate the app from the site
 
 Not built (yet), but this codebase is set up so they'd slot in:
