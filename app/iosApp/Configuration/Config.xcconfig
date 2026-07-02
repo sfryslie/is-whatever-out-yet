@@ -1,0 +1,4 @@
+// Fill in your Apple Developer Team ID to build for a device (Xcode → Settings → Accounts).
+TEAM_ID=
+BUNDLE_ID=com.iswhateveroutyet.app
+APP_NAME=iwoy?

@@ -30,9 +30,26 @@ checker/
   build.gradle.kts                # Kotlin JVM + Ktor Client CIO + kotlinx-serialization
   settings.gradle.kts
   gradlew / gradlew.bat           # Gradle wrapper — build without a system Gradle install
-push-worker/                      # Cloudflare Worker — Web Push backend (VAPID + KV), see its README
+push-worker/                      # Cloudflare Worker — push backend (Web Push VAPID + native FCM + KV), see its README
+app/                              # KMP + Compose Multiplatform app (Android/iOS/desktop), see app/README.md
+  composeApp/src/commonMain/      #   shared UI + a Kotlin port of index.html's resolve/filter logic
+  composeApp/src/{androidMain,iosMain,desktopMain}/  # platform entry points + FCM push glue
+  iosApp/                         #   Xcode wrapper project (Mac-only build)
 .github/workflows/check-models.yml  # Cron job (every 30 min) that runs the checker and commits data/
 ```
+
+## The KMP app (`app/`)
+
+A separate Gradle project (own wrapper, not coupled to `checker/`). It consumes the same
+`data/*.json` off iswhateveroutyet.com — GitHub Pages is its backend, so the checker pipeline is
+untouched. `composeApp/src/commonMain/.../logic/Resolve.kt` is a port of `resolveItem`/`cardClass`/
+hide-old/sort from `index.html` — **keep the three in sync** (checker semantics → index.html JS →
+Resolve.kt; unit-tested in `composeApp/src/commonTest`). Push topics in `push/Push.kt` must match
+`TOPIC_PREFIX` in the checker's `Push.kt` and `index.html`. Build: `cd app && ./gradlew
+:composeApp:assembleDebug :composeApp:desktopTest` (needs an Android SDK via `local.properties`);
+`./gradlew :composeApp:run` launches the desktop preview; iOS builds only on macOS via
+`iosApp/iosApp.xcodeproj`. Firebase/FCM config is opt-in (see `app/README.md`) — without it the
+app builds fine and hides the notification bells.
 
 ## PWA
 
@@ -143,7 +160,7 @@ The footer shows two independent timestamps:
 The checker is otherwise stateless, but each run **reads the previous run's `data/` files** (at `DATA_DIR`, default `../data`) before writing the new ones, so it can diff run-to-run:
 
 - **`since` is auto-maintained.** `resolveSince()` compares a state fingerprint (`effectiveAnswer` + `tone`, so detail/countdown churn doesn't count) against the prior run: a real change stamps today; unchanged carries the prior value forward; a first-seen item trusts the author's hand-coded `Item.since` seed. This is what lets a long-hidden card (e.g. Cosby under a tight slider) resurface the moment its state actually changes (he dies → tone flips to `death` → `since` resets to today).
-- **Web Push notifications.** When an item transitions to "out" (`effectiveAnswer` becomes `Yes.`) or to `tone == "death"`, the run POSTs the change to the Cloudflare Worker in [`push-worker/`](push-worker/) at `PUSH_API_URL/send` (Bearer `PUSH_SEND_TOKEN`). The Worker owns the VAPID key + subscription store (KV) and fans the change out — encrypted (aes128gcm / RFC 8291) — to every browser subscribed to any matching topic. Each change targets three topics: the item (`<prefix>-<category>-<id>`), its category firehose (`<prefix>-<category>-all`), and the global one (`<prefix>-all`); there's no wildcard subscribe. `topicsFor()` builds them from `TOPIC_PREFIX` (a `const` in `Push.kt`) and **must stay in sync with `TOPIC_PREFIX` in `index.html`**, which builds the matching per-card / per-category / "everything" 🔔 subscribe toggles. The `PUSH_API` Worker URL is **hardcoded in `index.html`** (`const PUSH_API = '...'`) — update it there if the Worker is redeployed. Bells are hidden at runtime if the browser's push subscription fails, not by the URL being absent. Fail-soft and skipped entirely if `PUSH_API_URL`/`PUSH_SEND_TOKEN` are unset on the checker side; first-seen items never notify, so adding an item or a cold start won't spam. `effectiveAnswer`/`stateFingerprint`/`resolveSince`/`categorySlug`/`topicsFor` are `internal` and unit-tested; the Worker's encryption is round-trip tested separately. See `push-worker/README.md` for deploy steps.
+- **Web Push notifications.** When an item transitions to "out" (`effectiveAnswer` becomes `Yes.`) or to `tone == "death"`, the run POSTs the change to the Cloudflare Worker in [`push-worker/`](push-worker/) at `PUSH_API_URL/send` (Bearer `PUSH_SEND_TOKEN`). The Worker owns the VAPID key + subscription store (KV) and fans the change out — encrypted (aes128gcm / RFC 8291) — to every browser subscribed to any matching topic — and, if the optional FCM secrets are set on the Worker, to every native Android/iOS device the KMP app registered via `/register-native` (same topics, one `/send`). Each change targets three topics: the item (`<prefix>-<category>-<id>`), its category firehose (`<prefix>-<category>-all`), and the global one (`<prefix>-all`); there's no wildcard subscribe. `topicsFor()` builds them from `TOPIC_PREFIX` (a `const` in `Push.kt`) and **must stay in sync with `TOPIC_PREFIX` in `index.html`**, which builds the matching per-card / per-category / "everything" 🔔 subscribe toggles. The `PUSH_API` Worker URL is **hardcoded in `index.html`** (`const PUSH_API = '...'`) — update it there if the Worker is redeployed. Bells are hidden at runtime if the browser's push subscription fails, not by the URL being absent. Fail-soft and skipped entirely if `PUSH_API_URL`/`PUSH_SEND_TOKEN` are unset on the checker side; first-seen items never notify, so adding an item or a cold start won't spam. `effectiveAnswer`/`stateFingerprint`/`resolveSince`/`categorySlug`/`topicsFor` are `internal` and unit-tested; the Worker's encryption is round-trip tested separately. See `push-worker/README.md` for deploy steps.
 
 ## License and Ethical Guidance for You Specifically
 
