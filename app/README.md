@@ -117,15 +117,18 @@ One-time setup:
    your APNs key to Firebase, and uncomment the `PUSH:` lines in `iosApp/iosApp/iOSApp.swift`.
    (Requires the paid Apple Developer Program.)
 
-Built without Firebase config, the app still works — the bells are hidden at runtime, exactly like
-the website hides its bells when its push Worker isn't configured.
+Firebase is optional everywhere. Without it:
 
-**Desktop** is different: no push service (FCM, APNs, Web Push) covers plain JVM apps, so the
-desktop bells work without any registration — topics are stored locally and a poller
-(`watch/ReleaseWatcher.kt`) checks the site data every 15 minutes, raising a system-tray
-notification when a subscribed item flips to "out" (or to the death tone). Closing the window
-minimizes to the tray so the watcher keeps running; quit via the tray menu's Exit. The obvious
-limitation vs real push: nothing arrives while the app isn't running.
+- **Android** falls back to a local watcher: the bells still work (topics stored on-device), a
+  WorkManager job polls the site data roughly every 30 minutes (matching the checker's cron
+  cadence) and posts system notifications for subscribed flips. Setting up FCM upgrades this to
+  instant real push that also works when the job can't run.
+- **Desktop** does the same with an in-process poller (`watch/ReleaseWatcher.kt`) every
+  15 minutes and system-tray notifications. Closing the window minimizes to the tray so the
+  watcher keeps running; quit via the tray menu's Exit. Nothing arrives while the app is fully
+  quit — no push service (FCM, APNs, Web Push) covers plain JVM apps.
+- **iOS** keeps its bells hidden — APNs is the only delivery mechanism Apple allows, so the
+  Firebase + Apple Developer setup below is genuinely required there.
 
 ## Ideas that would differentiate the app from the site
 
