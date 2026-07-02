@@ -1,12 +1,19 @@
 package com.iswhateveroutyet.app.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,10 +26,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.iswhateveroutyet.app.logic.HIDE_LEVELS
 import kotlin.math.roundToInt
 
@@ -35,6 +47,7 @@ private fun RowLabel(title: String, sub: String, font: FontFamily) {
     }
 }
 
+/** Touch platforms: settings in a Material bottom sheet. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsSheet(
@@ -58,10 +71,90 @@ fun SettingsSheet(
         containerColor = palette.surface,
         contentColor = palette.text,
     ) {
-        Column(
-            Modifier.padding(horizontal = 20.dp).padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-        ) {
+        SettingsContent(
+            modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 32.dp),
+            onDismiss = onDismiss,
+            isLight = isLight, onTheme = onTheme,
+            hideLevel = hideLevel, onHideLevel = onHideLevel,
+            categories = categories, hiddenCats = hiddenCats, onToggleCat = onToggleCat,
+            pushEnabled = pushEnabled, notifyAllOn = notifyAllOn, onNotifyAll = onNotifyAll,
+            onRefresh = onRefresh,
+            font = font,
+        )
+    }
+}
+
+/**
+ * Desktop: settings in a panel anchored to the hamburger button, top-right — same idea as the
+ * website's .settings-panel (a bottom sheet is a phone idiom that looks silly under a mouse).
+ * Place inside the Box that contains the settings IconButton so the popup anchors to it.
+ */
+@Composable
+fun SettingsPopup(
+    onDismiss: () -> Unit,
+    isLight: Boolean,
+    onTheme: (Boolean) -> Unit,
+    hideLevel: Int,
+    onHideLevel: (Int) -> Unit,
+    categories: List<String>,
+    hiddenCats: Set<String>,
+    onToggleCat: (String) -> Unit,
+    pushEnabled: Boolean,
+    notifyAllOn: Boolean,
+    onNotifyAll: () -> Unit,
+    onRefresh: () -> Unit,
+    font: FontFamily,
+) {
+    val palette = LocalPalette.current
+    val buttonGap = with(LocalDensity.current) { 46.dp.roundToPx() }
+    Popup(
+        alignment = Alignment.TopEnd,
+        offset = IntOffset(0, buttonGap),
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(focusable = true),
+    ) {
+        SettingsContent(
+            modifier = Modifier
+                .width(320.dp)
+                .heightIn(max = 620.dp)
+                .shadow(24.dp, RoundedCornerShape(12.dp))
+                .background(palette.surface, RoundedCornerShape(12.dp))
+                .border(1.dp, palette.border, RoundedCornerShape(12.dp))
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            onDismiss = onDismiss,
+            isLight = isLight, onTheme = onTheme,
+            hideLevel = hideLevel, onHideLevel = onHideLevel,
+            categories = categories, hiddenCats = hiddenCats, onToggleCat = onToggleCat,
+            pushEnabled = pushEnabled, notifyAllOn = notifyAllOn, onNotifyAll = onNotifyAll,
+            onRefresh = onRefresh,
+            font = font,
+        )
+    }
+}
+
+@Composable
+private fun SettingsContent(
+    modifier: Modifier,
+    onDismiss: () -> Unit,
+    isLight: Boolean,
+    onTheme: (Boolean) -> Unit,
+    hideLevel: Int,
+    onHideLevel: (Int) -> Unit,
+    categories: List<String>,
+    hiddenCats: Set<String>,
+    onToggleCat: (String) -> Unit,
+    pushEnabled: Boolean,
+    notifyAllOn: Boolean,
+    onNotifyAll: () -> Unit,
+    onRefresh: () -> Unit,
+    font: FontFamily,
+) {
+    val palette = LocalPalette.current
+    Column(
+        modifier,
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
             // Light mode
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RowLabel("Light mode", "Switch the color theme", font)
@@ -147,6 +240,5 @@ fun SettingsSheet(
                 fontWeight = FontWeight.Normal,
                 fontSize = 10.sp,
             )
-        }
     }
 }

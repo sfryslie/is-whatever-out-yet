@@ -160,30 +160,58 @@ fun App(pushPlatform: PushPlatform = DisabledPushPlatform) {
                         )
                     }
 
-                    // Settings (gear/hamburger) — fixed top-right, like the site.
-                    IconButton(
-                        onClick = { showSettings = true },
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(12.dp)
-                            .size(40.dp)
-                            .background(palette.surface, RoundedCornerShape(8.dp))
-                            .border(1.dp, palette.border, RoundedCornerShape(8.dp)),
-                    ) {
-                        Icon(
-                            Icons.Outlined.Menu,
-                            contentDescription = "Settings",
-                            tint = palette.text,
-                            modifier = Modifier.size(18.dp),
-                        )
+                    // Settings (gear/hamburger) — fixed top-right, like the site. On desktop the
+                    // panel anchors to this button; on touch it's a bottom sheet (below).
+                    Box(Modifier.align(Alignment.TopEnd).padding(12.dp)) {
+                        IconButton(
+                            onClick = { showSettings = true },
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(palette.surface, RoundedCornerShape(8.dp))
+                                .border(1.dp, palette.border, RoundedCornerShape(8.dp)),
+                        ) {
+                            Icon(
+                                Icons.Outlined.Menu,
+                                contentDescription = "Settings",
+                                tint = palette.text,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                        if (!isTouchPlatform && showSettings) {
+                            SettingsPopup(
+                                onDismiss = { showSettings = false },
+                                isLight = isLight,
+                                onTheme = { light ->
+                                    val value = if (light) "light" else "dark"
+                                    settings.putString("theme", value)
+                                    themeChoice = value
+                                },
+                                hideLevel = hideLevel,
+                                onHideLevel = { level ->
+                                    hideLevel = level
+                                    settings.putInt("hideOldLevel", level)
+                                },
+                                categories = (state as? LoadState.Ready)?.data?.categories.orEmpty(),
+                                hiddenCats = hiddenCats,
+                                onToggleCat = { cat ->
+                                    hiddenCats = hiddenCats.toMutableSet()
+                                        .apply { if (!add(cat)) remove(cat) }
+                                    settings.putString("hiddenCats", Json.encodeToString(hiddenCats.toList()))
+                                },
+                                pushEnabled = pushManager.enabled,
+                                notifyAllOn = TOPIC_ALL in pushTopics,
+                                onNotifyAll = { toggleBell(TOPIC_ALL) },
+                                onRefresh = ::refresh,
+                                font = font,
+                            )
+                        }
                     }
 
                     SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
                 }
             }
 
-            if (showSettings) {
-                val categories = (state as? LoadState.Ready)?.data?.categories.orEmpty()
+            if (isTouchPlatform && showSettings) {
                 SettingsSheet(
                     onDismiss = { showSettings = false },
                     isLight = isLight,
@@ -197,7 +225,7 @@ fun App(pushPlatform: PushPlatform = DisabledPushPlatform) {
                         hideLevel = level
                         settings.putInt("hideOldLevel", level)
                     },
-                    categories = categories,
+                    categories = (state as? LoadState.Ready)?.data?.categories.orEmpty(),
                     hiddenCats = hiddenCats,
                     onToggleCat = { cat ->
                         hiddenCats = hiddenCats.toMutableSet()
