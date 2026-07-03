@@ -101,7 +101,7 @@ val ITEMS = listOf(
         defaultDetail = "<a href=\"https://www.youtube.com/watch?v=HGCsAcFzaFw\" target=\"_blank\" rel=\"noopener\">Teaser out.</a>",
         aliases = listOf("JJK", "JJK S4", "JJK Season 4", "Jujutsu Kaisen", "Jujutsu Kaisen Season 4", "Culling Game")),
     Item("steel-ball-run-ep2", "Steel Ball Run", "Anime",
-        Check.AniList(210482, vagueDate = LocalDate.of(2026, 12, 31), vagueLabel = "Late 2026?"),
+        Check.AniList(210482),
         defaultDetail = "Fuck Netflix.",
         aliases = listOf("SBR", "JoJo Part 7", "JoJo's Part 7", "JoJo's Bizarre Adventure Part 7", "JoJo's Bizarre Adventure: Steel Ball Run")),
     Item("shangri-la-s3", "Shangri-La Frontier Season 3", "Anime",
