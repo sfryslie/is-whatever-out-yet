@@ -219,6 +219,18 @@
             "releaseDate": "2026-10-15"
         },
         {
+            "id": "zelda-oot-remake",
+            "label": "The Legend of Zelda: Ocarina of Time Remake",
+            "category": "Video Games",
+            "detail": "Announced for Switch 2. Speculation points to a late 2026 launch.",
+            "releaseDate": "2026-12-31",
+            "vagueLabel": "2026?",
+            "aliases": [
+                "Ocarina of Time Remake",
+                "OoT Remake"
+            ]
+        },
+        {
             "id": "silksong",
             "label": "Hollow Knight: Silksong",
             "category": "Video Games",
