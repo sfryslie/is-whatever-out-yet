@@ -67,6 +67,9 @@ val ITEMS = listOf(
     Item("runescape-dragonwilds", "RuneScape: Dragonwilds", "Video Games", Check.ScheduledDate(LocalDate.of(2026, 9, 15))),
     Item("gears-of-war-eday", "Gears of War: E-Day", "Video Games", Check.IGDB("gears-of-war-e-day")),
     Item("enshrouded",      "Enshrouded",      "Video Games", Check.IGDB("enshrouded")),
+    Item("zelda-oot-remake", "The Legend of Zelda: Ocarina of Time Remake", "Video Games",
+        Check.IGDB("the-legend-of-zelda-ocarina-of-time--1"),
+        aliases = listOf("Ocarina of Time Remake", "OoT Remake")),
     // Already-out games — exercise the "hide old stuff" slider at different age buckets.
     Item("silksong",        "Hollow Knight: Silksong", "Video Games", Check.Hardcoded, "Yes.",
         "Silkposting is a art", since = LocalDate.of(2025, 9, 4)),
@@ -132,7 +135,7 @@ val ITEMS = listOf(
     Item("air-bud-returns",     "Air Bud Returns",        "Movies", Check.ScheduledDate(LocalDate.of(2027, 1, 22))),
     Item("sonic-4",             "Sonic the Hedgehog 4",   "Movies", Check.ScheduledDate(LocalDate.of(2027, 3, 19))),
     Item("spaceballs-new-one",  "Spaceballs: The New One", "Movies", Check.ScheduledDate(LocalDate.of(2027, 4, 23)), defaultDetail = "Sadly not Spaceballs III: The Search for Spaceballs II or Spaceballs 2: The Search for More Money"),
-    Item("zelda-movie", "The Legend of Zelda", "Movies", Check.ScheduledDate(LocalDate.of(2027, 4, 30)),
+    Item("zelda-movie", "The Legend of Zelda (Movie)", "Movies", Check.ScheduledDate(LocalDate.of(2027, 4, 30)),
         defaultDetail =
             """
             corpos can't triforce
