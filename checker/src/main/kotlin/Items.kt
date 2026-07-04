@@ -69,7 +69,6 @@ val ITEMS = listOf(
     Item("enshrouded",      "Enshrouded",      "Video Games", Check.IGDB("enshrouded")),
     Item("zelda-oot-remake", "The Legend of Zelda: Ocarina of Time Remake", "Video Games",
         Check.IGDB("the-legend-of-zelda-ocarina-of-time--1"),
-        defaultDetail = "Announced for Switch 2. Speculation points to a late 2026 launch.",
         aliases = listOf("Ocarina of Time Remake", "OoT Remake")),
     // Already-out games — exercise the "hide old stuff" slider at different age buckets.
     Item("silksong",        "Hollow Knight: Silksong", "Video Games", Check.Hardcoded, "Yes.",
