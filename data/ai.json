@@ -40,8 +40,9 @@
             "id": "gpt-5-6",
             "label": "GPT-5.6",
             "category": "AI",
-            "answer": "No.",
-            "detail": "Sol/Terra/Luna Soon™ — I would've thought these were new Pokémon games."
+            "answer": "Yes.",
+            "detail": "gpt-5.6-sol",
+            "since": "2026-07-09"
         },
         {
             "id": "gemini-3-1-pro",
