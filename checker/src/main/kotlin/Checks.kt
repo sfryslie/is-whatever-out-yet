@@ -168,11 +168,14 @@ internal suspend fun runCheck(item: Item, ctx: CheckContext): ItemResult {
             if (ctx.openAiKey == null) {
                 ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
             } else {
-                val matched = matchModelId(ctx.openAiIds, check.pattern)
+                // A pattern can match several shipped variants at once (e.g. GPT-5.6's Sol/Terra/
+                // Luna split) — list all of them rather than just whichever the API happened to
+                // return first.
+                val matches = matchModelIds(ctx.openAiIds, check.pattern).sorted()
                 ItemResult(
                     item.id, item.label, item.category,
-                    answer = if (matched != null) "Yes." else item.defaultAnswer,
-                    detail = matched ?: item.defaultDetail,
+                    answer = if (matches.isNotEmpty()) "Yes." else item.defaultAnswer,
+                    detail = matches.ifEmpty { null }?.joinToString(", ") ?: item.defaultDetail,
                 )
             }
         }

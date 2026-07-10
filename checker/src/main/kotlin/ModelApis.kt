@@ -9,8 +9,14 @@ import kotlinx.serialization.json.*
 private val PREVIEW_SUFFIXES = listOf("-preview", "-experimental", "-exp", "-beta", "-alpha")
 private fun String.isPreviewVariant() = PREVIEW_SUFFIXES.any { contains(it, ignoreCase = true) }
 
+/** All non-preview ids matching [pattern] — a provider can ship several variants under one name
+ *  (e.g. GPT-5.6's Sol/Terra/Luna split), so callers that want to surface all of them use this
+ *  instead of [matchModelId]. */
+internal fun matchModelIds(ids: List<String>, pattern: String): List<String> =
+    ids.filter { !it.isPreviewVariant() && (it == pattern || it.startsWith("$pattern-") || it.contains(pattern)) }
+
 internal fun matchModelId(ids: List<String>, pattern: String): String? =
-    ids.firstOrNull { !it.isPreviewVariant() && (it == pattern || it.startsWith("$pattern-") || it.contains(pattern)) }
+    matchModelIds(ids, pattern).firstOrNull()
 
 suspend fun fetchAnthropicModelIds(client: HttpClient, apiKey: String): List<String> {
     val ids = mutableListOf<String>()
