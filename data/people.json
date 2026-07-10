@@ -33,6 +33,14 @@
             "detail": "Still President of Russia. Has been since 2012."
         },
         {
+            "id": "mitch-mcconnell",
+            "label": "Mitch McConnell",
+            "category": "People",
+            "answer": "No.",
+            "detail": "Not seeking re-election in 2026. Term runs through January 2027.",
+            "countdownTo": "2027-01-03"
+        },
+        {
             "id": "elizabeth-holmes",
             "label": "Elizabeth Holmes",
             "category": "People",

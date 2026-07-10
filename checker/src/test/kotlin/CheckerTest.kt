@@ -41,6 +41,19 @@ class MatchModelIdTest {
     }
 }
 
+class MatchModelIdsTest {
+    @Test
+    fun `multiple shipped variants are all returned`() {
+        val ids = listOf("gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.6-preview")
+        assertEquals(listOf("gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"), matchModelIds(ids, "gpt-5.6"))
+    }
+
+    @Test
+    fun `no match returns an empty list`() {
+        assertEquals(emptyList<String>(), matchModelIds(listOf("claude-haiku-4-5"), "claude-opus-5"))
+    }
+}
+
 class StateTrackingTest {
     private val today = LocalDate.of(2026, 6, 28)
 
