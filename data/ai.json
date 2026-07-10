@@ -41,7 +41,7 @@
             "label": "GPT-5.6",
             "category": "AI",
             "answer": "Yes.",
-            "detail": "gpt-5.6-sol",
+            "detail": "gpt-5.6-luna, gpt-5.6-sol, gpt-5.6-terra",
             "since": "2026-07-09"
         },
         {
