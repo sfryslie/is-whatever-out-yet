@@ -21,7 +21,9 @@
             "id": "claude-opus-5",
             "label": "Claude Opus 5",
             "category": "AI",
-            "answer": "No."
+            "answer": "Yes.",
+            "detail": "claude-opus-5",
+            "since": "2026-07-24"
         },
         {
             "id": "claude-haiku-5",
