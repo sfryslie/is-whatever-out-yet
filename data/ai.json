@@ -5,25 +5,22 @@
             "id": "claude-fable-5",
             "label": "Claude Fable 5",
             "category": "AI",
-            "answer": "Yes.",
-            "detail": "claude-fable-5",
-            "since": "2026-07-16"
+            "answer": "No.",
+            "since": "2026-07-26"
         },
         {
             "id": "claude-sonnet-5",
             "label": "Claude Sonnet 5",
             "category": "AI",
-            "answer": "Yes.",
-            "detail": "claude-sonnet-5",
-            "since": "2026-06-30"
+            "answer": "No.",
+            "since": "2026-07-26"
         },
         {
             "id": "claude-opus-5",
             "label": "Claude Opus 5",
             "category": "AI",
-            "answer": "Yes.",
-            "detail": "claude-opus-5",
-            "since": "2026-07-25"
+            "answer": "No.",
+            "since": "2026-07-26"
         },
         {
             "id": "claude-haiku-5",
