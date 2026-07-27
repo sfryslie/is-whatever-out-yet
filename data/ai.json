@@ -5,22 +5,25 @@
             "id": "claude-fable-5",
             "label": "Claude Fable 5",
             "category": "AI",
-            "answer": "No.",
-            "since": "2026-07-26"
+            "answer": "Yes.",
+            "detail": "claude-fable-5",
+            "since": "2026-07-01"
         },
         {
             "id": "claude-sonnet-5",
             "label": "Claude Sonnet 5",
             "category": "AI",
-            "answer": "No.",
-            "since": "2026-07-26"
+            "answer": "Yes.",
+            "detail": "claude-sonnet-5",
+            "since": "2026-06-30"
         },
         {
             "id": "claude-opus-5",
             "label": "Claude Opus 5",
             "category": "AI",
-            "answer": "No.",
-            "since": "2026-07-26"
+            "answer": "Yes.",
+            "detail": "claude-opus-5",
+            "since": "2026-07-24"
         },
         {
             "id": "claude-haiku-5",
@@ -40,7 +43,7 @@
             "label": "GPT-5.6",
             "category": "AI",
             "answer": "Yes.",
-            "detail": "gpt-5.6-luna, gpt-5.6-sol, gpt-5.6-terra",
+            "detail": "I thought Sol/Terra/Luna were the new Pokémon games.",
             "since": "2026-07-09"
         },
         {
