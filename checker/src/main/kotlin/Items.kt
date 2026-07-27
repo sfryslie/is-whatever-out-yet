@@ -15,15 +15,18 @@ import java.time.LocalDate
 private val INCARCERATION_MARKERS = listOf("Incarcerated at", ">Incarcerated<", ">Imprisoned<")
 
 val ITEMS = listOf(
-    // AI — Anthropic (live API check)
-    Item("claude-fable-5",  "Claude Fable 5",  "AI", Check.Anthropic("claude-fable-5")),
-    Item("claude-sonnet-5", "Claude Sonnet 5", "AI", Check.Anthropic("claude-sonnet-5")),
-    Item("claude-opus-5",   "Claude Opus 5",   "AI", Check.Anthropic("claude-opus-5")),
+    // AI — Anthropic
+    // Shipped models are pinned to Hardcoded on purpose: the live /v1/models check needs a funded
+    // ANTHROPIC_API_KEY, and a billing lapse made every one of these false-flip back to "No."
+    // They're out; they're not un-shipping. Only the unreleased ones still need a live check.
+    Item("claude-fable-5",  "Claude Fable 5",  "AI", Check.Hardcoded, "Yes.", "claude-fable-5", LocalDate.of(2026, 7, 1)),
+    Item("claude-sonnet-5", "Claude Sonnet 5", "AI", Check.Hardcoded, "Yes.", "claude-sonnet-5", LocalDate.of(2026, 6, 30)),
+    Item("claude-opus-5",   "Claude Opus 5",   "AI", Check.Hardcoded, "Yes.", "claude-opus-5", LocalDate.of(2026, 7, 24)),
     Item("claude-haiku-5",  "Claude Haiku 5",  "AI", Check.Anthropic("claude-haiku-5")),
     Item("mythos",          "Claude Mythos 5",   "AI", Check.Anthropic("mythos"), "No.", "Not for us plebs."),
 
     // AI — other vendors
-    Item("gpt-5-6",        "GPT-5.6",         "AI", Check.OpenAI("gpt-5.6"), "No.", "Sol/Terra/Luna Soon™ — I would've thought these were new Pokémon games."),
+    Item("gpt-5-6",        "GPT-5.6",         "AI", Check.Hardcoded, "Yes.", "gpt-5.6-luna, gpt-5.6-sol, gpt-5.6-terra", LocalDate.of(2026, 7, 9)),
     Item("gemini-3-1-pro", "Gemini 3.1 Pro",   "AI", Check.Gemini("gemini-3.1-pro")),
     Item("grok-5",         "Grok 5",           "AI", Check.Grok("grok-5"), "No.", "... but do you care?"),
     Item("agi",            "AGI",              "AI", Check.Hardcoded, "No."),
