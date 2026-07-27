@@ -36,8 +36,9 @@
             "id": "mitch-mcconnell",
             "label": "Mitch McConnell",
             "category": "People",
-            "answer": "Yes.",
-            "detail": "Addison Mitchell McConnell III is an American politician and attorney serving a United States senator from Kentucky since 1985. A member of the Republican Party, McConnell is in his seventh Senate term, making him the longest-serving senator in Kentucky history. He led the Senate Republican Conference from 2007 to 2025, with two stints as minority leader and one stint as majority leader (2015–2021), making him the longest-serving Senate party leader in U.S. history. <a href=\"https://en.wikipedia.org/wiki/Mitch_McConnell\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
+            "answer": "No.",
+            "detail": "Not seeking re-election in 2026. Term runs through January 2027.",
+            "countdownTo": "2027-01-03",
             "since": "2026-07-27"
         },
         {
