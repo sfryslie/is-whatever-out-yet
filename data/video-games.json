@@ -136,8 +136,8 @@
             "label": "Halo: Campaign Evolved",
             "category": "Video Games",
             "answer": "Yes.",
-            "detail": "PC release",
-            "countdownTo": "2026-07-28"
+            "detail": "Early access July 23.",
+            "since": "2026-07-23"
         },
         {
             "id": "cod-mw4",
