@@ -93,6 +93,86 @@ class StateTrackingTest {
     }
 }
 
+/**
+ * The notification pass, which has to resolve the previous run against the previous run's clock.
+ * Getting this wrong is invisible in the data files (diffRuns still names the change and the commit
+ * still lands) but silently swallows every date-driven release's push.
+ */
+class TrackStateTest {
+    private val today = LocalDate.of(2026, 7, 30)
+    private val yesterday = LocalDate.of(2026, 7, 29)
+
+    private fun item(id: String, category: String = "Movies") =
+        Item(id, id.uppercase(), category, Check.Hardcoded)
+
+    @Test
+    fun `a date-driven release that flipped overnight notifies`() {
+        // The stored releaseDate never changes — only the calendar moves past it.
+        val stored = ItemResult("odyssey", "The Odyssey", "Movies", releaseDate = "2026-07-30")
+        val (_, transitions) = trackState(
+            items = listOf(item("odyssey")),
+            baseResults = listOf(stored),
+            prevById = mapOf("odyssey" to stored),
+            today = today,
+            prevClock = yesterday,
+        )
+        assertEquals(listOf("odyssey"), transitions.map { it.id })
+    }
+
+    @Test
+    fun `an already-released date item does not re-notify on later runs`() {
+        val stored = ItemResult("odyssey", "The Odyssey", "Movies", releaseDate = "2026-07-30")
+        val (_, transitions) = trackState(
+            items = listOf(item("odyssey")),
+            baseResults = listOf(stored),
+            prevById = mapOf("odyssey" to stored),
+            today = today,
+            prevClock = today, // previous run already saw it as out
+        )
+        assertEquals(emptyList(), transitions)
+    }
+
+    @Test
+    fun `an answer flip notifies regardless of clock`() {
+        val prev = ItemResult("opus", "Claude Opus 5", "AI", answer = "No.")
+        val base = ItemResult("opus", "Claude Opus 5", "AI", answer = "Yes.", detail = "It's here.")
+        val (_, transitions) = trackState(
+            items = listOf(item("opus", "AI")),
+            baseResults = listOf(base),
+            prevById = mapOf("opus" to prev),
+            today = today,
+            prevClock = today,
+        )
+        assertEquals(listOf("It's here."), transitions.map { it.message })
+    }
+
+    @Test
+    fun `a first-seen item never notifies`() {
+        val base = ItemResult("new", "New", "Movies", answer = "Yes.")
+        val (_, transitions) = trackState(
+            items = listOf(item("new")),
+            baseResults = listOf(base),
+            prevById = emptyMap(),
+            today = today,
+            prevClock = yesterday,
+        )
+        assertEquals(emptyList(), transitions)
+    }
+
+    @Test
+    fun `a date-driven flip also stamps since with the day it flipped`() {
+        val stored = ItemResult("odyssey", "The Odyssey", "Movies", releaseDate = "2026-07-30")
+        val (results, _) = trackState(
+            items = listOf(item("odyssey")),
+            baseResults = listOf(stored),
+            prevById = mapOf("odyssey" to stored),
+            today = today,
+            prevClock = yesterday,
+        )
+        assertEquals("2026-07-30", results.single().since)
+    }
+}
+
 class TopicSchemeTest {
     @Test
     fun `category is slugged to lowercase`() {

@@ -23,7 +23,10 @@ fun main(): Unit = runBlocking {
     val ctx = CheckContext.fromEnv(client, ITEMS, prevById, today)
     val baseResults = ITEMS.map { runCheck(it, ctx) }
 
-    val (results, transitions) = trackState(ITEMS, baseResults, prevById, today)
+    // The previous run is resolved against its own clock, not today's — otherwise a date-driven
+    // release that flipped overnight looks like it was already out last run and never notifies.
+    val prevClock = previousClock(prevData, today)
+    val (results, transitions) = trackState(ITEMS, baseResults, prevById, today, prevClock)
     notifyTransitions(client, transitions)
     client.close()
 

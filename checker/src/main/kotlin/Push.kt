@@ -1,5 +1,6 @@
 import io.ktor.client.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.json.*
 
@@ -54,7 +55,9 @@ internal suspend fun sendPush(client: HttpClient, apiUrl: String, token: String,
             contentType(ContentType.Application.Json)
             setBody(payload.toString())
         }
-        println("  push → ${event.label} (${res.status.value})")
+        // Log the body, not just the status: the Worker answers 200 with {"sent":0,…} when nothing
+        // matched, so without it a fan-out that reached nobody is indistinguishable from a delivery.
+        println("  push → ${event.label} (${res.status.value}) ${res.bodyAsText()}")
     } catch (e: Exception) {
         println("  push send failed for ${event.label}: ${e.message}")
     }
@@ -69,16 +72,24 @@ internal suspend fun sendPush(client: HttpClient, apiUrl: String, token: String,
  * cleanly.
  */
 internal suspend fun notifyTransitions(client: HttpClient, transitions: List<ChangeEvent>) {
+    if (transitions.isEmpty()) {
+        println("No notifiable transitions this run.")
+        return
+    }
+    // Log the transitions and their topics *before* the env check, so a local run with no secrets
+    // is a dry run that shows exactly what would have been sent — which is the only way to tell a
+    // "nothing transitioned" run apart from a "push wasn't configured" one after the fact.
+    println("Notifiable transitions this run: ${transitions.size}")
+    val fanOut = transitions.map { it to topicsFor(TOPIC_PREFIX, it.category, it.id) }
+    fanOut.forEach { (ev, topics) -> println("  - ${ev.label}: ${ev.message} → ${topics.joinToString(", ")}") }
+
     val pushApi   = System.getenv("PUSH_API_URL")?.takeUnless { it.isBlank() }
     val pushToken = System.getenv("PUSH_SEND_TOKEN")?.takeUnless { it.isBlank() }
     if (pushApi == null || pushToken == null) {
-        println("PUSH_API_URL / PUSH_SEND_TOKEN not set — skipping notifications.")
+        println("PUSH_API_URL / PUSH_SEND_TOKEN not set — dry run, nothing sent.")
         return
     }
-    if (transitions.isEmpty()) return
     println("Sending push for ${transitions.size} change(s)…")
-    transitions.take(8).forEach { ev ->
-        // The Worker fans each change out to the item, category, and global topics' subscribers.
-        sendPush(client, pushApi, pushToken, ev, topicsFor(TOPIC_PREFIX, ev.category, ev.id))
-    }
+    // The Worker fans each change out to the item, category, and global topics' subscribers.
+    fanOut.take(8).forEach { (ev, topics) -> sendPush(client, pushApi, pushToken, ev, topics) }
 }

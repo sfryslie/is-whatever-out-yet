@@ -52,6 +52,18 @@ internal fun readPreviousData(dataDir: String): PrevRun? = try {
 }
 
 /**
+ * The wall clock as of when [prevData] was recorded, from its `updated` stamp (falling back to
+ * [today] on a cold start or an unparseable stamp). Both the run-to-run diff and the notification
+ * pass resolve the previous results against *this* clock rather than today's, so a date-driven
+ * release that slipped past between runs still reads as "was No., is now Yes." — its stored
+ * `releaseDate` never changed, only the calendar did.
+ */
+internal fun previousClock(prevData: PrevRun?, today: LocalDate): LocalDate =
+    prevData?.updated?.let {
+        try { Instant.parse(it).atZone(ZoneOffset.UTC).toLocalDate() } catch (e: Exception) { today }
+    } ?: today
+
+/**
  * Diff this run against [prevData], then write the per-category files + index to [dataDir] and the
  * commit message to COMMIT_MSG_PATH (if set). `updated` only moves on a *meaningful* change (a
  * card's answer/tone, or an added/removed item) — not on pure display churn like the live gas price
@@ -60,11 +72,7 @@ internal fun readPreviousData(dataDir: String): PrevRun? = try {
  * skips the commit entirely.
  */
 internal fun writeOutput(dataDir: String, prevData: PrevRun?, results: List<ItemResult>, today: LocalDate) {
-    // Resolve the previous run against its own clock so a date-driven release that slipped past
-    // between runs still registers as a change (see diffRuns).
-    val prevClock = prevData?.updated?.let {
-        try { Instant.parse(it).atZone(ZoneOffset.UTC).toLocalDate() } catch (e: Exception) { today }
-    } ?: today
+    val prevClock = previousClock(prevData, today)
     val changes = if (prevData == null) listOf(RunChange("Initialize tracked data", meaningful = true))
                   else diffRuns(prevData.items, prevClock, results, today)
     val meaningful = changes.any { it.meaningful }

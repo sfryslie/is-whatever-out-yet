@@ -27,10 +27,20 @@ internal fun stateFingerprint(r: ItemResult, today: LocalDate): String =
  *  - unchanged → carry the previous value forward (or adopt a newly-added author [seed])
  *  - first-seen → trust the author [seed]; we can't know a dynamic item's real past flip date.
  * This is what lets, e.g., a long-hidden Cosby card resurface under a tight filter the moment he dies.
+ *
+ * [prevClock] is the wall clock as of when [prev] was recorded; it defaults to [today] but must be
+ * the real previous-run clock for date-driven items, otherwise re-resolving `prev` against *today*
+ * makes a just-released item look like it was already released last run (see [trackState]).
  */
-internal fun resolveSince(prev: ItemResult?, base: ItemResult, seed: String?, today: LocalDate): String? = when {
+internal fun resolveSince(
+    prev: ItemResult?,
+    base: ItemResult,
+    seed: String?,
+    today: LocalDate,
+    prevClock: LocalDate = today,
+): String? = when {
     prev == null -> base.since ?: seed
-    stateFingerprint(prev, today) != stateFingerprint(base, today) -> today.toString()
+    stateFingerprint(prev, prevClock) != stateFingerprint(base, today) -> today.toString()
     else -> prev.since ?: base.since ?: seed
 }
 
@@ -120,12 +130,18 @@ internal data class StateResolution(val results: List<ItemResult>, val transitio
  * Diff each freshly computed result against the previous run to maintain `since` and collect the
  * "just became out / just died / premiere just confirmed" transitions worth a push notification.
  * First-seen items (no [prevById] entry) never notify, so adding an item or a cold start won't spam.
+ *
+ * [prevClock] is the wall clock as of when the previous run was recorded, and the previous results
+ * are resolved against it — exactly as `diffRuns` does. This is what catches a date-driven release
+ * that slipped past between runs: the stored `releaseDate` never changes, so resolving `prev`
+ * against *today* would report it as already "Yes." last run and silently swallow the notification.
  */
 internal fun trackState(
     items: List<Item>,
     baseResults: List<ItemResult>,
     prevById: Map<String, ItemResult>,
     today: LocalDate,
+    prevClock: LocalDate = today,
 ): StateResolution {
     val seedById = items.associate { it.id to it.since?.toString() }
     val transitions = mutableListOf<ChangeEvent>()
@@ -133,7 +149,7 @@ internal fun trackState(
         val prev = prevById[base.id]
         if (prev != null) {
             val becameYes = effectiveAnswer(base, today).startsWith("Yes") &&
-                !effectiveAnswer(prev, today).startsWith("Yes")
+                !effectiveAnswer(prev, prevClock).startsWith("Yes")
             val becameDeath = base.tone == "death" && prev.tone != "death"
             // Fuzzy → exact: vagueLabel disappeared and a real releaseDate arrived (still "No." for now,
             // but fans want to know a premiere date just got officially confirmed by the broadcaster).
@@ -147,7 +163,7 @@ internal fun trackState(
                 transitions += ChangeEvent(base.id, base.label, base.category, message, becameDeath)
             }
         }
-        base.copy(since = resolveSince(prev, base, seedById[base.id], today))
+        base.copy(since = resolveSince(prev, base, seedById[base.id], today, prevClock))
     }
     return StateResolution(results, transitions)
 }

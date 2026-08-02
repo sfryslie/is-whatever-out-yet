@@ -14,6 +14,7 @@ dependencies, nothing to keep patched.
 | GET    | `/key`               | the website       | —                                      |
 | POST   | `/subscribe`         | the website       | `{ subscription, topics }`             |
 | POST   | `/unsubscribe`       | the website       | `{ endpoint }`                         |
+| POST   | `/resubscribe`       | `sw.js`           | `{ oldEndpoint, subscription }`        |
 | POST   | `/register-native`   | the KMP app       | `{ token, platform, topics }`          |
 | POST   | `/unregister-native` | the KMP app       | `{ token }`                            |
 | POST   | `/send`              | the GitHub Action | `{ topics, title, message, url, tag }` (Bearer `SEND_TOKEN`) |
@@ -60,10 +61,20 @@ curl https://iswhateveroutyet-push.<you>.workers.dev/key
 curl -X POST https://iswhateveroutyet-push.<you>.workers.dev/send \
   -H "Authorization: Bearer <SEND_TOKEN>" -H "Content-Type: application/json" \
   -d '{"topics":["iswhateveroutyet-all"],"title":"Test","message":"It works!","url":"https://iswhateveroutyet.com"}'
-# → {"sent":1}
+# → {"sent":1,"web":1,"native":0,"matched":1,"failed":0,"pruned":0,"fcmConfigured":true}
 ```
 
+`/send` reports what it actually reached, and the checker logs that body verbatim — so a fan-out
+that matched nobody (`"matched":0`) or a native push that was skipped for missing secrets
+(`"fcmConfigured":false`) is visible in the workflow log instead of hiding behind a 200.
+
+To test without notifying real subscribers, aim at a single item topic you're subscribed to
+(e.g. `iswhateveroutyet-misc-<id>`) rather than `iswhateveroutyet-all`.
+
 Dead subscriptions (uninstalled browsers) are pruned automatically when `/send` gets a 404/410 back.
+Rotated ones are *not* lost: the service worker's `pushsubscriptionchange` handler posts the new
+endpoint to `/resubscribe`, which carries the old endpoint's topics over, and the site re-registers
+its stored topics on every load as a backstop.
 
 ## Native push (the KMP app) — optional
 
