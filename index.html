@@ -830,6 +830,32 @@
       toggleTopic(el.dataset.topic);
     });
 
+    // Heal subscription drift on load. A browser push subscription is not permanent: Android Chrome
+    // rotates endpoints, a cleared site storage or a reinstalled PWA drops it, and the Worker prunes
+    // any endpoint that 410s. Any of those leaves the bells lit from localStorage while the Worker
+    // has nothing to push to — silent, and invisible until something you cared about ships.
+    // Re-register whatever topics this browser thinks it has. Permission is never prompted for here:
+    // we only act when it was already granted, so this is invisible to anyone who hasn't opted in.
+    async function reconcileSubscription() {
+      if (!pushEnabled || Notification.permission !== 'granted') return;
+      const topics = subscribedTopics();
+      if (topics.size === 0) return;
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          const { key } = await (await fetch(PUSH_API + '/key')).json();
+          sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToU8(key) });
+        }
+        await fetch(PUSH_API + '/subscribe', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription: sub.toJSON(), topics: [...topics] }),
+        });
+      } catch (e) {
+        // Offline or the Worker is down — the next load tries again.
+      }
+    }
+
     // "Hide old stuff" slider stops. Each level hides items that have been out longer than
     // `days`; level 0 is off, and the last (-1) hides anything released at all.
     const HIDE_LEVELS = [
@@ -1212,7 +1238,7 @@
     // Register the service worker for offline support, installability, and push. Non-fatal if it fails.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
+        navigator.serviceWorker.register('sw.js').then(reconcileSubscription).catch(() => {});
       });
     }
   </script>

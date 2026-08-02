@@ -86,6 +86,33 @@ class PushManager(
             }
         } ?: emptySet()
 
+    /**
+     * Re-assert this device's registration with the Worker for the topics it already has. Device
+     * tokens are not permanent — FCM rotates them, a restore-to-new-device reissues them, and the
+     * Worker prunes any token FCM reports as UNREGISTERED. Any of those leaves the bells lit locally
+     * while the Worker has nothing to send to. [PushService.onNewToken] covers rotation while the
+     * app is installed and reachable; this covers everything it missed. Cheap and idempotent: one
+     * PUT-equivalent per launch, and a no-op when nothing is subscribed.
+     */
+    suspend fun syncRegistration() {
+        if (!platform.supported || !platform.usesServerRegistration) return
+        val topics = _topics.value
+        if (topics.isEmpty()) return
+        val token = platform.requestToken() ?: return
+        try {
+            client.post("$PUSH_API/register-native") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    Json.encodeToString(
+                        RegisterNativeBody(token, platform.platformName, topics.toList())
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            // Best effort — the next launch or bell tap tries again.
+        }
+    }
+
     /** Toggle a topic on/off; returns false if permission was denied or the network call failed. */
     suspend fun toggle(topic: String): Boolean {
         if (!platform.supported) return false

@@ -86,6 +86,10 @@ fun App(pushPlatform: PushPlatform = DisabledPushPlatform) {
     val pushManager = remember { PushManager(pushPlatform, settings, client) }
     val scope = rememberCoroutineScope()
 
+    // Re-assert this device's push registration once per launch, so a rotated or pruned FCM token
+    // doesn't leave the bells lit with nothing behind them. No-op unless something is subscribed.
+    LaunchedEffect(Unit) { pushManager.syncRegistration() }
+
     // Theme: stored choice wins; otherwise follow the OS preference (same as the site).
     var themeChoice by remember { mutableStateOf(settings.getStringOrNull("theme")) }
     val systemDark = isSystemInDarkTheme()

@@ -9,6 +9,7 @@
 //   GET  /key               → { key }  the VAPID public key, for the frontend's applicationServerKey
 //   POST /subscribe         → { subscription, topics }  store/replace a browser push subscription
 //   POST /unsubscribe       → { endpoint }  remove it
+//   POST /resubscribe       → { oldEndpoint, subscription }  carry topics to a rotated endpoint
 //   POST /register-native   → { token, platform, topics }  store/replace a native FCM device token
 //   POST /unregister-native → { token }  remove it
 //   POST /send              → { topics, title, message, url, tag }  (Bearer SEND_TOKEN)  fan out a push
@@ -48,6 +49,31 @@ export default {
         return json({ ok: true }, 200, cors);
       }
 
+      // Endpoint rotation (the browser's `pushsubscriptionchange`). Chrome on Android rotates push
+      // endpoints on its own schedule; the old one then 410s and gets pruned, which would silently
+      // unsubscribe a device that still shows its bells lit. Carry the old key's topics over to the
+      // new endpoint so the subscription survives. No token: the caller must already hold both the
+      // old endpoint and a fresh subscription for this origin.
+      if (request.method === 'POST' && url.pathname === '/resubscribe') {
+        const { oldEndpoint, subscription } = await request.json();
+        if (!subscription?.endpoint || !subscription?.keys) {
+          return json({ error: 'bad request' }, 400, cors);
+        }
+        let topics = [];
+        if (oldEndpoint) {
+          const old = await env.SUBS.getWithMetadata(oldEndpoint);
+          topics = old?.metadata?.topics || [];
+          if (oldEndpoint !== subscription.endpoint) await env.SUBS.delete(oldEndpoint);
+        }
+        // Nothing to carry over — the page's own reconcile pass will re-subscribe with the topics
+        // it has in localStorage, so this is not an error.
+        if (topics.length === 0) return json({ ok: false, reason: 'no topics to migrate' }, 200, cors);
+        await env.SUBS.put(subscription.endpoint, JSON.stringify(subscription), {
+          metadata: { topics: topics.slice(0, 300) },
+        });
+        return json({ ok: true, topics: topics.length }, 200, cors);
+      }
+
       // Native (Android/iOS) FCM device tokens — same KV namespace, "fcm:" key prefix so /send
       // can tell them apart from Web Push endpoints (which are https:// URLs).
       if (request.method === 'POST' && url.pathname === '/register-native') {
@@ -80,8 +106,11 @@ export default {
           url: body.url || 'https://iswhateveroutyet.com',
           tag: body.tag || '',
         };
-        const sent = await fanOut(env, wanted, payload);
-        return json({ sent }, 200, cors);
+        // Break the count down by transport and report whether native push is even configured —
+        // the checker logs this body, so "delivered to nobody" and "FCM secrets missing" are
+        // visible in the workflow log instead of hiding behind a 200.
+        const stats = await fanOut(env, wanted, payload);
+        return json({ ...stats, fcmConfigured: hasFcm(env) }, 200, cors);
       }
 
       return json({ error: 'not found' }, 404, cors);
@@ -109,10 +138,11 @@ function json(obj, status, cors) {
 
 // Walk every stored subscription, push to those whose topics intersect `wanted`, prune dead ones.
 // Web Push endpoints and native FCM tokens live side by side; the "fcm:" prefix picks the transport.
+// Returns a per-transport breakdown: { sent, web, native, matched, failed, pruned }.
 async function fanOut(env, wanted, payload) {
   const webPayload = JSON.stringify(payload);
   let cursor;
-  let sent = 0;
+  const stats = { sent: 0, web: 0, native: 0, matched: 0, failed: 0, pruned: 0 };
   const seen = new Set();
   do {
     const list = await env.SUBS.list({ cursor, limit: 1000 });
@@ -122,14 +152,28 @@ async function fanOut(env, wanted, payload) {
       const topics = k.metadata?.topics || [];
       if (!topics.some((t) => wanted.has(t))) continue;
       seen.add(k.name);
-      const result = k.name.startsWith('fcm:')
+      stats.matched++;
+      const native = k.name.startsWith('fcm:');
+      const result = native
         ? await sendFcm(env, k.name.slice(4), payload)
         : await sendWeb(env, k.name, webPayload);
-      if (result === 'gone') await env.SUBS.delete(k.name);
-      else if (result === true) sent++;
+      if (result === 'gone') {
+        await env.SUBS.delete(k.name);
+        stats.pruned++;
+      } else if (result === true) {
+        stats.sent++;
+        if (native) stats.native++;
+        else stats.web++;
+      } else {
+        stats.failed++;
+      }
     }
   } while (cursor);
-  return sent;
+  return stats;
+}
+
+function hasFcm(env) {
+  return Boolean(env.FCM_PROJECT_ID && env.FCM_CLIENT_EMAIL && env.FCM_PRIVATE_KEY);
 }
 
 async function sendWeb(env, key, webPayload) {
@@ -145,7 +189,7 @@ async function sendWeb(env, key, webPayload) {
 let cachedFcmToken = null; // { token, exp } — per-isolate OAuth token cache
 
 async function sendFcm(env, deviceToken, payload) {
-  if (!env.FCM_PROJECT_ID || !env.FCM_CLIENT_EMAIL || !env.FCM_PRIVATE_KEY) return false;
+  if (!hasFcm(env)) return false;
   try {
     const access = await fcmAccessToken(env);
     const res = await fetch(

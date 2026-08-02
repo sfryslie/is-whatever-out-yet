@@ -7,7 +7,10 @@
 //     the freshest status, falling back to the last cached copy when offline.
 //
 // Bump CACHE_VERSION whenever the shell changes to evict the old cache.
-const CACHE_VERSION = 'iwoy-v8';
+const CACHE_VERSION = 'iwoy-v9';
+
+// Push Worker base URL — must match PUSH_API in index.html.
+const PUSH_API = 'https://iswhateveroutyet-push.iswhateveroutyet-push.workers.dev';
 const SHELL = [
   './',
   './index.html',
@@ -84,6 +87,45 @@ self.addEventListener('push', (event) => {
     })
   );
 });
+
+// The browser rotated (or revoked and reissued) this device's push subscription. Chrome on Android
+// does this on its own schedule, and the old endpoint then 410s and gets pruned Worker-side — so
+// without this handler a device goes quietly dark while its 🔔 bells still read as "on".
+// Re-subscribe with the same VAPID key and ask the Worker to carry the old endpoint's topics over.
+// `newSubscription` is often absent (Chrome), hence the manual re-subscribe fallback.
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    (async () => {
+      const oldEndpoint = event.oldSubscription?.endpoint;
+      try {
+        let sub = event.newSubscription;
+        if (!sub) {
+          const { key } = await (await fetch(PUSH_API + '/key')).json();
+          sub = await self.registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlB64ToU8(key),
+          });
+        }
+        await fetch(PUSH_API + '/resubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ oldEndpoint, subscription: sub.toJSON() }),
+        });
+      } catch (e) {
+        // Best effort — the page's reconcile pass re-registers next time the site is opened.
+      }
+    })(),
+  );
+});
+
+function urlB64ToU8(base64) {
+  const pad = '='.repeat((4 - (base64.length % 4)) % 4);
+  const b64 = (base64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(b64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
