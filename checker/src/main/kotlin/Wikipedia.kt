@@ -14,6 +14,14 @@ suspend fun fetchWikipediaExtract(client: HttpClient, article: String): String? 
     null
 }
 
+/**
+ * True while the lead still says the condition holds: [extract] is missing (fail closed — a
+ * transient outage must not flip a card) or ANY of [phrases] is present. Only an extract that
+ * matches none of them means the condition has ended.
+ */
+internal fun leadConditionHolds(extract: String?, phrases: List<String>): Boolean =
+    extract == null || phrases.any { extract.contains(it, ignoreCase = true) }
+
 suspend fun fetchWikipediaHtml(client: HttpClient, article: String): String? = try {
     client.get("https://en.wikipedia.org/api/rest_v1/page/html/$article") {
         header("User-Agent", "is-whatever-out-yet (https://iswhateveroutyet.com)")

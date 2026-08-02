@@ -2,7 +2,9 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -606,5 +608,46 @@ class GasAverageRegexTest {
     @Test
     fun `misses gracefully when the marker is absent`() {
         assertNull(GAS_AVG_REGEX.find("<p>no price here</p>"))
+    }
+}
+
+class LeadConditionHoldsTest {
+    // The two wordings Wikipedia's McConnell lead has actually used. The second one is what
+    // false-flipped the card in July 2026 against a single hard-coded phrase.
+    private val oldLead =
+        "Addison Mitchell McConnell III is an American politician and attorney serving as the " +
+            "senior United States senator from Kentucky, a seat he has held since 1985."
+    private val newLead =
+        "Addison Mitchell McConnell III is an American politician and attorney who has been a " +
+            "United States senator from Kentucky since 1985 and has been Kentucky's senior U.S. " +
+            "senator since 1999. A member of the Republican Party, McConnell is in his seventh " +
+            "Senate term, making him the longest-serving senator in Kentucky history."
+    private val retiredLead =
+        "Addison Mitchell McConnell III is an American politician and attorney who served as a " +
+            "United States senator from Kentucky from 1985 to 2027."
+
+    private val phrases = (ITEMS.first { it.id == "mitch-mcconnell" }.check as Check.WikipediaLead).phrases
+
+    @Test
+    fun `both real McConnell lead wordings hold the card`() {
+        assertTrue(leadConditionHolds(oldLead, phrases))
+        assertTrue(leadConditionHolds(newLead, phrases))
+    }
+
+    @Test
+    fun `past-tense lead flips the card`() {
+        assertFalse(leadConditionHolds(retiredLead, phrases))
+    }
+
+    @Test
+    fun `a failed fetch holds the card`() {
+        assertTrue(leadConditionHolds(null, phrases))
+    }
+
+    @Test
+    fun `matching is case-insensitive and OR-matched`() {
+        assertTrue(leadConditionHolds("IS AN UPCOMING game", listOf("is an upcoming")))
+        assertTrue(leadConditionHolds("b", listOf("a", "b")))
+        assertFalse(leadConditionHolds("c", listOf("a", "b")))
     }
 }
