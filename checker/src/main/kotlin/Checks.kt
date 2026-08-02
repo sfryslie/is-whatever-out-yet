@@ -258,7 +258,7 @@ internal suspend fun runCheck(item: Item, ctx: CheckContext): ItemResult {
         is Check.WikipediaLead -> {
             println("Checking Wikipedia lead for ${check.article}…")
             val extract = fetchWikipediaExtract(ctx.client, check.article)
-            if (extract == null || extract.contains(check.phrase, ignoreCase = true)) {
+            if (leadConditionHolds(extract, check.phrases)) {
                 ItemResult(
                     item.id, item.label, item.category,
                     answer = item.defaultAnswer,
@@ -272,7 +272,7 @@ internal suspend fun runCheck(item: Item, ctx: CheckContext): ItemResult {
                 ItemResult(
                     item.id, item.label, item.category,
                     answer = "Yes.",
-                    detail = "${escapeHtmlText(extract)} <a href=\"$articleUrl\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
+                    detail = "${escapeHtmlText(extract.orEmpty())} <a href=\"$articleUrl\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
                     tone = check.flippedTone,
                 )
             }

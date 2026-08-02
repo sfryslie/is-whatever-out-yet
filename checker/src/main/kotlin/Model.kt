@@ -92,23 +92,39 @@ sealed class Check {
     data class GasPrices(val url: String) : Check()
 
     /**
-     * Fetch the Wikipedia REST summary for [article] and check whether [phrase] still appears in
-     * the lead extract. Phrase present → defaultAnswer (condition still holds); phrase missing →
-     * "Yes." with the full new extract + a link to the article as the detail. Fail-closed on
-     * network errors so transient outages don't flip the card.
+     * Fetch the Wikipedia REST summary for [article] and check whether the lead extract still
+     * says the condition holds. [phrases] are OR-matched (case-insensitive substring): while ANY
+     * is present the card holds at defaultAnswer; only when ALL are gone does it flip to "Yes."
+     * with the full new extract + a link to the article as the detail. Fail-closed on network
+     * errors so transient outages don't flip the card.
+     *
+     * Pass several wordings of the same signal whenever the lead is prose an editor might copyedit
+     * (e.g. "serving as the senior United States senator from Kentucky" vs. "has been a United
+     * States senator from Kentucky since") — a single phrase makes the check a reword detector
+     * rather than a status detector. Keep every phrase tense-bearing, since the tense is what
+     * actually carries the signal: "is/serving/has been … since" all vanish when the lead is
+     * rewritten to "served … from 1985 to 2027".
      *
      * [latestDate], if set, adds a display-only countdown to that date while the condition still
      * holds — useful for "this could end sooner, but here's the official deadline" cases.
      */
     data class WikipediaLead(
         val article: String,
-        val phrase: String,
+        val phrases: List<String>,
         val latestDate: LocalDate? = null,
-        // Tone to stamp on the result if the phrase disappears (the card flips). Used for the
+        // Tone to stamp on the result if the phrases disappear (the card flips). Used for the
         // copula-tracking death checks (e.g. Cosby's "is an American" → "was") so the flip colors
         // as a death rather than a celebratory green.
         val flippedTone: String? = null,
-    ) : Check()
+    ) : Check() {
+        /** Single-phrase shorthand for leads with only one plausible wording. */
+        constructor(
+            article: String,
+            phrase: String,
+            latestDate: LocalDate? = null,
+            flippedTone: String? = null,
+        ) : this(article, listOf(phrase), latestDate, flippedTone)
+    }
 
     /**
      * Like [WikipediaLead] but fetches the full rendered HTML (not just the summary extract),

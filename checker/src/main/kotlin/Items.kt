@@ -171,8 +171,21 @@ val ITEMS = listOf(
     Item("vladimir-putin",  "Vladimir Putin",  "People",
         Check.WikipediaLead("Vladimir_Putin", "President of Russia since"),
         defaultDetail = "Still President of Russia. Has been since 2012."),
+    // The lead's exact wording churns (it has already gone "serving as the senior United States
+    // senator" → "has been a United States senator … since 1985"), so match several tense-bearing
+    // wordings instead of one: any present-tense claim of the seat means he still holds it, and
+    // they all disappear together once the lead switches to "served … from 1985 to 2027".
     Item("mitch-mcconnell", "Mitch McConnell", "People",
-        Check.WikipediaLead("Mitch_McConnell", "serving as the senior United States senator from Kentucky", LocalDate.of(2027, 1, 3)),
+        Check.WikipediaLead(
+            "Mitch_McConnell",
+            listOf(
+                "senator from Kentucky since",
+                "senior U.S. senator since",
+                "is the senior United States senator from Kentucky",
+                "serving as the senior United States senator from Kentucky",
+            ),
+            LocalDate.of(2027, 1, 3),
+        ),
         defaultDetail = "Not seeking re-election in 2026. Term runs through January 2027."),
     Item("elizabeth-holmes", "Elizabeth Holmes", "People",
         Check.WikipediaHtml("Elizabeth_Holmes", INCARCERATION_MARKERS, flippedDetail = "She's out."),
