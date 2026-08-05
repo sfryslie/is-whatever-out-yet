@@ -27,6 +27,7 @@ val ITEMS = listOf(
 
     // AI — other vendors
     Item("gpt-5-6",        "GPT-5.6",         "AI", Check.Hardcoded, "Yes.", "I thought Sol/Terra/Luna were the new Pokémon games.", LocalDate.of(2026, 7, 9)),
+    Item("gpt-6",          "GPT-6",            "AI", Check.OpenAI("gpt-6")),
     Item("gemini-3-1-pro", "Gemini 3.1 Pro",   "AI", Check.Gemini("gemini-3.1-pro")),
     Item("grok-5",         "Grok 5",           "AI", Check.Grok("grok-5"), "No.", "... but do you care?"),
     Item("agi",            "AGI",              "AI", Check.Hardcoded, "No."),

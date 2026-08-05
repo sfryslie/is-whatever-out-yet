@@ -47,6 +47,12 @@
             "since": "2026-07-09"
         },
         {
+            "id": "gpt-6",
+            "label": "GPT-6",
+            "category": "AI",
+            "answer": "No."
+        },
+        {
             "id": "gemini-3-1-pro",
             "label": "Gemini 3.1 Pro",
             "category": "AI",
