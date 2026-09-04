@@ -50,7 +50,9 @@
             "id": "gpt-6",
             "label": "GPT-6",
             "category": "AI",
-            "answer": "No."
+            "answer": "Yes.",
+            "detail": "gpt-6-astra",
+            "since": "2026-09-04"
         },
         {
             "id": "gemini-3-1-pro",
