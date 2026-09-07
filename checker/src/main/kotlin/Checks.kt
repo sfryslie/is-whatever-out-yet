@@ -15,10 +15,12 @@ internal class CheckContext(
     val openAiKey: String?,
     val googleKey: String?,
     val xaiKey: String?,
-    val anthropicIds: List<String>,
-    val openAiIds: List<String>,
-    val geminiIds: List<String>,
-    val xaiIds: List<String>,
+    // Null = the catalogue fetch failed this run, so the item holds its previous answer; empty
+    // = the catalogue came back fine and lists nothing matching, so the item default applies.
+    val anthropicIds: List<String>?,
+    val openAiIds: List<String>?,
+    val geminiIds: List<String>?,
+    val xaiIds: List<String>?,
     val aniListData: Map<Int, AniListMedia>,
     val igdbClientId: String?,
     val igdbToken: String?,
@@ -44,40 +46,44 @@ internal class CheckContext(
             val igdbClientId = System.getenv("IGDB_CLIENT_ID")
             val igdbSecret   = System.getenv("IGDB_CLIENT_SECRET")
 
-            val anthropicIds: List<String> = if (anthropicKey != null) {
+            val anthropicIds: List<String>? = if (anthropicKey != null) {
                 println("Fetching Anthropic models…")
                 fetchAnthropicModelIds(client, anthropicKey).also {
-                    println("  Found ${it.size} model(s): ${it.joinToString()}")
+                    if (it == null) println("  Fetch failed — Anthropic items hold last run's answers.")
+                    else println("  Found ${it.size} model(s): ${it.joinToString()}")
                 }
             } else {
                 println("ANTHROPIC_API_KEY not set — skipping Anthropic checks.")
                 emptyList()
             }
 
-            val openAiIds: List<String> = if (openAiKey != null) {
+            val openAiIds: List<String>? = if (openAiKey != null) {
                 println("Fetching OpenAI models…")
                 fetchOpenAIModelIds(client, openAiKey).also {
-                    println("  Found ${it.size} model(s)")
+                    if (it == null) println("  Fetch failed — OpenAI items hold last run's answers.")
+                    else println("  Found ${it.size} model(s)")
                 }
             } else {
                 println("OPENAI_API_KEY not set — skipping OpenAI checks.")
                 emptyList()
             }
 
-            val geminiIds: List<String> = if (googleKey != null) {
+            val geminiIds: List<String>? = if (googleKey != null) {
                 println("Fetching Gemini models…")
                 fetchGeminiModelIds(client, googleKey).also {
-                    println("  Found ${it.size} model(s)")
+                    if (it == null) println("  Fetch failed — Gemini items hold last run's answers.")
+                    else println("  Found ${it.size} model(s)")
                 }
             } else {
                 println("GOOGLE_API_KEY not set — skipping Gemini checks.")
                 emptyList()
             }
 
-            val xaiIds: List<String> = if (xaiKey != null) {
+            val xaiIds: List<String>? = if (xaiKey != null) {
                 println("Fetching xAI models…")
                 fetchXaiModelIds(client, xaiKey).also {
-                    println("  Found ${it.size} model(s)")
+                    if (it == null) println("  Fetch failed — xAI items hold last run's answers.")
+                    else println("  Found ${it.size} model(s)")
                 }
             } else {
                 println("XAI_API_KEY not set — skipping Grok checks.")
@@ -89,6 +95,7 @@ internal class CheckContext(
                 println("Fetching AniList data for ${aniListIds.size} show(s) (single request)…")
                 fetchAniListBatch(client, aniListIds).also {
                     println("  Got ${it.size}/${aniListIds.size} result(s)")
+                    if (it.isEmpty()) println("  AniList returned nothing — all ${aniListIds.size} anime item(s) hold last run's data.")
                 }
             } else emptyMap()
 
@@ -111,6 +118,13 @@ internal class CheckContext(
         }
     }
 }
+
+/** The previous run's result for [item], or its static defaults on a true first run. Used by every
+ *  check that can fail to reach its upstream — overwriting a confirmed answer with the default is
+ *  worse than repeating yesterday's. */
+private fun staleOrDefault(item: Item, ctx: CheckContext): ItemResult =
+    ctx.prevById[item.id]?.copy(id = item.id, label = item.label, category = item.category)
+        ?: ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
 
 /** Execute [item]'s check strategy against [ctx] and produce its result for this run. */
 internal suspend fun runCheck(item: Item, ctx: CheckContext): ItemResult {
@@ -151,21 +165,27 @@ internal suspend fun runCheck(item: Item, ctx: CheckContext): ItemResult {
             // Listing match excludes preview/experimental variants. If a candidate is found,
             // probe with a 1-token messages call — Anthropic lists models in the catalog
             // before they're actually callable, so we have to verify accessibility.
-            val candidate = matchModelId(ctx.anthropicIds, check.pattern)
-            val callable = candidate != null && ctx.anthropicKey != null &&
-                probeAnthropicModel(ctx.client, ctx.anthropicKey, candidate)
-            if (candidate != null && !callable) {
-                println("  ${item.label}: listed as '$candidate' but probe failed")
+            if (ctx.anthropicIds == null) {
+                staleOrDefault(item, ctx)
+            } else {
+                val candidate = matchModelId(ctx.anthropicIds, check.pattern)
+                val callable = candidate != null && ctx.anthropicKey != null &&
+                    probeAnthropicModel(ctx.client, ctx.anthropicKey, candidate)
+                if (candidate != null && !callable) {
+                    println("  ${item.label}: listed as '$candidate' but probe failed")
+                }
+                ItemResult(
+                    item.id, item.label, item.category,
+                    answer = if (callable) "Yes." else item.defaultAnswer,
+                    detail = if (callable) candidate else item.defaultDetail,
+                )
             }
-            ItemResult(
-                item.id, item.label, item.category,
-                answer = if (callable) "Yes." else item.defaultAnswer,
-                detail = if (callable) candidate else item.defaultDetail,
-            )
         }
 
         is Check.OpenAI -> {
-            if (ctx.openAiKey == null) {
+            if (ctx.openAiIds == null) {
+                staleOrDefault(item, ctx)
+            } else if (ctx.openAiKey == null) {
                 ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
             } else {
                 // A pattern can match several shipped variants at once (e.g. GPT-5.6's Sol/Terra/
@@ -181,7 +201,9 @@ internal suspend fun runCheck(item: Item, ctx: CheckContext): ItemResult {
         }
 
         is Check.Gemini -> {
-            if (ctx.googleKey == null) {
+            if (ctx.geminiIds == null) {
+                staleOrDefault(item, ctx)
+            } else if (ctx.googleKey == null) {
                 ItemResult(item.id, item.label, item.category, item.defaultAnswer, "Add GOOGLE_API_KEY secret to enable live check.")
             } else {
                 val matched = matchModelId(ctx.geminiIds, check.pattern)
@@ -194,7 +216,9 @@ internal suspend fun runCheck(item: Item, ctx: CheckContext): ItemResult {
         }
 
         is Check.Grok -> {
-            if (ctx.xaiKey == null) {
+            if (ctx.xaiIds == null) {
+                staleOrDefault(item, ctx)
+            } else if (ctx.xaiKey == null) {
                 ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
             } else {
                 val matched = matchModelId(ctx.xaiIds, check.pattern)
@@ -237,18 +261,14 @@ internal suspend fun runCheck(item: Item, ctx: CheckContext): ItemResult {
             // Fail closed: missing credentials or an unreachable/empty IGDB response shouldn't
             // overwrite a date a previous run already confirmed — prefer that over the item's
             // static defaults, and only fall back to the defaults on a true first run.
-            val staleOrDefault = {
-                ctx.prevById[item.id]?.copy(id = item.id, label = item.label, category = item.category)
-                    ?: ItemResult(item.id, item.label, item.category, item.defaultAnswer, item.defaultDetail)
-            }
             if (ctx.igdbClientId == null || ctx.igdbToken == null) {
-                staleOrDefault()
+                staleOrDefault(item, ctx)
             } else {
                 println("Checking IGDB for ${item.label} (slug: ${check.slug})…")
                 val game = fetchIgdbGame(ctx.client, ctx.igdbClientId, ctx.igdbToken, check.slug)
                 if (game == null) {
                     println("  IGDB: no result for '${check.slug}' — using previous run's data")
-                    staleOrDefault()
+                    staleOrDefault(item, ctx)
                 } else {
                     buildIgdbResult(item, game, ctx.today, ctx.prevById[item.id])
                 }

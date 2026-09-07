@@ -1,3 +1,6 @@
+import kotlinx.coroutines.runBlocking
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.HttpClient
 import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlin.test.Test
@@ -649,5 +652,55 @@ class LeadConditionHoldsTest {
         assertTrue(leadConditionHolds("IS AN UPCOMING game", listOf("is an upcoming")))
         assertTrue(leadConditionHolds("b", listOf("a", "b")))
         assertFalse(leadConditionHolds("c", listOf("a", "b")))
+    }
+}
+
+/**
+ * A model catalogue that failed to fetch (null) must hold the previous run's answer, while one
+ * that fetched cleanly but lists nothing (empty) must resolve to the item's default.
+ *
+ * Collapsing the two is a quiet category-wipe: every provider error body that happens to be
+ * well-formed JSON (401, 429, a 500 with `{"error":...}`) parses into a catalogue with no model
+ * array, and if that reads as "zero models exist" then Opus/Sonnet/GPT all flip to "No.", the
+ * `updated` stamp moves, and the commit message announces models being un-released.
+ */
+class ModelCatalogueFallbackTest {
+    private val item = Item(
+        "claude-opus-5", "Claude Opus 5", "AI", Check.Anthropic("claude-opus-5"),
+        defaultAnswer = "No.",
+    )
+    private val shipped = ItemResult(
+        "claude-opus-5", "Claude Opus 5", "AI", answer = "Yes.",
+        detail = "claude-opus-5", since = "2026-07-24",
+    )
+
+    private fun ctx(ids: List<String>?, prev: Map<String, ItemResult>) = CheckContext(
+        client = HttpClient(CIO), anthropicKey = "test-key", openAiKey = null,
+        googleKey = null, xaiKey = null,
+        anthropicIds = ids, openAiIds = null, geminiIds = null, xaiIds = null,
+        aniListData = emptyMap(), igdbClientId = null, igdbToken = null,
+        prevById = prev, today = LocalDate.of(2026, 9, 7),
+    )
+
+    @Test
+    fun `failed catalogue fetch holds the previous answer`() = runBlocking {
+        val result = runCheck(item, ctx(null, mapOf(item.id to shipped)))
+        assertEquals("Yes.", result.answer)
+        assertEquals("claude-opus-5", result.detail)
+        assertEquals("2026-07-24", result.since)
+    }
+
+    @Test
+    fun `failed catalogue fetch on a first-seen item falls back to the item default`() = runBlocking {
+        val result = runCheck(item, ctx(null, emptyMap()))
+        assertEquals("No.", result.answer)
+    }
+
+    @Test
+    fun `a catalogue that simply lists nothing resolves to the item default`() = runBlocking {
+        // Empty is a real answer, not a failure — an unshipped model must stay "No." even when a
+        // previous run somehow recorded otherwise.
+        val result = runCheck(item, ctx(emptyList(), mapOf(item.id to shipped)))
+        assertEquals("No.", result.answer)
     }
 }

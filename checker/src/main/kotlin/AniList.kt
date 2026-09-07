@@ -59,10 +59,22 @@ internal suspend fun fetchAniListBatch(client: HttpClient, mediaIds: List<Int>):
         "m$id: Media(id: $id, type: ANIME) { status startDate { year month day } nextAiringEpisode { airingAt episode } }"
     }
     return try {
-        val body = client.post("https://graphql.anilist.co") {
+        val response = client.post("https://graphql.anilist.co") {
             contentType(ContentType.Application.Json)
             setBody("""{"query":"{ $fields }"}""")
-        }.bodyAsText().let { Json.parseToJsonElement(it).jsonObject }
+        }
+        val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        // A GraphQL-level failure parses perfectly well — `data` is null and the reason lives in
+        // `errors` — so it reaches [parseAniListBatchResponse] as a clean empty map and reads
+        // exactly like "nothing is airing". Say it out loud instead: AniList disabled its public
+        // API outright on 2026-09-06 and the only trace in the logs was a "Got 0/13" line.
+        if (!response.status.isSuccess()) {
+            println("  AniList returned HTTP ${response.status.value}")
+        }
+        (body["errors"] as? JsonArray).orEmpty().forEach { err ->
+            val message = (err as? JsonObject)?.get("message")?.jsonPrimitive?.contentOrNull
+            println("  AniList error: ${message ?: err}")
+        }
         parseAniListBatchResponse(body, mediaIds)
     } catch (e: Exception) {
         println("  AniList batch fetch failed: ${e.message}")
