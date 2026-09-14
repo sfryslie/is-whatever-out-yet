@@ -26,9 +26,9 @@
             "id": "steam-frame",
             "label": "Steam Frame",
             "category": "Tech",
-            "answer": "No.",
-            "detail": "Expected Summer 2026.",
-            "countdownTo": "2026-09-22"
+            "answer": "Yes.",
+            "detail": "The Steam Frame is a virtual reality headset developed by Valve. It was announced in November 2025 as part of a broader Steam hardware lineup and is a successor to the Valve Index. Reservations came out September 14, 2026. <a href=\"https://en.wikipedia.org/wiki/Steam_Frame\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
+            "since": "2026-09-14"
         },
         {
             "id": "java-valhalla",
