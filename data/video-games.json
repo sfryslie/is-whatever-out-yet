@@ -188,7 +188,8 @@
             "id": "marvels-wolverine",
             "label": "Marvel's Wolverine",
             "category": "Video Games",
-            "releaseDate": "2026-09-15"
+            "answer": "Yes.",
+            "since": "2026-09-15"
         },
         {
             "id": "witcher-4",
@@ -207,7 +208,8 @@
             "id": "runescape-dragonwilds",
             "label": "RuneScape: Dragonwilds",
             "category": "Video Games",
-            "releaseDate": "2026-09-15"
+            "releaseDate": "2026-09-15",
+            "since": "2026-09-15"
         },
         {
             "id": "gears-of-war-eday",
