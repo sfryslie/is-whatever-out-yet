@@ -105,8 +105,10 @@
             "id": "steel-ball-run-ep2",
             "label": "Steel Ball Run",
             "category": "Anime",
+            "answer": "Yes.",
             "detail": "Fuck Netflix.",
-            "releaseDate": "2026-09-25",
+            "countdownLabel": "Ep. 2 airs",
+            "countdownSub": "Oct 2, 2026",
             "since": "2026-09-25",
             "aliases": [
                 "SBR",
