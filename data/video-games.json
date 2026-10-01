@@ -215,8 +215,10 @@
             "id": "gears-of-war-eday",
             "label": "Gears of War: E-Day",
             "category": "Video Games",
-            "detail": "PC: Oct 06, 2026",
-            "releaseDate": "2026-10-01"
+            "answer": "Yes.",
+            "detail": "PC release",
+            "countdownTo": "2026-10-06",
+            "since": "2026-10-01"
         },
         {
             "id": "enshrouded",
