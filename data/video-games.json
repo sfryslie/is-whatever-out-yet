@@ -222,7 +222,8 @@
             "id": "enshrouded",
             "label": "Enshrouded",
             "category": "Video Games",
-            "releaseDate": "2026-10-15"
+            "answer": "Yes.",
+            "since": "2026-10-15"
         },
         {
             "id": "zelda-oot-remake",
