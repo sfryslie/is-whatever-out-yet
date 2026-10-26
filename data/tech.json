@@ -5,9 +5,9 @@
             "id": "tesla-roadster-2",
             "label": "Tesla Roadster 2",
             "category": "Tech",
-            "answer": "Yes.",
-            "detail": "The second-generation Tesla Roadster is a concept battery electric sports car demonstrated by Tesla, Inc. When it was announced in November 2017, the company said it would be capable of accelerating from 0 to 60 mph in 1.9 seconds, which would have been quicker than any street legal production car at the date of its announcement. It is the successor to Tesla&#39;s first production car, the 2008 Tesla Roadster, and is intended to be a halo car for the company. <a href=\"https://en.wikipedia.org/wiki/Tesla_Roadster_(second_generation)\" target=\"_blank\" rel=\"noopener\">(Wikipedia)</a>",
-            "since": "2026-10-24"
+            "answer": "No.",
+            "detail": "Announced November 2017. Still upcoming.",
+            "since": "2026-10-26"
         },
         {
             "id": "python-4",
