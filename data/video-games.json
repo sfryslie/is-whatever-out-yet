@@ -229,7 +229,8 @@
             "id": "zelda-oot-remake",
             "label": "The Legend of Zelda: Ocarina of Time Remake",
             "category": "Video Games",
-            "releaseDate": "2026-11-05",
+            "answer": "Yes.",
+            "since": "2026-11-05",
             "aliases": [
                 "Ocarina of Time Remake",
                 "OoT Remake"
