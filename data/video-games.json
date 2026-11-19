@@ -76,8 +76,9 @@
             "id": "gta-vi",
             "label": "Grand Theft Auto VI",
             "category": "Video Games",
+            "answer": "Yes.",
             "detail": "Not for PC though, rip.",
-            "releaseDate": "2026-11-19",
+            "since": "2026-11-19",
             "aliases": [
                 "GTA 6",
                 "GTA VI",
